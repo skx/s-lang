@@ -1,0 +1,20 @@
+let a = 43;
+print("This should be 43: ", a, "\n" );
+let c = 3 * 4;
+let X = 99;
+
+let b = a -1;
+print("Hello, world!  The magic number is ", b, "\n");
+
+# comments are good
+let a = 4;
+println( a );  # println is like print, but adds a newline
+
+print("Steve Did this!\n");
+
+# Simple loops
+let f = 10;
+while( f ) {
+  print( "Loop ", f, "\n" );
+  let f = f - 1;
+}
