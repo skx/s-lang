@@ -1,0 +1,42 @@
+# FizzBuzz for 1..100
+#
+# Since there is no modulus operator, keep counters
+# for multiples of 3 and 5.
+
+let i = 1;
+let remaining = 100;
+
+let fizz = 0;
+let buzz = 0;
+
+while (remaining) {
+
+    let fizz = fizz + 1;
+    let buzz = buzz + 1;
+
+    let printed = 0;
+
+    # Divisible by 3
+    if (fizz == 3) {
+        print("Fizz");
+        let fizz = 0;
+        let printed = 1;
+    }
+
+    # Divisible by 5
+    if (buzz == 5) {
+        print("Buzz");
+        let buzz = 0;
+        let printed = 1;
+    }
+
+    # Neither divisible by 3 nor 5
+    if (printed == 0) {
+        print(i);
+    }
+
+    print("\n");
+
+    let i = i + 1;
+    let remaining = remaining - 1;
+}

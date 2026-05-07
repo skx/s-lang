@@ -14,6 +14,20 @@ This is my own take on such a minimalist system:
 
 
 
+## Example Programs
+
+See [examples/](examples/) for "real" programs:
+
+* [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20
+* [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100
+
+Syntax below, and some sample code here:
+
+* [example.in](example.in) - Misc. Examples.
+* [if.in](if.in) - Examples of comparisons.
+
+
+
 ## Syntax
 
 The following is a tour of our language:

@@ -1,0 +1,20 @@
+let m = 20; # Max number to calculate
+let n = 1;  # Current value being calculated
+let o = 1;  # old value
+
+
+while ( m ) {
+
+  print( "Calculating the factorial of ", n);
+
+  let f = 1;   # factorial
+  while( n ) {
+    let f = f * n;
+    let n = n - 1;
+  }
+
+  print(" result ", f, "\n" );
+  let m = m - 1 ;
+  let n = o + 1;
+  let o = o + 1;
+}
