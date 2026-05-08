@@ -58,8 +58,8 @@ The following is a tour of our language:
     # Printing of integer and string literal works too.
     print( "steve", " ", 21);
 
-    # Exit with the given status code (register/integer literal).
-    return(c);
+    # Exit with the given status
+    return(1 + 2 * 3);
 
 > **NOTE**: Example files include [example.in](example.in) and [if.in](if.in).
 
@@ -72,8 +72,9 @@ Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
   * `print(31)` prints the integer literal `31`.
   * `print("Steve")` prints the string literal `Steve`.
   * You can use `println` instead to add a trailing newline.
-  * Add multiple comma-separated arguments to print multiple values.
-* The exit-code of the generated value can be set to register x via `return(x);`.
+  * Add multiple comma-separated arguments to print multiple expressions.
+* The exit-code of the generated binary is set via `return(x);`.
+  * Where `x` is a variable name, an integer literal, or the value of an expression.
 * We have support for both `while` and `if`.
   * Both of these allow simple tests to be made such as `>=`, `<`, `a`, etc.
 
@@ -82,7 +83,7 @@ Using the ability to decrease a variable (`let i = i - 1`) we can also write a l
     let x = 3;
 
     while ( x ) {
-        print( x );
+        println( x );
         let x = x - 1;
     }
 
@@ -95,7 +96,7 @@ The same comparison support is present for our `if` statements:
     if (a > b ) { ... }
     if (a >= b ) { ... }
 
-These are the only comparisons we support, but either "a" or "b" may be a number or variable name.
+We have support for logical and (`&&`) and or (`||`) too.
 
 
 
@@ -153,16 +154,8 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
 
 
 
-## Status
+## History
 
-I wrote a simple prototype, in perl, beneath [prototype/](prototype/) which showed things were mostly simple and to get an idea of what primitives the standard library would require (literally just printing numbers and newlines, along with the ability to set an exit code).
+There is a simple perl-based prototype, beneath [prototype/](prototype/), which I hacked up to see if this would be a project that was within my means.
 
-Then I wrote the golang version which is the real product of this repository:
-
-* [x] lexer
-  * [x] lexer support for eating comments
-  * [x] lexer support for strings
-* [x] parser
-* [x] generator
-* [x] executor
-  * This generates the assembly and runs "as .." and "ld .." automatically.
+It parses via regexp which is terrible, but also good enough to show that things could work in a predictable fashion.
