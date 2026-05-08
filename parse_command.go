@@ -59,7 +59,7 @@ func (p *parseCommand) parseFile(path string) error {
 		case *parser.Return:
 			fmt.Printf("RETURN(%s)\n", stmt.Value)
 		case *parser.While:
-			fmt.Printf("while(%s) { .. }\n", stmt.Value)
+			fmt.Printf("while(%v) { .. }\n", stmt.Expression)
 		default:
 			fmt.Printf("Uknown %T %v\n", stmt, stmt)
 		}

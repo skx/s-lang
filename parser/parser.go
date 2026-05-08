@@ -35,10 +35,9 @@ func (p *Parser) ParseProgram() (*Program, error) {
 	return program, err
 }
 
-// parseExpr is called to parse "LET X = ...." - where we need to handle
-// several cases in the "...." section:
+// parseExpr is called to parse expressions - be they in IF, LET, or WHILE.
 func (p *Parser) parseExpr() Expr {
-	return p.parseAddSub()
+	return p.parseLogicalOr()
 }
 
 func (p *Parser) parseAddSub() Expr {
@@ -119,18 +118,104 @@ func (p *Parser) parsePrimary() Expr {
 	panic("unexpected token")
 }
 
-// parseConditional is designed to parse the test used in
-// an if-statement.
-func (p *Parser) parseConditional() []*lexer.Token {
-	res := []*lexer.Token{}
+func (p *Parser) parseComparison() Expr {
+	left := p.parseAddSub()
 
-	x := p.l.Next()
-	for x.Type != lexer.RPAREN && x.Type != lexer.EOF {
-		res = append(res, x)
-		x = p.l.Next()
+	for {
+		tok := p.l.Peek()
+
+		switch tok.Type {
+
+		case lexer.LT,
+			lexer.LT_EQUALS,
+			lexer.GT,
+			lexer.GT_EQUALS:
+
+			p.l.Next()
+
+			right := p.parseAddSub()
+
+			left = &BinaryExpr{
+				Left:  left,
+				Op:    tok.Type,
+				Right: right,
+			}
+
+		default:
+			return left
+		}
 	}
+}
 
-	return res
+func (p *Parser) parseEquality() Expr {
+	left := p.parseComparison()
+
+	for {
+		tok := p.l.Peek()
+
+		switch tok.Type {
+
+		case lexer.EQUALS,
+			lexer.NOT_EQUALS:
+
+			p.l.Next()
+
+			right := p.parseComparison()
+
+			left = &BinaryExpr{
+				Left:  left,
+				Op:    tok.Type,
+				Right: right,
+			}
+
+		default:
+			return left
+		}
+	}
+}
+
+func (p *Parser) parseLogicalOr() Expr {
+	left := p.parseLogicalAnd()
+
+	for {
+		tok := p.l.Peek()
+
+		if tok.Type != lexer.OR {
+			return left
+		}
+
+		p.l.Next()
+
+		right := p.parseLogicalAnd()
+
+		left = &BinaryExpr{
+			Left:  left,
+			Op:    tok.Type,
+			Right: right,
+		}
+	}
+}
+
+func (p *Parser) parseLogicalAnd() Expr {
+	left := p.parseEquality()
+
+	for {
+		tok := p.l.Peek()
+
+		if tok.Type != lexer.AND {
+			return left
+		}
+
+		p.l.Next()
+
+		right := p.parseEquality()
+
+		left = &BinaryExpr{
+			Left:  left,
+			Op:    tok.Type,
+			Right: right,
+		}
+	}
 }
 
 // parseStatements is used to parse a collection of statements.
@@ -158,7 +243,11 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return res, fmt.Errorf("missing '(' after if")
 			}
 
-			cnd := p.parseConditional()
+			expr := p.parseExpr()
+			start = p.l.Next()
+			if start.Type != lexer.RPAREN {
+				return res, fmt.Errorf("missing ')' after if")
+			}
 
 			end := p.l.Next()
 			if end.Type != lexer.LBRACE {
@@ -171,7 +260,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if err != nil {
 				return res, err
 			}
-			res = append(res, &If{Condition: cnd, Statements: stmts})
+			res = append(res, &If{Expression: expr, Statements: stmts})
 
 		case lexer.LET:
 			name := p.l.Next()
@@ -189,7 +278,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after while")
 			}
-			val := p.l.Next()
+			val := p.parseExpr()
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after while")
@@ -205,7 +294,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if err != nil {
 				return res, err
 			}
-			res = append(res, &While{Value: val, Statements: stmts})
+			res = append(res, &While{Expression: val, Statements: stmts})
 
 		case lexer.PRINT, lexer.PRINTLN:
 			calledAs := p.curToken.Type

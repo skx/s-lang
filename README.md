@@ -75,6 +75,7 @@ Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
   * Add multiple comma-separated arguments to print multiple values.
 * The exit-code of the generated value can be set to register x via `return(x);`.
 * We have support for both `while` and `if`.
+  * Both of these allow simple tests to be made such as `>=`, `<`, `a`, etc.
 
 Using the ability to decrease a variable (`let i = i - 1`) we can also write a loop:
 
@@ -85,7 +86,7 @@ Using the ability to decrease a variable (`let i = i - 1`) we can also write a l
         let x = x - 1;
     }
 
-The simplification that makes this possible is that the only test possible within the `while` condition is "variable value != 0", however we have better support for our `if` statements:
+The same comparison support is present for our `if` statements:
 
     if (a == 3 ) { ... }
     if (a != b ) { ... }
