@@ -218,20 +218,6 @@ func (p *Parser) parseLogicalAnd() Expr {
 	}
 }
 
-// parseConditional is designed to parse the test used in
-// an if-statement.
-func (p *Parser) parseConditional() []*lexer.Token {
-	res := []*lexer.Token{}
-
-	x := p.l.Next()
-	for x.Type != lexer.RPAREN && x.Type != lexer.EOF {
-		res = append(res, x)
-		x = p.l.Next()
-	}
-
-	return res
-}
-
 // parseStatements is used to parse a collection of statements.
 //
 // It is extracted into a function because our WHILE and IF blocks
@@ -257,7 +243,11 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return res, fmt.Errorf("missing '(' after if")
 			}
 
-			cnd := p.parseConditional()
+			expr := p.parseEquality()
+			start = p.l.Next()
+			if start.Type != lexer.RPAREN {
+				return res, fmt.Errorf("missing ')' after if")
+			}
 
 			end := p.l.Next()
 			if end.Type != lexer.LBRACE {
@@ -270,7 +260,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if err != nil {
 				return res, err
 			}
-			res = append(res, &If{Condition: cnd, Statements: stmts})
+			res = append(res, &If{Expression: expr, Statements: stmts})
 
 		case lexer.LET:
 			name := p.l.Next()
@@ -288,7 +278,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after while")
 			}
-			expr := p.parseEquality()
+			val := p.parseEquality()
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after while")
@@ -304,7 +294,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if err != nil {
 				return res, err
 			}
-			res = append(res, &While{Expression: expr, Statements: stmts})
+			res = append(res, &While{Expression: val, Statements: stmts})
 
 		case lexer.PRINT, lexer.PRINTLN:
 			calledAs := p.curToken.Type

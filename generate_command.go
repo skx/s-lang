@@ -207,139 +207,29 @@ func (g *generateCommand) generateStmt(out io.Writer, stmt parser.Statement) {
 	switch stmt.(type) {
 
 	case *parser.If:
-		// There are two ways we can run an "IF" test;
-		//   if ( a ) { .. }
-		//   if ( a OP b ) { .. }
-		//
 		i := stmt.(*parser.If)
+
+		// Generate a unique label
 		n := g.whileCount
 		g.whileCount++
 		n++
 
-		if len(i.Condition) == 1 {
+		g.compileExpr(out, i.Expression)
 
-			cnd := i.Condition[0].Value.(string)
-			num := rune(cnd[0]) - 'a'
-
-			txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
+		txt := fmt.Sprintf(`
 	cmp rax, 0
 	jz if_%d_end
-`, num, n)
-			fmt.Fprint(out, txt)
+`, n)
+		fmt.Fprint(out, txt)
 
-			// assemble the body
-			for _, s := range i.Statements {
-				g.generateStmt(out, s)
-			}
-			txt = fmt.Sprintf(`
+		// assemble the body
+		for _, s := range i.Statements {
+			g.generateStmt(out, s)
+		}
+		txt = fmt.Sprintf(`
 if_%d_end:
 `, n)
-			fmt.Fprint(out, txt)
-		}
-
-		if len(i.Condition) == 3 {
-
-			// We want to handle: A OP B
-			// A or B might be numbers or registers
-			//
-			// To simplify we'll store the values in RAX and RBX
-			// then perform the operation before saving
-
-			// RAX = A
-			if i.Condition[0].Type == lexer.NUMBER {
-
-				val := int64(i.Condition[0].Value.(float64))
-				txt := fmt.Sprintf(`
-	mov rax, %d
-`, val)
-				fmt.Fprint(out, txt)
-			} else {
-
-				// Value here is a register read
-				src := strings.ToLower(i.Condition[0].Value.(string))
-				srcN := rune(src[0]) - 'a'
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
-`, srcN)
-				fmt.Fprint(out, txt)
-			}
-
-			// RBX = B
-			if i.Condition[2].Type == lexer.NUMBER {
-
-				val := int64(i.Condition[2].Value.(float64))
-				txt := fmt.Sprintf(`
-	mov rbx, %d
-`, val)
-				fmt.Fprint(out, txt)
-			} else {
-
-				// Value here is a register read
-				src := strings.ToLower(i.Condition[2].Value.(string))
-				srcN := rune(src[0]) - 'a'
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rbx, [rcx + %d*8]
-`, srcN)
-				fmt.Fprint(out, txt)
-			}
-
-			// Now we have A in RAX, and B in RCX
-			// We need to handle the comparison operation.
-			switch i.Condition[1].Value.(string) {
-			case "==":
-				txt := fmt.Sprintf(`
-	cmp rax, rbx
-	jnz if_%d_end`, n)
-				fmt.Fprint(out, txt)
-
-			case "!=":
-				txt := fmt.Sprintf(`
-	cmp rax, rbx
-	jz if_%d_end`, n)
-				fmt.Fprint(out, txt)
-
-			case "<":
-				txt := fmt.Sprintf(`
-cmp rax, rbx
-jge if_%d_end`, n)
-				fmt.Fprint(out, txt)
-			case "<=":
-				txt := fmt.Sprintf(`
-cmp rax, rbx
-jg if_%d_end`, n)
-				fmt.Fprint(out, txt)
-
-			case ">":
-
-				txt := fmt.Sprintf(`
-cmp rax, rbx
-jle if_%d_end`, n)
-				fmt.Fprint(out, txt)
-
-			case ">=":
-
-				txt := fmt.Sprintf(`
-cmp rax, rbx
-jl if_%d_end`, n)
-				fmt.Fprint(out, txt)
-			default:
-				panic(fmt.Sprintf("unknown condition for if-statement: %s", i.Condition[1].Value.(string)))
-			}
-			// assemble the body
-			for _, s := range i.Statements {
-				g.generateStmt(out, s)
-			}
-
-			txt := fmt.Sprintf(`
-if_%d_end:
-`, n)
-			fmt.Fprint(out, txt)
-
-		}
+		fmt.Fprint(out, txt)
 
 	case *parser.LetStatement:
 

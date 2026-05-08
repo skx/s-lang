@@ -81,10 +81,9 @@ type While struct {
 // If is our conditional operation - note this is not yet implemented, and
 // when it is we don't have an Else facility in mind.
 type If struct {
-	// Condition is the thing we use to decide if to execute the block
-	// It will either be a single token like "b", or a simple three-value alternative [a <= b]
-	// TODO: This should be shared with WHILE.
-	Condition []*lexer.Token
+	// Expression is the expression we test before processing the statements
+	// within the block.
+	Expression Expr
 
 	// Statements are the things we execute if the condition is true
 	Statements []Statement
