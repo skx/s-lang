@@ -136,6 +136,10 @@ lea rcx, vars
 mov rax, [rcx + %d*8]
 `, idx)
 
+	case *parser.StringExpr:
+		panic("expression is a string")
+		return nil
+
 	case *parser.BinaryExpr:
 
 		err := g.compileExpr(out, v.Left)
@@ -285,10 +289,10 @@ mov [rcx + %d*8], rax
 	case *parser.Print:
 		prn := stmt.(*parser.Print)
 		for _, item := range prn.Values {
-			switch item.Type {
+			switch v := item.(type) {
 
-			case lexer.STRING:
-				str := item.Value.(string)
+			case *parser.StringExpr:
+				str := v.Value
 				hsh := g.hashString(str)
 				g.stringTable[hsh] = str
 
@@ -299,59 +303,35 @@ mov [rcx + %d*8], rax
 
 `, hsh, hsh, hsh)
 				fmt.Fprint(out, txt)
-
-			case lexer.IDENT:
-				reg := strings.ToLower(item.Value.(string))
-				num := rune(reg[0]) - 'a'
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
-	call print_number`, num)
-				fmt.Fprint(out, txt)
-
-			case lexer.NUMBER:
-				num := int64(item.Value.(float64))
-
-				txt := fmt.Sprintf(`
-	mov rax, %d
-	call print_number`, num)
-				fmt.Fprint(out, txt)
 			default:
-				fmt.Printf("Uknown token type %V\n", item.Value)
-			}
+				err := g.compileExpr(out, v)
+				if err != nil {
+					return err
+				}
+				txt := fmt.Sprintf(`
+	call print_number
+`)
+				fmt.Fprint(out, txt)
 
-			if prn.NewLine {
-				fmt.Fprint(out, `
+			}
+		}
+
+		if prn.NewLine {
+			fmt.Fprint(out, `
 	call newline
 `)
-			}
 		}
 	case *parser.Return:
 		rtn := stmt.(*parser.Return)
-		switch rtn.Value.Type {
 
-		case lexer.STRING:
-			// TODO
-			panic("invalid return value")
-
-		case lexer.IDENT:
-			reg := strings.ToLower(rtn.Value.Value.(string))
-			num := rune(reg[0]) - 'a'
-			txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
-	call exit_with_status
-`, num)
-			fmt.Fprint(out, txt)
-
-		case lexer.NUMBER:
-			num := int64(rtn.Value.Value.(float64))
-
-			txt := fmt.Sprintf(`
-	mov rax, %d
-	call exit_with_status`, num)
-			fmt.Fprint(out, txt)
+		err := g.compileExpr(out, rtn.Expression)
+		if err != nil {
+			return err
 		}
+		txt := fmt.Sprintf(`
+	call exit_with_status
+`)
+		fmt.Fprint(out, txt)
 
 	case *parser.While:
 		whl := stmt.(*parser.While)
@@ -372,7 +352,7 @@ while_%d_start:
 
 		txt = fmt.Sprintf(`
 	cmp rax, 0
-	jnz while_%d_end
+	jz while_%d_end
 `, n)
 		fmt.Fprint(out, txt)
 

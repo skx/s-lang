@@ -105,6 +105,11 @@ func (p *Parser) parsePrimary() Expr {
 			Name: tok.Value.(string),
 		}
 
+	case lexer.STRING:
+		return &StringExpr{
+			Value: tok.Value.(string),
+		}
+
 	case lexer.LPAREN:
 		expr := p.parseExpr()
 
@@ -115,7 +120,7 @@ func (p *Parser) parsePrimary() Expr {
 		return expr
 	}
 
-	panic("unexpected token")
+	panic(fmt.Sprintf("unexpected token %v", tok))
 }
 
 func (p *Parser) parseComparison() Expr {
@@ -303,32 +308,39 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after print")
 			}
-			tmp := []*lexer.Token{}
-			val := p.l.Next()
-			for val.Type != lexer.RPAREN && val.Type != lexer.EOF {
-				if val.Type != lexer.COMMA {
-					tmp = append(tmp, val)
+
+			var x []Expr
+
+			expr := p.parseExpr()
+			x = append(x, expr)
+
+			for {
+				tok := p.l.Peek()
+				if tok.Type == lexer.RPAREN {
+					p.l.Next()
+					break
 				}
-				val = p.l.Next()
-			}
-			if val.Type != lexer.RPAREN {
-				return res, fmt.Errorf("missing ')' after print value")
+				if tok.Type == lexer.COMMA {
+					p.l.Next()
+					expr = p.parseExpr()
+					x = append(x, expr)
+				}
 			}
 
-			res = append(res, &Print{Values: tmp, NewLine: (calledAs == lexer.PRINTLN)})
+			res = append(res, &Print{Values: x, NewLine: (calledAs == lexer.PRINTLN)})
 
 		case lexer.RETURN:
 			start := p.l.Next()
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after return")
 			}
-			val := p.l.Next()
+			expr := p.parseExpr()
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after return value")
 			}
 
-			res = append(res, &Return{Value: val})
+			res = append(res, &Return{Expression: expr})
 
 		default:
 			return res, fmt.Errorf("uknown token type %v", p.curToken)

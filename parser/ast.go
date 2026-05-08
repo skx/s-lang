@@ -26,6 +26,13 @@ type NumberExpr struct {
 
 func (NumberExpr) expr() {}
 
+// StringExpr holds a literal String
+type StringExpr struct {
+	Value string
+}
+
+func (StringExpr) expr() {}
+
 // VariableExpr holds a variable reference.
 type VariableExpr struct {
 	Name string
@@ -56,7 +63,7 @@ type LetStatement struct {
 type Print struct {
 	// Values holds a list of IDENTIFIER, INTEGERLITERAL, and STRINGLITERAL
 	// which should be printed
-	Values []*lexer.Token
+	Values []Expr
 
 	// Show a newline afterward?
 	NewLine bool
@@ -64,8 +71,8 @@ type Print struct {
 
 // Return terminates the running program, with a specified exit-code.
 type Return struct {
-	// Value to return is IDENTIFIER, or INTEGERLITERAL.
-	Value *lexer.Token
+	// Expression is the return code we'll have
+	Expression Expr
 }
 
 // While is our looping operation which currently allows a block of code to

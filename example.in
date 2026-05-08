@@ -1,3 +1,5 @@
+print( "Precedence means this should equal 7: ", 1 + 2 * 3, "\n");
+
 let a = 43;
 print("This should be 43: ", a, "\n" );
 let c = 3 * 4;
@@ -8,12 +10,13 @@ print("Hello, world!  The magic number is ", b, "\n");
 
 # comments are good
 let a = 4;
-println( a );  # println is like print, but adds a newline
+println( "A=4: ", a );  # println is like print, but adds a newline
 
 print("Steve Did this!\n");
 
 # Simple loops
 let f = 10;
+
 while( f ) {
   print( "Loop ", f, "\n" );
   let f = f - 1;
