@@ -35,10 +35,9 @@ func (p *Parser) ParseProgram() (*Program, error) {
 	return program, err
 }
 
-// parseExpr is called to parse "LET X = ...." - where we need to handle
-// several cases in the "...." section:
+// parseExpr is called to parse expressions - be they in IF, LET, or WHILE.
 func (p *Parser) parseExpr() Expr {
-	return p.parseAddSub()
+	return p.parseLogicalOr()
 }
 
 func (p *Parser) parseAddSub() Expr {
@@ -147,6 +146,7 @@ func (p *Parser) parseComparison() Expr {
 		}
 	}
 }
+
 func (p *Parser) parseEquality() Expr {
 	left := p.parseComparison()
 
@@ -243,7 +243,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return res, fmt.Errorf("missing '(' after if")
 			}
 
-			expr := p.parseEquality()
+			expr := p.parseExpr()
 			start = p.l.Next()
 			if start.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after if")
@@ -278,7 +278,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after while")
 			}
-			val := p.parseEquality()
+			val := p.parseExpr()
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after while")
