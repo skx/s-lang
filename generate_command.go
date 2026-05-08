@@ -220,7 +220,7 @@ cmp rax, 0
 setne al
 movzx rax, al`)
 		default:
-			return fmt.Errorf("unhandled token in compileExpr\n", v)
+			return fmt.Errorf("unhandled token in compileExpr: %v\n", v)
 		}
 
 	}
