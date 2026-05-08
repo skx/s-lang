@@ -323,30 +323,15 @@ mov [rcx + %d*8], rax
 		}
 	case *parser.Return:
 		rtn := stmt.(*parser.Return)
-		switch rtn.Value.Type {
 
-		case lexer.STRING:
-			// TODO
-			panic("invalid return value")
-
-		case lexer.IDENT:
-			reg := strings.ToLower(rtn.Value.Value.(string))
-			num := rune(reg[0]) - 'a'
-			txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
-	call exit_with_status
-`, num)
-			fmt.Fprint(out, txt)
-
-		case lexer.NUMBER:
-			num := int64(rtn.Value.Value.(float64))
-
-			txt := fmt.Sprintf(`
-	mov rax, %d
-	call exit_with_status`, num)
-			fmt.Fprint(out, txt)
+		err := g.compileExpr(out, rtn.Expression)
+		if err != nil {
+			return err
 		}
+		txt := fmt.Sprintf(`
+	call exit_with_status
+`)
+		fmt.Fprint(out, txt)
 
 	case *parser.While:
 		whl := stmt.(*parser.While)

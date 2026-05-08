@@ -71,8 +71,8 @@ type Print struct {
 
 // Return terminates the running program, with a specified exit-code.
 type Return struct {
-	// Value to return is IDENTIFIER, or INTEGERLITERAL.
-	Value *lexer.Token
+	// Expression is the return code we'll have
+	Expression Expr
 }
 
 // While is our looping operation which currently allows a block of code to

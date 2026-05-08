@@ -334,13 +334,13 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after return")
 			}
-			val := p.l.Next()
+			expr := p.parseExpr()
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after return value")
 			}
 
-			res = append(res, &Return{Value: val})
+			res = append(res, &Return{Expression: expr})
 
 		default:
 			return res, fmt.Errorf("uknown token type %v", p.curToken)

@@ -46,7 +46,7 @@ func (p *parseCommand) printStmt(st parser.Statement) {
 		fmt.Printf(")\n")
 
 	case *parser.Return:
-		fmt.Printf("RETURN(%s)\n", stmt.Value)
+		fmt.Printf("RETURN(%v)\n", stmt.Expression)
 	case *parser.While:
 		fmt.Printf("while(%v) {\n", stmt.Expression)
 		for _, x := range stmt.Statements {
