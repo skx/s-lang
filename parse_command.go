@@ -30,6 +30,42 @@ Example:
 `
 }
 
+func (p *parseCommand) printStmt(st parser.Statement) {
+	switch stmt := st.(type) {
+	case *parser.LetStatement:
+		fmt.Printf("LET %s = %v;\n", stmt.Name, stmt.Expression)
+	case *parser.Print:
+		if stmt.NewLine {
+			fmt.Printf("PRINTLN(")
+		} else {
+			fmt.Printf("PRINT(")
+		}
+		for _, x := range stmt.Values {
+			fmt.Printf("%v, ", x)
+		}
+		fmt.Printf(")\n")
+
+	case *parser.Return:
+		fmt.Printf("RETURN(%s)\n", stmt.Value)
+	case *parser.While:
+		fmt.Printf("while(%v) {\n", stmt.Expression)
+		for _, x := range stmt.Statements {
+			fmt.Printf("\t")
+			p.printStmt(x)
+		}
+		fmt.Printf("}\n")
+	case *parser.If:
+		fmt.Printf("if(%V) { \n", stmt.Expression)
+		for _, x := range stmt.Statements {
+			fmt.Printf("\t")
+			p.printStmt(x)
+		}
+		fmt.Printf("}\n")
+	default:
+		fmt.Printf("Uknown %T %v\n", stmt, stmt)
+	}
+}
+
 func (p *parseCommand) parseFile(path string) error {
 
 	// Read the file-contents
@@ -47,22 +83,7 @@ func (p *parseCommand) parseFile(path string) error {
 	}
 
 	for _, stmt := range program.Statements {
-		switch stmt := stmt.(type) {
-		case *parser.LetStatement:
-			fmt.Printf("LET %s = %v;\n", stmt.Name, stmt.Expression)
-		case *parser.Print:
-			if stmt.NewLine {
-				fmt.Printf("PRINTLN(%v)\n", stmt.Values)
-			} else {
-				fmt.Printf("PRINT(%v)\n", stmt.Values)
-			}
-		case *parser.Return:
-			fmt.Printf("RETURN(%s)\n", stmt.Value)
-		case *parser.While:
-			fmt.Printf("while(%v) { .. }\n", stmt.Expression)
-		default:
-			fmt.Printf("Uknown %T %v\n", stmt, stmt)
-		}
+		p.printStmt(stmt)
 	}
 	return nil
 }

@@ -136,6 +136,10 @@ lea rcx, vars
 mov rax, [rcx + %d*8]
 `, idx)
 
+	case *parser.StringExpr:
+		panic("expression is a string")
+		return nil
+
 	case *parser.BinaryExpr:
 
 		err := g.compileExpr(out, v.Left)
@@ -287,20 +291,6 @@ mov [rcx + %d*8], rax
 		for _, item := range prn.Values {
 			switch v := item.(type) {
 
-			case *parser.NumberExpr:
-				fmt.Fprintf(out, `
-mov rax, %d
-call print_number`, v.Value)
-
-			case *parser.VariableExpr:
-				idx := rune(v.Name[0]) - 'a'
-
-				fmt.Fprintf(out, `
-lea rcx, vars
-mov rax, [rcx + %d*8]
-call print_number
-`, idx)
-
 			case *parser.StringExpr:
 				str := v.Value
 				hsh := g.hashString(str)
@@ -313,99 +303,16 @@ call print_number
 
 `, hsh, hsh, hsh)
 				fmt.Fprint(out, txt)
-
-			case *parser.BinaryExpr:
-
-				err := g.compileExpr(out, v.Left)
+			default:
+				err := g.compileExpr(out, v)
 				if err != nil {
 					return err
 				}
-
-				fmt.Fprintln(out, `
-push rax`)
-
-				err = g.compileExpr(out, v.Right)
-				if err != nil {
-					return err
-				}
-
-				fmt.Fprintln(out, `
-pop rbx`)
-
-				switch v.Op {
-
-				case lexer.PLUS:
-					fmt.Fprintln(out, `
-add rax, rbx`)
-
-				case lexer.MINUS:
-					fmt.Fprintln(out, `
-sub rbx, rax
-mov rax, rbx`)
-
-				case lexer.MULTIPLY:
-					fmt.Fprintln(out, `
-imul rax, rbx`)
-
-				case lexer.DIVIDE:
-					fmt.Fprintln(out, `
-mov rdx, 0
-mov rcx, rax
-mov rax, rbx
-idiv rcx`)
-				case lexer.EQUALS:
-					fmt.Fprintln(out, `
-cmp rbx, rax
-sete al
-movzx rax, al`)
-
-				case lexer.NOT_EQUALS:
-					fmt.Fprintln(out, `
-cmp rbx, rax
-setne al
-movzx rax, al`)
-
-				case lexer.LT:
-					fmt.Fprintln(out, `
-cmp rbx, rax
-setl al
-movzx rax, al`)
-
-				case lexer.LT_EQUALS:
-					fmt.Fprintln(out, `
-cmp rbx, rax
-setle al
-movzx rax, al`)
-
-				case lexer.GT:
-					fmt.Fprintln(out, `
-cmp rbx, rax
-setg al
-movzx rax, al`)
-
-				case lexer.GT_EQUALS:
-					fmt.Fprintln(out, `
-cmp rbx, rax
-setge al
-movzx rax, al`)
-				case lexer.AND:
-					fmt.Fprintln(out, `
-imul rax, rbx`)
-				case lexer.OR:
-					fmt.Fprintln(out, `
-or rax, rbx
-cmp rax, 0
-setne al
-movzx rax, al`)
-				default:
-					return fmt.Errorf("unhandled token in compileExpr: %v\n", v)
-				}
-				fmt.Fprint(out, `
+				txt := fmt.Sprintf(`
 	call print_number
 `)
+				fmt.Fprint(out, txt)
 
-			default:
-				fmt.Printf("Uknown token type %V\n", v)
 			}
 		}
 
