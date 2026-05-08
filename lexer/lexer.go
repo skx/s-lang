@@ -44,6 +44,8 @@ const (
 	DIVIDE   = "/"
 
 	// Comparisons
+	AND        = "&&"
+	OR         = "||"
 	LT         = "<"
 	LT_EQUALS  = "<="
 	GT         = ">"
@@ -188,6 +190,21 @@ func (l *Lexer) Next() *Token {
 				return &Token{Type: NOT_EQUALS, Value: "!="}
 			}
 			return &Token{Type: ERROR, Value: "invalid character '!'"}
+		case "&":
+			l.position++
+			if l.peekChar() == "&" {
+				l.position++
+				return &Token{Type: AND, Value: "&&"}
+			}
+			return &Token{Type: ERROR, Value: "invalid character '&'"}
+		case "|":
+			l.position++
+			if l.peekChar() == "|" {
+				l.position++
+				return &Token{Type: OR, Value: "||"}
+			}
+			return &Token{Type: ERROR, Value: "invalid character '|'"}
+
 		case "=":
 			l.position++
 			if l.peekChar() == "=" {

@@ -160,6 +160,41 @@ mov rdx, 0
 mov rcx, rax
 mov rax, rbx
 idiv rcx`)
+		case lexer.EQUALS:
+			fmt.Fprintln(out, `
+cmp rbx, rax
+sete al
+movzx rax, al`)
+
+		case lexer.NOT_EQUALS:
+			fmt.Fprintln(out, `
+cmp rbx, rax
+setne al
+movzx rax, al`)
+
+		case lexer.LT:
+			fmt.Fprintln(out, `
+cmp rbx, rax
+setl al
+movzx rax, al`)
+
+		case lexer.LT_EQUALS:
+			fmt.Fprintln(out, `
+cmp rbx, rax
+setle al
+movzx rax, al`)
+
+		case lexer.GT:
+			fmt.Fprintln(out, `
+cmp rbx, rax
+setg al
+movzx rax, al`)
+
+		case lexer.GT_EQUALS:
+			fmt.Fprintln(out, `
+cmp rbx, rax
+setge al
+movzx rax, al`)
 		}
 
 	}
@@ -397,19 +432,22 @@ mov [rcx + %d*8], rax
 
 	case *parser.While:
 		whl := stmt.(*parser.While)
-		cnd := whl.Value.Value.(string)
-		num := rune(cnd[0]) - 'a'
 
 		n := g.whileCount
 		g.whileCount++
 		n++
+
 		txt := fmt.Sprintf(`
 while_%d_start:
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
+`, n)
+		fmt.Fprint(out, txt)
+
+		g.compileExpr(out, whl.Expression)
+
+		txt = fmt.Sprintf(`
 	cmp rax, 0
-	jz while_%d_end
-`, n, num, n)
+	jnz while_%d_end
+`, n)
 		fmt.Fprint(out, txt)
 
 		// assemble the body

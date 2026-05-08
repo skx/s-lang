@@ -119,6 +119,105 @@ func (p *Parser) parsePrimary() Expr {
 	panic("unexpected token")
 }
 
+func (p *Parser) parseComparison() Expr {
+	left := p.parseAddSub()
+
+	for {
+		tok := p.l.Peek()
+
+		switch tok.Type {
+
+		case lexer.LT,
+			lexer.LT_EQUALS,
+			lexer.GT,
+			lexer.GT_EQUALS:
+
+			p.l.Next()
+
+			right := p.parseAddSub()
+
+			left = &BinaryExpr{
+				Left:  left,
+				Op:    tok.Type,
+				Right: right,
+			}
+
+		default:
+			return left
+		}
+	}
+}
+func (p *Parser) parseEquality() Expr {
+	left := p.parseComparison()
+
+	for {
+		tok := p.l.Peek()
+
+		switch tok.Type {
+
+		case lexer.EQUALS,
+			lexer.NOT_EQUALS:
+
+			p.l.Next()
+
+			right := p.parseComparison()
+
+			left = &BinaryExpr{
+				Left:  left,
+				Op:    tok.Type,
+				Right: right,
+			}
+
+		default:
+			return left
+		}
+	}
+}
+
+func (p *Parser) parseLogicalOr() Expr {
+	left := p.parseLogicalAnd()
+
+	for {
+		tok := p.l.Peek()
+
+		if tok.Type != lexer.OR {
+			return left
+		}
+
+		p.l.Next()
+
+		right := p.parseLogicalAnd()
+
+		left = &BinaryExpr{
+			Left:  left,
+			Op:    tok.Type,
+			Right: right,
+		}
+	}
+}
+
+func (p *Parser) parseLogicalAnd() Expr {
+	left := p.parseEquality()
+
+	for {
+		tok := p.l.Peek()
+
+		if tok.Type != lexer.AND {
+			return left
+		}
+
+		p.l.Next()
+
+		right := p.parseEquality()
+
+		left = &BinaryExpr{
+			Left:  left,
+			Op:    tok.Type,
+			Right: right,
+		}
+	}
+}
+
 // parseConditional is designed to parse the test used in
 // an if-statement.
 func (p *Parser) parseConditional() []*lexer.Token {
@@ -189,7 +288,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after while")
 			}
-			val := p.l.Next()
+			expr := p.parseEquality()
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after while")
@@ -205,7 +304,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if err != nil {
 				return res, err
 			}
-			res = append(res, &While{Value: val, Statements: stmts})
+			res = append(res, &While{Expression: expr, Statements: stmts})
 
 		case lexer.PRINT, lexer.PRINTLN:
 			calledAs := p.curToken.Type

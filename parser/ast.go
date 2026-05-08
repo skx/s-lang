@@ -71,9 +71,8 @@ type Return struct {
 // While is our looping operation which currently allows a block of code to
 // be repeated while a variable contains a non-zero value.
 type While struct {
-	// Value is the register we test against.
-	// TODO: Parse this in the same we will for IF.
-	Value *lexer.Token
+	// Expression is the expression we evaluate each time through the loop
+	Expression Expr
 
 	// Statements are the things we execute while the condition is true
 	Statements []Statement
