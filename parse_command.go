@@ -49,11 +49,7 @@ func (p *parseCommand) parseFile(path string) error {
 	for _, stmt := range program.Statements {
 		switch stmt := stmt.(type) {
 		case *parser.LetStatement:
-			if len(stmt.Expression) == 1 {
-				fmt.Printf("LET %s = %v;\n", stmt.Name, stmt.Expression[0])
-			} else {
-				fmt.Printf("LET %s = %v %v %v;\n", stmt.Name, stmt.Expression[0], stmt.Expression[1], stmt.Expression[2])
-			}
+			fmt.Printf("LET %s = %v;\n", stmt.Name, stmt.Expression)
 		case *parser.Print:
 			if stmt.NewLine {
 				fmt.Printf("PRINTLN(%v)\n", stmt.Values)

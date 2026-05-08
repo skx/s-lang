@@ -66,6 +66,7 @@ The following is a tour of our language:
 Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
 
 * Here you can guess there are 26 variables ("a"-"z"), which are assigned to via `let`.
+  * e.g. `let a = 1 + 2 * 3`.
 * You can see printing in three forms:
   * `print(n)` shows the contents of register `n`.
   * `print(31)` prints the integer literal `31`.
@@ -74,19 +75,6 @@ Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
   * Add multiple comma-separated arguments to print multiple values.
 * The exit-code of the generated value can be set to register x via `return(x);`.
 * We have support for both `while` and `if`.
-
-
-### More Details
-
-The `let` statement can have several forms:
-
-* `let a = 3;`
-  * Assign an integer literal.
-* `let a = b;`
-  * Copy the contents of a variable to another.
-* `let x = a OP b;`
-  * OP is +, -, /, *.
-  * e.g. `let x = x - 1;`.
 
 Using the ability to decrease a variable (`let i = i - 1`) we can also write a loop:
 

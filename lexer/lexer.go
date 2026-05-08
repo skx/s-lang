@@ -88,13 +88,16 @@ type Lexer struct {
 
 	// simple map of single-character tokens to their type
 	known map[string]string
+
+	// peek is used for peeking
+	peek *Token
 }
 
 // NewLexer creates a new lexer, for the given input.
 func NewLexer(input string) *Lexer {
 
 	// Create the lexer object.
-	l := &Lexer{input: input}
+	l := &Lexer{input: input, peek: nil}
 
 	// Populate the simple token-types in a map for later use.
 	//
@@ -115,6 +118,15 @@ func NewLexer(input string) *Lexer {
 	return l
 }
 
+// Peek returns the upcoming token.
+func (l *Lexer) Peek() *Token {
+
+	if l.peek == nil {
+		l.peek = l.Next()
+	}
+	return l.peek
+}
+
 func (l *Lexer) peekChar() string {
 	val := ""
 	if l.position < len(l.input) {
@@ -130,6 +142,12 @@ func (l *Lexer) peekChar() string {
 // recognize numbers, identifiers, and our small set of
 // operators.
 func (l *Lexer) Next() *Token {
+
+	if l.peek != nil {
+		x := l.peek
+		l.peek = nil
+		return x
+	}
 
 	// Loop until we've exhausted our input.
 	for l.position < len(l.input) {
