@@ -99,7 +99,10 @@ func (g *generateCommand) processFile(path string) error {
 
 	// compile each statement
 	for _, stmt := range program.Statements {
-		g.generateStmt(out, stmt)
+		err := g.generateStmt(out, stmt)
+		if err != nil {
+			return err
+		}
 	}
 
 	// write the footer
@@ -118,11 +121,12 @@ func (g *generateCommand) processFile(path string) error {
 }
 
 // compileExpr handles compiling an expression
-func (g *generateCommand) compileExpr(out io.Writer, e parser.Expr) {
+func (g *generateCommand) compileExpr(out io.Writer, e parser.Expr) error {
 	switch v := e.(type) {
 
 	case *parser.NumberExpr:
-		fmt.Fprintf(out, "mov rax, %d\n", v.Value)
+		fmt.Fprintf(out, `
+mov rax, %d`, v.Value)
 
 	case *parser.VariableExpr:
 		idx := rune(v.Name[0]) - 'a'
@@ -134,25 +138,36 @@ mov rax, [rcx + %d*8]
 
 	case *parser.BinaryExpr:
 
-		g.compileExpr(out, v.Left)
+		err := g.compileExpr(out, v.Left)
+		if err != nil {
+			return err
+		}
 
-		fmt.Fprintln(out, "push rax")
+		fmt.Fprintln(out, `
+push rax`)
 
-		g.compileExpr(out, v.Right)
+		err = g.compileExpr(out, v.Right)
+		if err != nil {
+			return err
+		}
 
-		fmt.Fprintln(out, "pop rbx")
+		fmt.Fprintln(out, `
+pop rbx`)
 
 		switch v.Op {
 
 		case lexer.PLUS:
-			fmt.Fprintln(out, "add rax, rbx")
+			fmt.Fprintln(out, `
+add rax, rbx`)
 
 		case lexer.MINUS:
-			fmt.Fprintln(out, "sub rbx, rax")
-			fmt.Fprintln(out, "mov rax, rbx")
+			fmt.Fprintln(out, `
+sub rbx, rax
+mov rax, rbx`)
 
 		case lexer.MULTIPLY:
-			fmt.Fprintln(out, "imul rax, rbx")
+			fmt.Fprintln(out, `
+imul rax, rbx`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(out, `
@@ -195,14 +210,26 @@ movzx rax, al`)
 cmp rbx, rax
 setge al
 movzx rax, al`)
+		case lexer.AND:
+			fmt.Fprintln(out, `
+imul rax, rbx`)
+		case lexer.OR:
+			fmt.Fprintln(out, `
+or rax, rbx
+cmp rax, 0
+setne al
+movzx rax, al`)
+		default:
+			return fmt.Errorf("unhandled token in compileExpr\n", v)
 		}
 
 	}
+	return nil
 }
 
 // generateStmt generates the assembly for a single statement, it is moved into
 // its own function so that we can call it recursively for cases like "if" and "while".
-func (g *generateCommand) generateStmt(out io.Writer, stmt parser.Statement) {
+func (g *generateCommand) generateStmt(out io.Writer, stmt parser.Statement) error {
 
 	switch stmt.(type) {
 
@@ -224,7 +251,10 @@ func (g *generateCommand) generateStmt(out io.Writer, stmt parser.Statement) {
 
 		// assemble the body
 		for _, s := range i.Statements {
-			g.generateStmt(out, s)
+			err := g.generateStmt(out, s)
+			if err != nil {
+				return err
+			}
 		}
 		txt = fmt.Sprintf(`
 if_%d_end:
@@ -239,7 +269,10 @@ if_%d_end:
 		//
 		// We'll handle them both here
 		l := stmt.(*parser.LetStatement)
-		g.compileExpr(out, l.Expression)
+		err := g.compileExpr(out, l.Expression)
+		if err != nil {
+			return err
+		}
 
 		// The value will be in RAX, save it into the appropriate
 		// variable
@@ -332,7 +365,10 @@ while_%d_start:
 `, n)
 		fmt.Fprint(out, txt)
 
-		g.compileExpr(out, whl.Expression)
+		err := g.compileExpr(out, whl.Expression)
+		if err != nil {
+			return err
+		}
 
 		txt = fmt.Sprintf(`
 	cmp rax, 0
@@ -342,7 +378,10 @@ while_%d_start:
 
 		// assemble the body
 		for _, s := range whl.Statements {
-			g.generateStmt(out, s)
+			err := g.generateStmt(out, s)
+			if err != nil {
+				return err
+			}
 		}
 		txt = fmt.Sprintf(`
 	jmp while_%d_start
@@ -353,8 +392,9 @@ while_%d_end:
 		//
 
 	default:
-		fmt.Printf("Uknown %T %v\n", stmt, stmt)
+		return fmt.Errorf("unhandled token in generateStmt %v", stmt)
 	}
+	return nil
 }
 
 // writeFooter generates the footer for our generated assembly language, which is
