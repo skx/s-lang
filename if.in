@@ -55,3 +55,8 @@ if ( 3 > 10 ) {
 if ( 2 >= 10 ) {
   print("panic: 2 >= 10\n" );
 }
+
+let a = 102;
+if ( ( a <= 3) && ( a <= 10) ) {
+print("logical\n");
+}

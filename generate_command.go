@@ -285,10 +285,24 @@ mov [rcx + %d*8], rax
 	case *parser.Print:
 		prn := stmt.(*parser.Print)
 		for _, item := range prn.Values {
-			switch item.Type {
+			switch v := item.(type) {
 
-			case lexer.STRING:
-				str := item.Value.(string)
+			case *parser.NumberExpr:
+				fmt.Fprintf(out, `
+mov rax, %d
+call print_number`, v.Value)
+
+			case *parser.VariableExpr:
+				idx := rune(v.Name[0]) - 'a'
+
+				fmt.Fprintf(out, `
+lea rcx, vars
+mov rax, [rcx + %d*8]
+call print_number
+`, idx)
+
+			case *parser.StringExpr:
+				str := v.Value
 				hsh := g.hashString(str)
 				g.stringTable[hsh] = str
 
@@ -300,31 +314,105 @@ mov [rcx + %d*8], rax
 `, hsh, hsh, hsh)
 				fmt.Fprint(out, txt)
 
-			case lexer.IDENT:
-				reg := strings.ToLower(item.Value.(string))
-				num := rune(reg[0]) - 'a'
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
-	call print_number`, num)
-				fmt.Fprint(out, txt)
+			case *parser.BinaryExpr:
 
-			case lexer.NUMBER:
-				num := int64(item.Value.(float64))
+				err := g.compileExpr(out, v.Left)
+				if err != nil {
+					return err
+				}
 
-				txt := fmt.Sprintf(`
-	mov rax, %d
-	call print_number`, num)
-				fmt.Fprint(out, txt)
-			default:
-				fmt.Printf("Uknown token type %V\n", item.Value)
-			}
+				fmt.Fprintln(out, `
+push rax`)
 
-			if prn.NewLine {
+				err = g.compileExpr(out, v.Right)
+				if err != nil {
+					return err
+				}
+
+				fmt.Fprintln(out, `
+pop rbx`)
+
+				switch v.Op {
+
+				case lexer.PLUS:
+					fmt.Fprintln(out, `
+add rax, rbx`)
+
+				case lexer.MINUS:
+					fmt.Fprintln(out, `
+sub rbx, rax
+mov rax, rbx`)
+
+				case lexer.MULTIPLY:
+					fmt.Fprintln(out, `
+imul rax, rbx`)
+
+				case lexer.DIVIDE:
+					fmt.Fprintln(out, `
+mov rdx, 0
+mov rcx, rax
+mov rax, rbx
+idiv rcx`)
+				case lexer.EQUALS:
+					fmt.Fprintln(out, `
+cmp rbx, rax
+sete al
+movzx rax, al`)
+
+				case lexer.NOT_EQUALS:
+					fmt.Fprintln(out, `
+cmp rbx, rax
+setne al
+movzx rax, al`)
+
+				case lexer.LT:
+					fmt.Fprintln(out, `
+cmp rbx, rax
+setl al
+movzx rax, al`)
+
+				case lexer.LT_EQUALS:
+					fmt.Fprintln(out, `
+cmp rbx, rax
+setle al
+movzx rax, al`)
+
+				case lexer.GT:
+					fmt.Fprintln(out, `
+cmp rbx, rax
+setg al
+movzx rax, al`)
+
+				case lexer.GT_EQUALS:
+					fmt.Fprintln(out, `
+cmp rbx, rax
+setge al
+movzx rax, al`)
+				case lexer.AND:
+					fmt.Fprintln(out, `
+imul rax, rbx`)
+				case lexer.OR:
+					fmt.Fprintln(out, `
+or rax, rbx
+cmp rax, 0
+setne al
+movzx rax, al`)
+				default:
+					return fmt.Errorf("unhandled token in compileExpr: %v\n", v)
+				}
 				fmt.Fprint(out, `
+	call print_number
+`)
+
+			default:
+				fmt.Printf("Uknown token type %V\n", v)
+			}
+		}
+
+		if prn.NewLine {
+			fmt.Fprint(out, `
 	call newline
 `)
-			}
 		}
 	case *parser.Return:
 		rtn := stmt.(*parser.Return)
@@ -372,7 +460,7 @@ while_%d_start:
 
 		txt = fmt.Sprintf(`
 	cmp rax, 0
-	jnz while_%d_end
+	jz while_%d_end
 `, n)
 		fmt.Fprint(out, txt)
 
