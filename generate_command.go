@@ -117,6 +117,54 @@ func (g *generateCommand) processFile(path string) error {
 	return nil
 }
 
+// compileExpr handles compiling an expression
+func (g *generateCommand) compileExpr(out io.Writer, e parser.Expr) {
+	switch v := e.(type) {
+
+	case *parser.NumberExpr:
+		fmt.Fprintf(out, "mov rax, %d\n", v.Value)
+
+	case *parser.VariableExpr:
+		idx := rune(v.Name[0]) - 'a'
+
+		fmt.Fprintf(out, `
+lea rcx, vars
+mov rax, [rcx + %d*8]
+`, idx)
+
+	case *parser.BinaryExpr:
+
+		g.compileExpr(out, v.Left)
+
+		fmt.Fprintln(out, "push rax")
+
+		g.compileExpr(out, v.Right)
+
+		fmt.Fprintln(out, "pop rbx")
+
+		switch v.Op {
+
+		case lexer.PLUS:
+			fmt.Fprintln(out, "add rax, rbx")
+
+		case lexer.MINUS:
+			fmt.Fprintln(out, "sub rbx, rax")
+			fmt.Fprintln(out, "mov rax, rbx")
+
+		case lexer.MULTIPLY:
+			fmt.Fprintln(out, "imul rax, rbx")
+
+		case lexer.DIVIDE:
+			fmt.Fprintln(out, `
+mov rdx, 0
+mov rcx, rax
+mov rax, rbx
+idiv rcx`)
+		}
+
+	}
+}
+
 // generateStmt generates the assembly for a single statement, it is moved into
 // its own function so that we can call it recursively for cases like "if" and "while".
 func (g *generateCommand) generateStmt(out io.Writer, stmt parser.Statement) {
@@ -266,128 +314,15 @@ if_%d_end:
 		//
 		// We'll handle them both here
 		l := stmt.(*parser.LetStatement)
+		g.compileExpr(out, l.Expression)
 
-		if len(l.Expression) == 1 {
-
-			// a, b, c ... etc
-			dst := strings.ToLower(l.Name)
-
-			// value is either a literal, or the value of
-			// an existing register
-			if l.Expression[0].Type == lexer.NUMBER {
-
-				val := int64(l.Expression[0].Value.(float64))
-				num := rune(dst[0]) - 'a'
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, %d
-	mov [rcx + %d*8], rax
-`, val, num)
-				fmt.Fprint(out, txt)
-			} else {
-
-				// Value here is a register read
-				src := strings.ToLower(l.Expression[0].Value.(string))
-				srcN := rune(src[0]) - 'a'
-				dstN := rune(dst[0]) - 'a'
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
-	mov [rcx + %d*8], rax
-`, srcN, dstN)
-				fmt.Fprint(out, txt)
-			}
-		}
-
-		if len(l.Expression) == 3 {
-
-			// We want to set
-			//  DST = A OP B
-			// A or B might be numbers or registers
-			//
-			// To simplify we'll store the values in RAX and RBX
-			// then perform the operation before saving
-
-			// RAX = A
-			if l.Expression[0].Type == lexer.NUMBER {
-
-				val := int64(l.Expression[0].Value.(float64))
-				txt := fmt.Sprintf(`
-	mov rax, %d
-`, val)
-				fmt.Fprint(out, txt)
-			} else {
-
-				// Value here is a register read
-				src := strings.ToLower(l.Expression[0].Value.(string))
-				srcN := rune(src[0]) - 'a'
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rax, [rcx + %d*8]
-`, srcN)
-				fmt.Fprint(out, txt)
-			}
-
-			// RBX = B
-			if l.Expression[2].Type == lexer.NUMBER {
-
-				val := int64(l.Expression[2].Value.(float64))
-				txt := fmt.Sprintf(`
-	mov rbx, %d
-`, val)
-				fmt.Fprint(out, txt)
-			} else {
-
-				// Value here is a register read
-				src := strings.ToLower(l.Expression[2].Value.(string))
-				srcN := rune(src[0]) - 'a'
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mov rbx, [rcx + %d*8]
-`, srcN)
-				fmt.Fprint(out, txt)
-			}
-
-			// Now we have A in RAX, and B in RCX
-			// We need to handle the actual operation now.
-			dst := strings.ToLower(l.Name)
-			num := rune(dst[0]) - 'a'
-
-			switch l.Expression[1].Value {
-			case "-":
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	sub rax, rbx
-	mov [rcx + %d*8], rax
-`, num)
-				fmt.Fprint(out, txt)
-
-			case "+":
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	add rax, rbx
-	mov [rcx + %d*8], rax
-`, num)
-				fmt.Fprint(out, txt)
-
-			case "/":
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	div rax, rbx
-	mov [rcx + %d*8], rax
-`, num)
-				fmt.Fprint(out, txt)
-
-			case "*":
-				txt := fmt.Sprintf(`
-	lea rcx, vars
-	mul rbx
-	mov [rcx + %d*8], rax
-`, num)
-				fmt.Fprint(out, txt)
-			}
-
-		}
+		// The value will be in RAX, save it into the appropriate
+		// variable
+		idx := rune(l.Name[0]) - 'a'
+		fmt.Fprintf(out, `
+lea rcx, vars
+mov [rcx + %d*8], rax
+`, idx)
 
 	case *parser.Print:
 		prn := stmt.(*parser.Print)

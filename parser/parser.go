@@ -37,22 +37,86 @@ func (p *Parser) ParseProgram() (*Program, error) {
 
 // parseExpr is called to parse "LET X = ...." - where we need to handle
 // several cases in the "...." section:
-//
-// Integer Literal
-// Register
-// Simple expression
-//
-// Stop at ";" or the end of the input if one is missing.
-func (p *Parser) parseExpr() []*lexer.Token {
-	res := []*lexer.Token{}
+func (p *Parser) parseExpr() Expr {
+	return p.parseAddSub()
+}
 
-	x := p.l.Next()
-	for x.Type != lexer.SEMICOLON && x.Type != lexer.EOF {
-		res = append(res, x)
-		x = p.l.Next()
+func (p *Parser) parseAddSub() Expr {
+	left := p.parseMulDiv()
+
+	for {
+		tok := p.l.Peek()
+
+		if tok.Type != lexer.PLUS &&
+			tok.Type != lexer.MINUS {
+			break
+		}
+
+		p.l.Next()
+
+		right := p.parseMulDiv()
+
+		left = &BinaryExpr{
+			Left:  left,
+			Op:    tok.Type,
+			Right: right,
+		}
 	}
 
-	return res
+	return left
+}
+
+func (p *Parser) parseMulDiv() Expr {
+	left := p.parsePrimary()
+
+	for {
+		tok := p.l.Peek()
+
+		if tok.Type != lexer.MULTIPLY &&
+			tok.Type != lexer.DIVIDE {
+			break
+		}
+
+		p.l.Next()
+
+		right := p.parsePrimary()
+
+		left = &BinaryExpr{
+			Left:  left,
+			Op:    tok.Type,
+			Right: right,
+		}
+	}
+
+	return left
+}
+
+func (p *Parser) parsePrimary() Expr {
+	tok := p.l.Next()
+
+	switch tok.Type {
+
+	case lexer.NUMBER:
+		return &NumberExpr{
+			Value: int64(tok.Value.(float64)),
+		}
+
+	case lexer.IDENT:
+		return &VariableExpr{
+			Name: tok.Value.(string),
+		}
+
+	case lexer.LPAREN:
+		expr := p.parseExpr()
+
+		if p.l.Next().Type != lexer.RPAREN {
+			panic("missing )")
+		}
+
+		return expr
+	}
+
+	panic("unexpected token")
 }
 
 // parseConditional is designed to parse the test used in
@@ -117,10 +181,6 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return res, fmt.Errorf("missing '=' after LET")
 			}
 			vals := p.parseExpr()
-			if len(vals) != 1 && len(vals) != 3 {
-				return res, fmt.Errorf("invalid expression: %v", vals)
-			}
-
 			res = append(res,
 				&LetStatement{Name: name.Value.(string), Expression: vals})
 

@@ -14,14 +14,41 @@ type Program struct {
 	Statements []Statement
 }
 
+// Expr is the interface for expression (maths) parsing.
+type Expr interface {
+	expr()
+}
+
+// NumberExpr holds a literal number
+type NumberExpr struct {
+	Value int64
+}
+
+func (NumberExpr) expr() {}
+
+// VariableExpr holds a variable reference.
+type VariableExpr struct {
+	Name string
+}
+
+func (VariableExpr) expr() {}
+
+// BinaryExpr holds a binop ("a + b", or similar).
+type BinaryExpr struct {
+	Left  Expr
+	Op    lexer.TokenType
+	Right Expr
+}
+
+func (BinaryExpr) expr() {}
+
 // LetStatement holds a let-statemnt.  Shocking.
 type LetStatement struct {
 	// Name is the name of the variable to which we're assigning
 	Name string
 
 	// Expression is the thing to set the name to.
-	// It will either be "3", "b", or a simple three-value alternative [a, +, b]
-	Expression []*lexer.Token
+	Expression Expr
 }
 
 // Print represents a call to our stdlib "print(...)" function.
