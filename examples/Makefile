@@ -1,4 +1,4 @@
-ALL: factorial fizzbuzz
+ALL: factorial fizzbuzz string
 
 # Ensure we have the compiler
 ../s-lang:
@@ -11,3 +11,9 @@ factorial: factorial.in ../s-lang
 # fizzbuzz 1-100
 fizzbuzz: fizzbuzz.in ../s-lang
 	../s-lang compile -output fizzbuzz fizzbuzz.in
+
+# store a string in a variable, and print it
+string: string.in ../s-lang
+	../s-lang compile -output string string.in
+
+
