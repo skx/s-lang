@@ -3,14 +3,20 @@ package compiler
 import (
 	"bytes"
 	"crypto/sha1"
+	_ "embed"
 	"encoding/hex"
 	"fmt"
-	"io"
 	"strings"
 
 	"s-lang/lexer"
 	"s-lang/parser"
 )
+
+//go:embed header.s.txt
+var header string
+
+//go:embed footer.s.txt
+var footer string
 
 // Compiler holds our compiler state
 type Compiler struct {
@@ -53,7 +59,7 @@ func (c *Compiler) Compile() (string, error) {
 	}
 
 	// Write the header
-	c.writeHeader(&c.buff)
+	fmt.Fprintf(&c.buff, header)
 
 	// compile each statement
 	for _, stmt := range program.Statements {
@@ -63,8 +69,8 @@ func (c *Compiler) Compile() (string, error) {
 		}
 	}
 
-	// write the footer
-	c.writeFooter(&c.buff)
+	// Write the footer
+	fmt.Fprintf(&c.buff, footer)
 
 	// write String table
 	if len(c.stringTable) > 0 {
@@ -370,186 +376,4 @@ while_%d_end:
 		return fmt.Errorf("unhandled token in generateStmt %v", stmt)
 	}
 	return nil
-}
-
-// writeFooter generates the footer for our generated assembly language, which is
-// a combination of our "standard library" routines, and a string-table of any string
-// literals within the source file we're compiling.
-func (c *Compiler) writeFooter(f io.Writer) {
-	text := `
-
-	#
-	# Exit explicitly, just in case the program was missing a
-	# terminating RETURN statement.
-	#
-	xor rax, rax
-	jp exit_with_status
-
-
-
-	#
-	# Write a newline to STDOUT.
-	#
-	# Uses the "print_rax_buffer" as temporary
-	# storage, and will trash it.
-	#
-newline:
-	mov rdx, 1 # length
-	lea rsi, print_rax_buffer
-	mov byte ptr [rsi], '\n'
-
-	#
-	# RSI should point to the start of the string
-	#
-	# RDX should have the length.
-	#
-print_string_with_length:
-	mov rax, 1 # write
-	mov rdi, 1 # STDOUT
-	syscall
-	ret
-
-
-	#
-	# Print the NULL-terminated string pointed to by RAX.
-	#
-	# The length will be dynamically discovered
-print_string:
-	mov rbx, rax
-
-.loop:
-	mov al, [rbx]         # load one byte
-	test al, al           # is it zero?
-	jz .done
-
-	mov rax, 1            # sys_write
-	mov rdi, 1            # stdout
-	mov rsi, rbx          # pointer to char
-	mov rdx, 1            # length = 1
-	syscall
-
-	inc rbx               # next character
-	jmp .loop
-.done:
-	ret
-
-
-	#
-	# Exit with the given status.
-	#
-	# Status code to use is stored in RAX
-	#
-exit_with_status:
-	mov rdi, rax
-	mov rax, 60     # sys_exit
-	syscall
-	ret
-
-
-
-#
-# Convert the integer in RAX into
-# ASCII and print it to the console.
-#
-# Uses the "print_rax_buffer" as temporary
-# storage, and will trash it.
-#
-# Clobbers: rax, rbx, rcx, rdx, rdi, rsi
-#
-print_number:
-	mov rbx, 10
-	lea rdi, [print_rax_buffer+31]
-	mov byte ptr [rdi], 0
-	dec rdi
-
-	# Track sign in rcx
-	xor rcx, rcx
-
-	# If negative:
-	test rax, rax
-	jns .convert_loop_start
-
-	neg rax
-	mov rcx, 1              # remember number was negative
-
-.convert_loop_start:
-
-	# Special case for 0
-	test rax, rax
-	jnz .convert_loop
-
-	mov byte ptr [rdi], '0'
-	dec rdi
-	jmp .after_convert
-
-.convert_loop:
-	xor rdx, rdx
-	div rbx
-	add dl, '0'
-	mov [rdi], dl
-	dec rdi
-	test rax, rax
-	jnz .convert_loop
-
-.after_convert:
-
-	# Add minus sign if needed
-	test rcx, rcx
-	jz .done_sign
-
-	mov byte ptr [rdi], '-'
-	dec rdi
-
-.done_sign:
-
-	inc rdi              # rdi = pointer to string start
-
-	# compute length in rdx
-	lea rsi, [print_rax_buffer+31]
-	mov rdx, rsi
-	sub rdx, rdi
-
-	mov rax, 1           # sys_write
-	mov rsi, rdi         # buffer
-	mov rdi, 1           # stdout
-	syscall
-
-	ret
-`
-	fmt.Fprintln(f, text)
-}
-
-// writeHeader generates the prolog which is prepended to the generated
-// assembly language code.
-func (c *Compiler) writeHeader(f io.Writer) {
-	text := `
-	# Define our entry-point
-	.global _start
-
-	# Declare our library-functions
-	.global print_number
-	.global print_string
-	.global print_string_with_length
-	.global newline
-	.global exit_with_status
-
-
-	# Writeable data storage
-	.section .bss
-
-	# Buffer for printing numbers, and newlines
-print_rax_buffer:
-	.skip 32
-
-	# storage for our variables
-vars:
-	.skip 26 * 8
-
-	#
-	# Code
-	#
-	.section .text
-_start:
-`
-	fmt.Fprintln(f, text)
 }
