@@ -92,6 +92,9 @@ type Lexer struct {
 	// simple map of single-character tokens to their type
 	known map[string]string
 
+	// keywords holds known keywords
+	keywords map[string]bool
+
 	// peek is used for peeking
 	peek *Token
 }
@@ -120,6 +123,14 @@ func NewLexer(input string) *Lexer {
 	l.known["}"] = RBRACE
 	l.known[";"] = SEMICOLON
 	l.known[","] = COMMA
+
+	l.keywords = make(map[string]bool)
+	l.keywords["if"] = true
+	l.keywords["let"] = true
+	l.keywords["print"] = true
+	l.keywords["println"] = true
+	l.keywords["return"] = true
+	l.keywords["while"] = true
 
 	return l
 }
@@ -343,9 +354,6 @@ func (l *Lexer) Next() *Token {
 		//
 		// We only need handle a few.
 		//
-		if strings.ToLower(token) == "if" {
-			return &Token{Value: "if", Type: IF}
-		}
 		if strings.ToLower(token) == "inline" {
 
 			// We want to be able to handle input of
@@ -390,20 +398,13 @@ func (l *Lexer) Next() *Token {
 			return &Token{Value: "unterminated inline", Type: ERROR}
 		}
 
-		if strings.ToLower(token) == "let" {
-			return &Token{Value: "let", Type: LET}
-		}
-		if strings.ToLower(token) == "return" {
-			return &Token{Value: "return", Type: RETURN}
-		}
-		if strings.ToLower(token) == "print" {
-			return &Token{Value: "print", Type: PRINT}
-		}
-		if strings.ToLower(token) == "println" {
-			return &Token{Value: "println", Type: PRINTLN}
-		}
-		if strings.ToLower(token) == "while" {
-			return &Token{Value: "while", Type: WHILE}
+		//
+		// Should we convert the token from an IDENT into a known
+		// keyword?  If so do it.
+		//
+		_, ok = l.keywords[strings.ToLower(token)]
+		if ok {
+			return &Token{Value: strings.ToLower(token), Type: TokenType(strings.ToUpper(token))}
 		}
 
 		//
