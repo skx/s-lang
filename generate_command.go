@@ -115,7 +115,7 @@ func (g *generateCommand) processFile(path string) error {
 	for k, v := range g.stringTable {
 		v = strings.Replace(v, "\n", "\\n", -1)
 		fmt.Fprintf(out, "  %s: .ascii \"%s\"\n", k, v)
-		fmt.Fprintf(out, ".skip 1  # null byte at end of string\n")
+		fmt.Fprintf(out, ".byte 00  # null byte at end of string\n")
 		fmt.Fprintf(out, "  %s_end:\n", k)
 	}
 	return nil
