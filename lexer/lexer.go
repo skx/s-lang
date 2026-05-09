@@ -106,10 +106,13 @@ func NewLexer(input string) *Lexer {
 	//
 	// Note that we don't have "=", "<", ">", etc here because they
 	// might be part of a multi-character token (i.e. ">=").
+	//
+	// We also don't have "-" because we need to parse numbers and that
+	// might be present as the leading character.
+	//
 	l.known = make(map[string]string)
 	l.known["*"] = MULTIPLY
 	l.known["+"] = PLUS
-	l.known["-"] = MINUS
 	l.known["/"] = DIVIDE
 	l.known["("] = LPAREN
 	l.known[")"] = RPAREN
@@ -283,6 +286,10 @@ func (l *Lexer) Next() *Token {
 			// Here we have the number
 			token := l.input[start:end]
 
+			if token == "-" {
+				return &Token{Value: "-", Type: MINUS}
+
+			}
 			// too many periods?
 			bits := strings.Split(token, ".")
 			if len(bits) > 2 {
