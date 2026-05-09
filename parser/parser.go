@@ -36,12 +36,15 @@ func (p *Parser) ParseProgram() (*Program, error) {
 }
 
 // parseExpr is called to parse expressions - be they in IF, LET, or WHILE.
-func (p *Parser) parseExpr() Expr {
+func (p *Parser) parseExpr() (Expr, error) {
 	return p.parseLogicalOr()
 }
 
-func (p *Parser) parseAddSub() Expr {
-	left := p.parseMulDiv()
+func (p *Parser) parseAddSub() (Expr, error) {
+	left, err := p.parseMulDiv()
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		tok := p.l.Peek()
@@ -53,7 +56,10 @@ func (p *Parser) parseAddSub() Expr {
 
 		p.l.Next()
 
-		right := p.parseMulDiv()
+		right, err := p.parseMulDiv()
+		if err != nil {
+			return nil, err
+		}
 
 		left = &BinaryExpr{
 			Left:  left,
@@ -62,11 +68,14 @@ func (p *Parser) parseAddSub() Expr {
 		}
 	}
 
-	return left
+	return left, nil
 }
 
-func (p *Parser) parseMulDiv() Expr {
-	left := p.parsePrimary()
+func (p *Parser) parseMulDiv() (Expr, error) {
+	left, err := p.parsePrimary()
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		tok := p.l.Peek()
@@ -78,7 +87,10 @@ func (p *Parser) parseMulDiv() Expr {
 
 		p.l.Next()
 
-		right := p.parsePrimary()
+		right, err := p.parsePrimary()
+		if err != nil {
+			return nil, err
+		}
 
 		left = &BinaryExpr{
 			Left:  left,
@@ -87,10 +99,10 @@ func (p *Parser) parseMulDiv() Expr {
 		}
 	}
 
-	return left
+	return left, nil
 }
 
-func (p *Parser) parsePrimary() Expr {
+func (p *Parser) parsePrimary() (Expr, error) {
 	tok := p.l.Next()
 
 	switch tok.Type {
@@ -98,33 +110,39 @@ func (p *Parser) parsePrimary() Expr {
 	case lexer.NUMBER:
 		return &NumberExpr{
 			Value: int64(tok.Value.(float64)),
-		}
+		}, nil
 
 	case lexer.IDENT:
 		return &VariableExpr{
 			Name: tok.Value.(string),
-		}
+		}, nil
 
 	case lexer.STRING:
 		return &StringExpr{
 			Value: tok.Value.(string),
-		}
+		}, nil
 
 	case lexer.LPAREN:
-		expr := p.parseExpr()
-
-		if p.l.Next().Type != lexer.RPAREN {
-			panic("missing )")
+		expr, err := p.parseExpr()
+		if err != nil {
+			return nil, err
 		}
 
-		return expr
+		if p.l.Next().Type != lexer.RPAREN {
+			return expr, fmt.Errorf("missing )")
+		}
+
+		return expr, nil
 	}
 
-	panic(fmt.Sprintf("unexpected token %v", tok))
+	return nil, fmt.Errorf("unexpected token %v", tok)
 }
 
-func (p *Parser) parseComparison() Expr {
-	left := p.parseAddSub()
+func (p *Parser) parseComparison() (Expr, error) {
+	left, err := p.parseAddSub()
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		tok := p.l.Peek()
@@ -138,7 +156,10 @@ func (p *Parser) parseComparison() Expr {
 
 			p.l.Next()
 
-			right := p.parseAddSub()
+			right, err := p.parseAddSub()
+			if err != nil {
+				return nil, err
+			}
 
 			left = &BinaryExpr{
 				Left:  left,
@@ -147,13 +168,16 @@ func (p *Parser) parseComparison() Expr {
 			}
 
 		default:
-			return left
+			return left, nil
 		}
 	}
 }
 
-func (p *Parser) parseEquality() Expr {
-	left := p.parseComparison()
+func (p *Parser) parseEquality() (Expr, error) {
+	left, err := p.parseComparison()
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		tok := p.l.Peek()
@@ -165,7 +189,10 @@ func (p *Parser) parseEquality() Expr {
 
 			p.l.Next()
 
-			right := p.parseComparison()
+			right, err := p.parseComparison()
+			if err != nil {
+				return nil, err
+			}
 
 			left = &BinaryExpr{
 				Left:  left,
@@ -174,24 +201,30 @@ func (p *Parser) parseEquality() Expr {
 			}
 
 		default:
-			return left
+			return left, nil
 		}
 	}
 }
 
-func (p *Parser) parseLogicalOr() Expr {
-	left := p.parseLogicalAnd()
+func (p *Parser) parseLogicalOr() (Expr, error) {
+	left, err := p.parseLogicalAnd()
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		tok := p.l.Peek()
 
 		if tok.Type != lexer.OR {
-			return left
+			return left, nil
 		}
 
 		p.l.Next()
 
-		right := p.parseLogicalAnd()
+		right, err := p.parseLogicalAnd()
+		if err != nil {
+			return nil, err
+		}
 
 		left = &BinaryExpr{
 			Left:  left,
@@ -201,19 +234,25 @@ func (p *Parser) parseLogicalOr() Expr {
 	}
 }
 
-func (p *Parser) parseLogicalAnd() Expr {
-	left := p.parseEquality()
+func (p *Parser) parseLogicalAnd() (Expr, error) {
+	left, err := p.parseEquality()
+	if err != nil {
+		return nil, err
+	}
 
 	for {
 		tok := p.l.Peek()
 
 		if tok.Type != lexer.AND {
-			return left
+			return left, nil
 		}
 
 		p.l.Next()
 
-		right := p.parseEquality()
+		right, err := p.parseEquality()
+		if err != nil {
+			return nil, err
+		}
 
 		left = &BinaryExpr{
 			Left:  left,
@@ -248,7 +287,11 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return res, fmt.Errorf("missing '(' after if")
 			}
 
-			expr := p.parseExpr()
+			expr, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
+
 			start = p.l.Next()
 			if start.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after if")
@@ -277,7 +320,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if eq.Type != lexer.ASSIGN {
 				return res, fmt.Errorf("missing '=' after LET")
 			}
-			vals := p.parseExpr()
+			vals, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
 			res = append(res,
 				&LetStatement{Name: name.Value.(string), Expression: vals})
 
@@ -286,7 +332,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after while")
 			}
-			val := p.parseExpr()
+			val, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after while")
@@ -314,7 +363,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			var x []Expr
 
-			expr := p.parseExpr()
+			expr, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
 			x = append(x, expr)
 
 			for {
@@ -325,7 +377,11 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				}
 				if tok.Type == lexer.COMMA {
 					p.l.Next()
-					expr = p.parseExpr()
+					expr, err = p.parseExpr()
+					if err != nil {
+						return nil, err
+					}
+
 					x = append(x, expr)
 				}
 			}
@@ -337,7 +393,11 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after return")
 			}
-			expr := p.parseExpr()
+			expr, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
+
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
 				return res, fmt.Errorf("missing ')' after return value")
