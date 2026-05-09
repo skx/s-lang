@@ -136,7 +136,9 @@ push rax
 
 		}
 		fmt.Fprintf(&c.buff, `
-call %s`, v.Name)
+call %s
+add rsp, %d
+`, v.Name, 8*len(v.Arguments))
 
 	case *parser.VariableExpr:
 		idx := rune(v.Name[0]) - 'a'
