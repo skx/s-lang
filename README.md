@@ -188,6 +188,6 @@ Possible future improvements and additions, to be added slowly if ever.
 
 * [x] negative numbers (implemented in #14).
 * [ ] floating point numbers
-* [ ] allow assignment of strings to variables
+* [x] allow assignment of strings to variables (implemented in #16).
 * [ ] allow *x to get the address of x, for working with strings
 * [ ] user-defined functions (e.g. sqrt/abs)

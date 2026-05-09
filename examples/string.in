@@ -1,0 +1,26 @@
+
+# This saves the value in RAX of the string address.
+let a = "Steve Kemp\n";
+
+# Save a copy of the address
+let b = a;
+
+# Print the string address
+print("The string is stored at address ", a, "\n");
+
+# Now print the string
+let a = b;
+
+#
+# Since we know RAX has a pointer to the string,
+# and the string is null-terminated, we can print
+# it via some inline assembly.
+#
+inline {
+       call print_string
+}
+
+#
+# And print the address again
+#
+print("Back to normal code\n");
