@@ -1,22 +1,64 @@
 #
-# Simple functions which return fixed values
+# Simple functions which take no parameters, and
+# return fixed values.
 #
-function four {
+function four () {
    return( 4 );
 }
-function five {
+function five () {
    return (3 + 2);
 }
 
+#
+# Call the functions and confirm that works
+#
 let a = four();
 let b = five();
 println( "four() -> ", a, " five() -> ", b)
+
+
+
+#
+# Set some global variables
+#
+let a = 13;
+let b = 17;
+
+println("Before function A is: ", a);
+println("Before function B is: ", b);
+
+#
+# Define a function to show that it gets
+# it's own scope, and the varibles have
+# different values
+#
+function debug(a, b) {
+
+   print("  Inside debug() A is ", a, "\n");
+   print("  Inside debug() B is ", b, "\n");
+
+}
+
+#
+# Call the function
+#
+let d = debug(33, 42);
+
+#
+# And confirm the global scope is unchanged
+#
+println("A should still be 13: ", a);
+println("B should still be 17: ", b);
+
+
+
+
 
 #
 # Return the maximum value of those
 # values stored in variable A and B
 #
-function max {
+function max (a, b ) {
 
    print("max() was called!\n");
 
@@ -25,29 +67,28 @@ function max {
    # End result is A contains the
    # biggest of A and B.
 
-   if ( b > a ) {
-      let a = b;
+   if ( b >= a ) {
+      return( b );
    }
-
-   # We rely on the side-effect of this
-   # it sets the value of the RAX register
-   # to the value of the A-variable
-   let a = a;
+   return (a);
 }
 
-
-function steve {
+#
+# Define a function with inline assembly
+#
+function steve () {
   inline {
+      # Set the return value
       mov rax, 42
+      # cleanup stack-frame
+      mov rsp, rbp
+      pop rbp
       ret
   }
 }
 
 
-let a = 2220;
-let b = 210;
-
-let p = max();
+let p = max(210, 121);
 print("Result of max(): ", p, "\n");
 
 let b = steve();

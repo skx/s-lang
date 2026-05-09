@@ -123,13 +123,33 @@ func (p *Parser) parsePrimary() (Expr, error) {
 			return nil, fmt.Errorf("missing '(' after function call")
 		}
 
-		start = p.l.Next()
-		if start.Type != lexer.RPAREN {
-			return nil, fmt.Errorf("missing ')' after function call")
+		// collect the arguments
+		var params []Expr
+
+		for {
+			tok := p.l.Peek()
+			if tok.Type == lexer.RPAREN {
+				p.l.Next()
+				break
+			}
+			if tok.Type == lexer.COMMA {
+				p.l.Next()
+				continue
+			}
+
+			expr, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
+
+			params = append(params, expr)
 		}
 
+		// copy arguments into place ..
+
 		return &FunctionCallExpr{
-			Name: tok.Value.(string),
+			Name:      tok.Value.(string),
+			Arguments: params,
 		}, nil
 
 	case lexer.STRING:
@@ -298,9 +318,33 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 		case lexer.FUNCTION:
 			name := p.l.Next()
+
+			start := p.l.Next()
+			if start.Type != lexer.LPAREN {
+				return res, fmt.Errorf("missing '(' after function name %s", name)
+			}
+
+			// collect parameters
+			params := []*lexer.Token{}
+
+			for {
+				tok := p.l.Next()
+				// )?  Then we're at the end
+				if tok.Type == lexer.RPAREN {
+					break
+				}
+				// skip the comments
+				if tok.Type == lexer.COMMA {
+					continue
+				}
+				if tok.Type == lexer.IDENT {
+					params = append(params, tok)
+				}
+			}
+
 			end := p.l.Next()
 			if end.Type != lexer.LBRACE {
-				return res, fmt.Errorf("missing '{' after function")
+				return res, fmt.Errorf("missing '{' after function definition")
 			}
 
 			// Now parse the block
@@ -309,7 +353,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if err != nil {
 				return res, err
 			}
-			res = append(res, &Function{Name: name.Value.(string), Statements: stmts})
+			res = append(res, &Function{Name: name.Value.(string), Parameters: params, Statements: stmts})
 
 		case lexer.IF:
 			start := p.l.Next()

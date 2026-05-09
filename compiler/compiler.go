@@ -122,17 +122,36 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 mov rax, %d`, v.Value)
 
 	case *parser.FunctionCallExpr:
+
+		// We have to loop over the arguments in reverse
+		for i := len(v.Arguments) - 1; i >= 0; i-- {
+			// push each argument to the stack
+			err := c.compileExpr(v.Arguments[i])
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(&c.buff, `
+push rax
+`)
+
+		}
 		fmt.Fprintf(&c.buff, `
 call %s`, v.Name)
 
 	case *parser.VariableExpr:
 		idx := rune(v.Name[0]) - 'a'
 
-		fmt.Fprintf(&c.buff, `
+		if c.inFunction > 0 {
+			fmt.Fprintf(&c.buff, `
+mov rax, [rbp+%d]
+`, 16+idx*8)
+
+		} else {
+			fmt.Fprintf(&c.buff, `
 lea rcx, vars
 mov rax, [rcx + %d*8]
 `, idx)
-
+		}
 	case *parser.StringExpr:
 		return fmt.Errorf("compileExpr cannot handle a string-expression")
 
@@ -246,8 +265,19 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 	jmp function_%d
 
 %s:
+
 `, n, s.Name)
 
+		//		fmt.Printf("compiling body of function %s\n", s.Name)
+		//		fmt.Printf("args: %d\n", len(s.Parameters))
+		fmt.Fprint(&c.buff, txt)
+
+		txt = fmt.Sprintf(`
+		    # space for %d arguments
+		    push rbp
+    mov rbp, rsp
+    sub rsp, 8 * %d
+`, len(s.Parameters), len(s.Parameters))
 		fmt.Fprint(&c.buff, txt)
 
 		// Insert the body of the function
@@ -260,6 +290,9 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		// Now the function was written
 		// so we're gonna mark the label
 		txt = fmt.Sprintf(`
+	  # cleanup stack frame
+	  mov rsp, rbp
+	  pop rbp
 	  # Functions will be CALL'd, so add a RET
 	  ret
 function_%d:
@@ -389,6 +422,10 @@ mov [rcx + %d*8], rax
 		if c.inFunction > 0 {
 
 			txt := `
+	# cleanup stack-frame
+	mov rsp, rbp
+	pop rbp
+
 	ret
 `
 			fmt.Fprint(&c.buff, txt)

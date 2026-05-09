@@ -29,11 +29,14 @@ type Expr interface {
 type FunctionCallExpr struct {
 	// Name is the name of the function we should call.
 	Name string
+
+	// Arguments are what we'll setup for the function
+	Arguments []Expr
 }
 
 // String returns the value of the given expression.
 func (f *FunctionCallExpr) String() string {
-	return fmt.Sprintf("%s();", f.Name)
+	return fmt.Sprintf("%s(%s)", f.Name, fmt.Sprintf("%v", f.Arguments))
 }
 func (FunctionCallExpr) expr() {}
 
@@ -95,7 +98,13 @@ type Inline struct {
 
 // Function holds details about (user-defined) functions.
 type Function struct {
-	Name       string
+	// Name is the name of the function that is being defined
+	Name string
+
+	// Parameters holds the parameters the function accepts
+	Parameters []*lexer.Token
+
+	// Statements are the body of the function
 	Statements []Statement
 }
 
