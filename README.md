@@ -179,3 +179,15 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
 There is a simple perl-based prototype, beneath [prototype/](prototype/), which I hacked up to see if this would be a project that was within my means.
 
 It parses via regexp which is terrible, but also good enough to show that things could work in a predictable fashion.
+
+
+
+## Future Additions
+
+Possible future improvements and additions, to be added slowly if ever.
+
+* [x] negative numbers
+* [ ] floating point numbers
+* [ ] allow assignment of strings to variables
+* [ ] allow *x to get the address of x, for working with strings
+* [ ] user-defined functions (e.g. sqrt/abs)
