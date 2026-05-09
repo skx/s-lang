@@ -444,20 +444,42 @@ exit_with_status:
 
 
 
-	#
-	# Convert the integer in RAX into
-	# ASCII and print it to the console.
-	#
-	# Uses the "print_rax_buffer" as temporary
-	# storage, and will trash it.
-	#
+#
+# Convert the integer in RAX into
+# ASCII and print it to the console.
+#
+# Uses the "print_rax_buffer" as temporary
+# storage, and will trash it.
+#
+# Clobbers: rax, rbx, rcx, rdx, rdi, rsi
+#
 print_number:
 	mov rbx, 10
 	lea rdi, [print_rax_buffer+31]
 	mov byte ptr [rdi], 0
 	dec rdi
 
-	.convert_loop:
+	# Track sign in rcx
+	xor rcx, rcx
+
+	# If negative:
+	test rax, rax
+	jns .convert_loop_start
+
+	neg rax
+	mov rcx, 1              # remember number was negative
+
+.convert_loop_start:
+
+	# Special case for 0
+	test rax, rax
+	jnz .convert_loop
+
+	mov byte ptr [rdi], '0'
+	dec rdi
+	jmp .after_convert
+
+.convert_loop:
 	xor rdx, rdx
 	div rbx
 	add dl, '0'
@@ -465,6 +487,17 @@ print_number:
 	dec rdi
 	test rax, rax
 	jnz .convert_loop
+
+.after_convert:
+
+	# Add minus sign if needed
+	test rcx, rcx
+	jz .done_sign
+
+	mov byte ptr [rdi], '-'
+	dec rdi
+
+.done_sign:
 
 	inc rdi              # rdi = pointer to string start
 
@@ -479,7 +512,6 @@ print_number:
 	syscall
 
 	ret
-
 `
 	fmt.Fprintln(f, text)
 }
