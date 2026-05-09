@@ -267,6 +267,9 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			}
 			res = append(res, &If{Expression: expr, Statements: stmts})
 
+		case lexer.INLINE:
+			res = append(res, &Inline{Text: p.curToken.Value.(string)})
+
 		case lexer.LET:
 			name := p.l.Next()
 			eq := p.l.Next()

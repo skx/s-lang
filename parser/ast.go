@@ -73,6 +73,12 @@ func (b *BinaryExpr) String() string {
 
 func (BinaryExpr) expr() {}
 
+// Inline holds inline assembly the user wants to add to the program
+type Inline struct {
+	// Text is the raw text to insert into our generated source
+	Text string
+}
+
 // LetStatement holds a let-statemnt.  Shocking.
 type LetStatement struct {
 	// Name is the name of the variable to which we're assigning

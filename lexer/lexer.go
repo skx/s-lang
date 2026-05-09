@@ -20,6 +20,7 @@ const (
 
 	// Statements
 	IF      = "IF"
+	INLINE  = "INLINE"
 	LET     = "LET"
 	PRINT   = "PRINT"
 	PRINTLN = "PRINTLN"
@@ -338,6 +339,50 @@ func (l *Lexer) Next() *Token {
 		if strings.ToLower(token) == "if" {
 			return &Token{Value: "if", Type: IF}
 		}
+		if strings.ToLower(token) == "inline" {
+
+			// We want to be able to handle input of
+			// the form :
+			//
+			//   inline {
+			//     blah
+			//   }
+			//
+			// If we return a token of "inline" then
+			// rely on the rest of the tokens to get the
+			// body things will be broken, because
+			// we'll swallow whitespace, etc, etc.
+			//
+			// So we have to return it here.
+			txt := ""
+
+			// skip over the opening block
+			for l.position < len(l.input) {
+				c := l.input[l.position]
+				l.position++
+				if c == '{' {
+					break
+				}
+			}
+
+			// Build up all characters
+			for l.position < len(l.input) {
+				// get the character
+				c := l.input[l.position]
+				l.position++
+
+				// end of the string?  We're done
+				// and we've already bumped ot the next
+				// character so all is okay.
+				if c == '}' {
+					return &Token{Value: txt, Type: INLINE}
+
+				}
+				txt += string(c)
+			}
+			return &Token{Value: "unterminated inline", Type: ERROR}
+		}
+
 		if strings.ToLower(token) == "let" {
 			return &Token{Value: "let", Type: LET}
 		}
