@@ -49,6 +49,12 @@ The following is a tour of our language:
        let x = x - 1;
     }
 
+    inline {
+       # Inline assembly here
+       mov rax, 32
+       call print_number
+    }
+
     # Simple comparisons are present
     if (x >= 3 ) {
       print("x >= 3\n");
@@ -76,6 +82,7 @@ statements      ::= { statement }
 statement       ::= ";"
                   | "let" IDENT "=" expression
                   | "if" "(" expression ")" block
+                  | "inline" "{" LITERAL "}"
                   | "while" "(" expression ")" block
                   | "print" "(" exprList ")"
                   | "println" "(" exprList ")"

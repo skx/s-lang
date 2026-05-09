@@ -272,6 +272,9 @@ if_%d_end:
 `, n)
 		fmt.Fprint(out, txt)
 
+	case *parser.Inline:
+		fmt.Fprint(out, "\n"+s.Text+"\n")
+
 	case *parser.LetStatement:
 
 		// Compile the expression, masking off strings.

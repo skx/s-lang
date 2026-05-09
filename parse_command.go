@@ -34,6 +34,8 @@ func (p *parseCommand) printStmt(st parser.Statement) {
 	switch stmt := st.(type) {
 	case *parser.LetStatement:
 		fmt.Printf("LET %s = %v;\n", stmt.Name, stmt.Expression)
+	case *parser.Inline:
+		fmt.Printf("INLINE {%s}", stmt.Text)
 	case *parser.Print:
 		if stmt.NewLine {
 			fmt.Printf("PRINTLN(")
