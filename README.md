@@ -186,7 +186,7 @@ It parses via regexp which is terrible, but also good enough to show that things
 
 Possible future improvements and additions, to be added slowly if ever.
 
-* [x] negative numbers
+* [x] negative numbers (implemented in #14).
 * [ ] floating point numbers
 * [ ] allow assignment of strings to variables
 * [ ] allow *x to get the address of x, for working with strings
