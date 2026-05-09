@@ -202,4 +202,6 @@ Possible future improvements and additions, to be added slowly if ever.
 * [ ] allow *x to get the address of x, for working with strings
 * [x] user-defined functions (e.g. min/max/abs/etc.)
   * Implemented in [#18](https://github.com/skx/s-lang/pull/18)
+* [x] user-defined functions can `return` values.
+  * Implemented in [#19](https://github.com/skx/s-lang/pull/19)
 * [ ] arguments to user-defined functions.

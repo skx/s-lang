@@ -1,4 +1,18 @@
 #
+# Simple functions which return fixed values
+#
+function four {
+   return( 4 );
+}
+function five {
+   return (3 + 2);
+}
+
+let a = four();
+let b = five();
+println( "four() -> ", a, " five() -> ", b)
+
+#
 # Return the maximum value of those
 # values stored in variable A and B
 #
