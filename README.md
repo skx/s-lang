@@ -1,16 +1,15 @@
-# v
+# s
 
-I was inspired by a simple compiler I saw recently:
-
-* https://github.com/ismail0098-lang/Y-/tree/main
-
-This is my own take on such a minimalist system:
+This is my own take on a minimal linux x86 compiler:
 
 * Simple compiler written in Golang.
 * Generates an AST internally.
 * Uses that to generate assembly language.
-  * This includes a couple of utility functions.
-* Invokes the external `as` and `ld` binaries to compile and link.
+* Invokes the external `as` and `ld` binaries to compile and link if desired.
+
+I was inspired by a simple compiler I saw recently:
+
+* https://github.com/ismail0098-lang/Y-/tree/main
 
 
 
@@ -65,38 +64,52 @@ The following is a tour of our language:
 
 Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
 
-* Here you can guess there are 26 variables ("a"-"z"), which are assigned to via `let`.
-  * e.g. `let a = 1 + 2 * 3`.
-* You can see printing in three forms:
-  * `print(n)` shows the contents of register `n`.
-  * `print(31)` prints the integer literal `31`.
-  * `print("Steve")` prints the string literal `Steve`.
-  * You can use `println` instead to add a trailing newline.
-  * Add multiple comma-separated arguments to print multiple expressions.
-* The exit-code of the generated binary is set via `return(x);`.
-  * Where `x` is a variable name, an integer literal, or the value of an expression.
-* We have support for both `while` and `if`.
-  * Both of these allow simple tests to be made such as `>=`, `<`, `a`, etc.
 
-Using the ability to decrease a variable (`let i = i - 1`) we can also write a loop:
 
-    let x = 3;
+## Grammar
 
-    while ( x ) {
-        println( x );
-        let x = x - 1;
-    }
+```
+program         ::= statements
 
-The same comparison support is present for our `if` statements:
+statements      ::= { statement }
 
-    if (a == 3 ) { ... }
-    if (a != b ) { ... }
-    if (a <= b ) { ... }
-    if (a < b ) { ... }
-    if (a > b ) { ... }
-    if (a >= b ) { ... }
+statement       ::= ";"
+                  | "let" IDENT "=" expression
+                  | "if" "(" expression ")" block
+                  | "while" "(" expression ")" block
+                  | "print" "(" exprList ")"
+                  | "println" "(" exprList ")"
+                  | "return" "(" expression ")"
 
-We have support for logical and (`&&`) and or (`||`) too.
+block           ::= "{" statements "}"
+
+exprList        ::= expression { "," expression }
+
+expression      ::= logicalOr
+
+logicalOr       ::= logicalAnd
+                    { "||" logicalAnd }
+
+logicalAnd      ::= equality
+                    { "&&" equality }
+
+equality        ::= comparison
+                    { ( "==" | "!=" ) comparison }
+
+comparison      ::= addSub
+                    { ( "<" | "<=" | ">" | ">=" ) addSub }
+
+addSub          ::= mulDiv
+                    { ( "+" | "-" ) mulDiv }
+
+mulDiv          ::= primary
+                    { ( "*" | "/" ) primary }
+
+primary         ::= NUMBER
+                  | STRING
+                  | IDENT
+                  | "(" expression ")"
+```
 
 
 
