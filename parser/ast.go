@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"s-lang/lexer"
 )
 
@@ -17,6 +18,9 @@ type Program struct {
 // Expr is the interface for expression (maths) parsing.
 type Expr interface {
 	expr()
+
+	// String returns the value of a given expression
+	String() string
 }
 
 // NumberExpr holds a literal number
@@ -24,6 +28,10 @@ type NumberExpr struct {
 	Value int64
 }
 
+// String returns the value of the given expression.
+func (n *NumberExpr) String() string {
+	return fmt.Sprintf("%d", n.Value)
+}
 func (NumberExpr) expr() {}
 
 // StringExpr holds a literal String
@@ -31,6 +39,10 @@ type StringExpr struct {
 	Value string
 }
 
+// String returns the value of the given expression.
+func (s *StringExpr) String() string {
+	return fmt.Sprintf("\"%s\"", s.Value)
+}
 func (StringExpr) expr() {}
 
 // VariableExpr holds a variable reference.
@@ -38,6 +50,10 @@ type VariableExpr struct {
 	Name string
 }
 
+// String returns the value of the given expression.
+func (v *VariableExpr) String() string {
+	return (v.Name)
+}
 func (VariableExpr) expr() {}
 
 // BinaryExpr holds a binop ("a + b", or similar).
@@ -45,6 +61,14 @@ type BinaryExpr struct {
 	Left  Expr
 	Op    lexer.TokenType
 	Right Expr
+}
+
+// String returns the value of the given expression.
+func (b *BinaryExpr) String() string {
+	return fmt.Sprintf("%s %s %s",
+		b.Left.String(),
+		b.Op,
+		b.Right.String())
 }
 
 func (BinaryExpr) expr() {}
