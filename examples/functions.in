@@ -1,0 +1,40 @@
+#
+# Return the maximum value of those
+# values stored in variable A and B
+#
+function max {
+
+   print("max() was called!\n");
+
+   # If B > A then update A
+   #
+   # End result is A contains the
+   # biggest of A and B.
+
+   if ( b > a ) {
+      let a = b;
+   }
+
+   # We rely on the side-effect of this
+   # it sets the value of the RAX register
+   # to the value of the A-variable
+   let a = a;
+}
+
+
+function steve {
+  inline {
+      mov rax, 42
+      ret
+  }
+}
+
+
+let a = 2220;
+let b = 210;
+
+let p = max();
+print("Result of max(): ", p, "\n");
+
+let b = steve();
+print("Result of steve() -> ", b, "\n");

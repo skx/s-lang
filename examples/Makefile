@@ -1,7 +1,7 @@
-ALL: factorial fizzbuzz string while
+ALL: factorial fizzbuzz functions string while
 
 clean:
-	@rm -f factorial fizzbuzz string while || true
+	@rm -f factorial fizzbuzz functions string while || true
 
 # Ensure we have the compiler
 ../s-lang:
@@ -14,6 +14,10 @@ factorial: factorial.in ../s-lang
 # fizzbuzz 1-100
 fizzbuzz: fizzbuzz.in ../s-lang
 	../s-lang compile -output fizzbuzz fizzbuzz.in
+
+# user-defined functions
+functions: functions.in ../s-lang
+	../s-lang compile -output functions functions.in
 
 # store a string in a variable, and print it
 string: string.in ../s-lang

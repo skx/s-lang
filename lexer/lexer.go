@@ -19,17 +19,19 @@ const (
 	STRING = "STRING"
 
 	// Statements
-	IF      = "IF"
-	INLINE  = "INLINE"
-	LET     = "LET"
-	PRINT   = "PRINT"
-	PRINTLN = "PRINTLN"
-	RETURN  = "RETURN"
-	WHILE   = "WHILE"
+	FUNCTION = "FUNCTION"
+	IF       = "IF"
+	INLINE   = "INLINE"
+	LET      = "LET"
+	PRINT    = "PRINT"
+	PRINTLN  = "PRINTLN"
+	RETURN   = "RETURN"
+	WHILE    = "WHILE"
 
 	// Specials
 	ASSIGN    = "="
 	COMMA     = ","
+	FUNCALL   = "FUNCALL"
 	SEMICOLON = ";"
 
 	// Paren
@@ -125,6 +127,7 @@ func NewLexer(input string) *Lexer {
 	l.known[","] = COMMA
 
 	l.keywords = make(map[string]bool)
+	l.keywords["function"] = true
 	l.keywords["if"] = true
 	l.keywords["let"] = true
 	l.keywords["print"] = true
@@ -428,6 +431,9 @@ func (l *Lexer) Next() *Token {
 		//
 		// Return it.
 		//
+		if l.Peek().Type == LPAREN {
+			return &Token{Value: token, Type: FUNCALL}
+		}
 		return &Token{Value: token, Type: IDENT}
 
 	}

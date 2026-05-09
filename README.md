@@ -19,6 +19,7 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
 
 * [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100
+* [examples/functions.in](examples/functions.in) - Demonstrates user-defined functions.
 
 Syntax below, and some sample code here:
 
@@ -80,6 +81,7 @@ program         ::= statements
 statements      ::= { statement }
 
 statement       ::= ";"
+                  | "function" IDENT block
                   | "let" IDENT "=" expression
                   | "if" "(" expression ")" block
                   | "inline" "{" LITERAL "}"
@@ -115,6 +117,7 @@ mulDiv          ::= primary
 primary         ::= NUMBER
                   | STRING
                   | IDENT
+                  | FUNCTION()
                   | "(" expression ")"
 ```
 
@@ -186,9 +189,13 @@ It parses via regexp which is terrible, but also good enough to show that things
 
 Possible future improvements and additions, to be added slowly if ever.
 
-* [x] negative numbers (implemented in #14).
-* [x] allow assignment of strings to variables (implemented in #16).
+* [x] negative numbers may be parsed and print'd
+  * Implemented in [#14](https://github.com/skx/s-lang/pull/14)
+* [x] allow assignment of strings to variables.
+  * Implemented in [#16](https://github.com/skx/s-lang/pull/16)
 * [ ] add types to our variables
 * [ ] floating point numbers
 * [ ] allow *x to get the address of x, for working with strings
-* [ ] user-defined functions (e.g. sqrt/abs)
+* [x] user-defined functions (e.g. min/max/abs/etc.)
+  * Implemented in [#18](https://github.com/skx/s-lang/pull/18)
+* [ ] arguments to user-defined functions.
