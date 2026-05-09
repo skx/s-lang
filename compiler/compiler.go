@@ -1,3 +1,8 @@
+// Package compiler implements our compiler.
+//
+// The compiler makes use of our parser and lexer packages
+// and largely walks trees generating snippets of assembly
+// language as it goes.
 package compiler
 
 import (
@@ -18,13 +23,14 @@ var header string
 //go:embed footer.s.txt
 var footer string
 
-// Compiler holds our compiler state
+// Compiler holds our internal compiler state.
 type Compiler struct {
 
-	// Source holds the source program we'll work on
+	// Source holds the source program we'll work on.
 	Source string
 
-	// buff is where we write out data to
+	// buff is the writer object we use to send our
+	// output to, as it is generated.
 	buff bytes.Buffer
 
 	// labelCount is used for generating labels
@@ -45,7 +51,9 @@ func New(source string) *Compiler {
 	return tmp
 }
 
-// Compiler produces the compiled string
+// Compile produces, and returns, an assembly language
+// implementation of the program which was passed to
+// our constructor.
 func (c *Compiler) Compile() (string, error) {
 
 	// Create a lexer and parser
@@ -59,7 +67,7 @@ func (c *Compiler) Compile() (string, error) {
 	}
 
 	// Write the header
-	fmt.Fprintf(&c.buff, header)
+	fmt.Fprintf(&c.buff, "%s", header)
 
 	// compile each statement
 	for _, stmt := range program.Statements {
@@ -70,17 +78,22 @@ func (c *Compiler) Compile() (string, error) {
 	}
 
 	// Write the footer
-	fmt.Fprintf(&c.buff, footer)
+	fmt.Fprintf(&c.buff, "%s", footer)
 
-	// write String table
+	// If there are any string-table entries then we write them
+	// to the foot of the file.
 	if len(c.stringTable) > 0 {
+
+		// The header
 		fmt.Fprintf(&c.buff, "\n# generated string table\n.section .data\n")
-	}
-	for k, v := range c.stringTable {
-		v = strings.Replace(v, "\n", "\\n", -1)
-		fmt.Fprintf(&c.buff, "  %s: .ascii \"%s\"\n", k, v)
-		fmt.Fprintf(&c.buff, ".byte 00  # null byte at end of string\n")
-		fmt.Fprintf(&c.buff, "  %s_end:\n", k)
+
+		// The actual strings.
+		for k, v := range c.stringTable {
+			v = strings.ReplaceAll(v, "\n", "\\n")
+			fmt.Fprintf(&c.buff, "  %s: .ascii \"%s\"\n", k, v)
+			fmt.Fprintf(&c.buff, ".byte 00  # null byte at end of string\n")
+			fmt.Fprintf(&c.buff, "  %s_end:\n", k)
+		}
 	}
 
 	return c.buff.String(), nil
@@ -95,7 +108,7 @@ func (c *Compiler) hashString(str string) string {
 	return fmt.Sprintf("msg_%s", sha)
 }
 
-// compileExpr handles compiling an expression
+// compileExpr handles compiling an expression.
 func (c *Compiler) compileExpr(e parser.Expr) error {
 	switch v := e.(type) {
 
@@ -252,6 +265,7 @@ if_%d_end:
 	case *parser.Let:
 
 		// Compile the expression, masking off strings.
+		// which require special handling.
 		switch v := s.Expression.(type) {
 
 		case *parser.StringExpr:

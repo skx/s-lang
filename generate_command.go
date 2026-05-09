@@ -11,15 +11,8 @@ import (
 
 // Structure for our options and state.
 type generateCommand struct {
-
 	// output will be the file to generate
 	output string
-
-	// hash table for strings to be generated
-	stringTable map[string]string
-
-	// whileCount is the count of while-expressions we've received
-	whileCount int
 }
 
 // Arguments adds per-command args to the object.
@@ -61,7 +54,8 @@ func (g *generateCommand) processFile(path string) error {
 
 	// If a file was provided, use it instead
 	if g.output != "" {
-		file, err := os.Create(g.output)
+		var file *os.File
+		file, err = os.Create(g.output)
 		if err != nil {
 			return err
 		}
@@ -69,13 +63,17 @@ func (g *generateCommand) processFile(path string) error {
 		out = file
 	}
 
+	// Create a compiler object
 	c := compiler.New(string(data))
-	txt, err2 := c.Compile()
-	if err2 != nil {
-		return err2
+
+	txt := ""
+	txt, err = c.Compile()
+	if err != nil {
+		return err
 	}
 
-	fmt.Fprintf(out, txt)
+	// Write the text to the output file/handle.
+	fmt.Fprintf(out, "%s", txt)
 
 	return nil
 }
