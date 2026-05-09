@@ -32,7 +32,7 @@ Example:
 
 func (p *parseCommand) printStmt(st parser.Statement) {
 	switch stmt := st.(type) {
-	case *parser.LetStatement:
+	case *parser.Let:
 		fmt.Printf("LET %s = %v;\n", stmt.Name, stmt.Expression)
 	case *parser.Inline:
 		fmt.Printf("INLINE {%s}", stmt.Text)

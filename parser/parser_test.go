@@ -34,7 +34,7 @@ func TestLetStatements(t *testing.T) {
 				len(program.Statements))
 		}
 		stmt := program.Statements[0]
-		_, ok := stmt.(*LetStatement)
+		_, ok := stmt.(*Let)
 		if !ok {
 			t.Fatalf("unexpected statement type")
 		}

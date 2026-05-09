@@ -124,7 +124,7 @@ func (g *generateCommand) processFile(path string) error {
 func (g *generateCommand) compileExpr(out io.Writer, e parser.Expr) error {
 	switch v := e.(type) {
 
-	case *parser.NumberExpr:
+	case *parser.IntegerExpr:
 		fmt.Fprintf(out, `
 mov rax, %d`, v.Value)
 
@@ -275,7 +275,7 @@ if_%d_end:
 	case *parser.Inline:
 		fmt.Fprint(out, "\n"+s.Text+"\n")
 
-	case *parser.LetStatement:
+	case *parser.Let:
 
 		// Compile the expression, masking off strings.
 		switch s.Expression.(type) {

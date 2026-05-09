@@ -108,7 +108,7 @@ func (p *Parser) parsePrimary() (Expr, error) {
 	switch tok.Type {
 
 	case lexer.NUMBER:
-		return &NumberExpr{
+		return &IntegerExpr{
 			Value: int64(tok.Value.(float64)),
 		}, nil
 
@@ -325,7 +325,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return nil, err
 			}
 			res = append(res,
-				&LetStatement{Name: name.Value.(string), Expression: vals})
+				&Let{Name: name.Value.(string), Expression: vals})
 
 		case lexer.WHILE:
 			start := p.l.Next()
@@ -406,7 +406,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res, &Return{Expression: expr})
 
 		default:
-			return res, fmt.Errorf("uknown token type %v", p.curToken)
+			return res, fmt.Errorf("unknown token type %v", p.curToken)
 		}
 
 		// repeat

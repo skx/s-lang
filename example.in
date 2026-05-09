@@ -5,7 +5,7 @@ print("This should be 43: ", a, "\n" );
 let c = 3 * 4;
 let X = 99;
 
-let b = a -1;
+let b = a - 1;
 print("Hello, world!  The magic number is ", b, "\n");
 
 # comments are good

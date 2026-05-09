@@ -10,6 +10,8 @@ type Statement interface {
 }
 
 // Program represents a complete program.
+//
+// Programs contain Statements.
 type Program struct {
 	// Statements is the set of statements which the program is comprised of.
 	Statements []Statement
@@ -19,22 +21,22 @@ type Program struct {
 type Expr interface {
 	expr()
 
-	// String returns the value of a given expression
+	// String returns the value of a given expression.
 	String() string
 }
 
-// NumberExpr holds a literal number
-type NumberExpr struct {
+// IntegerExpr holds a literal integer, positive or negative.
+type IntegerExpr struct {
 	Value int64
 }
 
 // String returns the value of the given expression.
-func (n *NumberExpr) String() string {
+func (n *IntegerExpr) String() string {
 	return fmt.Sprintf("%d", n.Value)
 }
-func (NumberExpr) expr() {}
+func (IntegerExpr) expr() {}
 
-// StringExpr holds a literal String
+// StringExpr holds a literal String.
 type StringExpr struct {
 	Value string
 }
@@ -79,8 +81,8 @@ type Inline struct {
 	Text string
 }
 
-// LetStatement holds a let-statemnt.  Shocking.
-type LetStatement struct {
+// Let holds a let-statemnt.  Shocking.
+type Let struct {
 	// Name is the name of the variable to which we're assigning
 	Name string
 
