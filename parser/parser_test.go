@@ -41,6 +41,43 @@ func TestLetStatements(t *testing.T) {
 	}
 }
 
+// TestValid runs some programs which should be valid, and confirms no
+// errors are returned
+func TestValid(t *testing.T) {
+	tests := []struct {
+		input string
+	}{
+
+		{"if(1) { return( 1 ) ; }"},
+		{"if(a) { return( 1 ) ; }"},
+		{"if(a < b) { return( 1 ) ; }"},
+
+		{"inline{ }"},
+
+		{"let a = 3;"},
+		{"let a = 3 * 3;"},
+
+		{"print(3);"},
+		{"print(3, 3, 4);"},
+		{"println(3, 3, 4);"},
+
+		{"return(1);"},
+		{"return(a);"},
+		{"return(1 + 2 * 3);"},
+
+		{"while(1) { print(3) };"},
+		{"let a = 10; while(a) { let a = a - 1; println( a ); };"},
+	}
+	for _, tt := range tests {
+		l := lexer.NewLexer(tt.input)
+		p := New(l)
+		_, err := p.ParseProgram()
+		if err != nil {
+			t.Fatalf("unexpected err parsing program: %s %s", tt.input, err)
+		}
+	}
+}
+
 func TestErrors(t *testing.T) {
 	tests := []struct {
 		input string
@@ -50,15 +87,34 @@ func TestErrors(t *testing.T) {
 		{"return"},
 		{"return("},
 		{"return(3"},
+
+		{"if ( a ) "},
+		{"if ( a * ) { return 1: } "},
+		{"if ( a ) { return \"steve\"; }"},
+		{"if ( a  "},
+		{"if  a  "},
+
 		{"let a = ( 3 + 3"},
 		{"let a "},
+
+		{"print"},
+		{"print( 3 +"},
+		{"print( 3 + 3 *"},
+		{"print( 3, 3 *"},
+
+		{"while "},
+		{"while ("},
+		{"while ( 3 * 3 *"},
+		{"while ( 3 * 3  "},
+		{"while ( 3 * 3 ) print "},
+		{"while ( 3 * 3 ) { return \"steve\"; } "},
 	}
 	for _, tt := range tests {
 		l := lexer.NewLexer(tt.input)
 		p := New(l)
 		_, err := p.ParseProgram()
 		if err == nil {
-			t.Fatalf("unexpected error parsing program")
+			t.Fatalf("expected err parsing program, but got none: %s", tt.input)
 		}
 	}
 }
