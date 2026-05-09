@@ -1,11 +1,12 @@
-# s
+# s-lang
 
-This is my own take on a minimal linux x86 compiler:
+This repository contains a minimal linux x86 compiler, which generates
+assembly language, and may be compiled statically.  The generated binaries
+start at approximately 8k.
 
-* Simple compiler written in Golang.
-* Generates an AST internally.
-* Uses that to generate assembly language.
-* Invokes the external `as` and `ld` binaries to compile and link if desired.
+* Written in Golang for portability, although the generated code is AMD64-specific.
+* We have a real lexer, and parser, and internally generate an AST which is transformed into code-generation.
+* We can automatically invokes the external `as` and `ld` binaries to compile and link if desired.
 
 I was inspired by a simple compiler I saw recently:
 
@@ -56,7 +57,7 @@ The following is a tour of our language:
        call print_number
     }
 
-    # Simple comparisons are present
+    # Conditional expressions are present
     if (x >= 3 ) {
       print("x >= 3\n");
     }
@@ -125,7 +126,10 @@ primary         ::= NUMBER
 
 ## Usage
 
-Build, and optionally install, then use the `s-lang` binary with our [example.in](example.in) file:
+Once built (and optionally installed) the `s-lang` binary may be used to generate, compile, or
+inspect the output of various stages via a number of sub-commands.
+
+Here we see the four sub-commands that you might choose to use, though in practice only the last two are expected to be used regularly.
 
 
 ### lex

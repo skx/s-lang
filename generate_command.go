@@ -34,8 +34,8 @@ and linker for you.
 
 Example:
 
-    $ sysbox generate example.in
-    $ sysbox generate -output example.s example.in
+    $ s-lang generate example.in
+    $ s-lang generate -output example.s example.in
 `
 }
 

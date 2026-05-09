@@ -25,7 +25,7 @@ given input file.
 
 Example:
 
-    $ sysbox lex example.in
+    $ s-lang lex example.in
 `
 }
 

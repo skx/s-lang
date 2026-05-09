@@ -35,8 +35,8 @@ output produced by the 'generate' sub-command.
 
 Example:
 
-    $ sysbox compile example.in
-    $ sysbox compile -output example example.in
+    $ s-lang compile example.in
+    $ s-lang compile -output example example.in
 `
 }
 

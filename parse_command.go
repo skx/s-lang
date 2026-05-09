@@ -26,7 +26,7 @@ given input file.
 
 Example:
 
-    $ sysbox parse example.in
+    $ s-lang parse example.in
 `
 }
 
