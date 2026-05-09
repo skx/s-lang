@@ -137,8 +137,7 @@ mov rax, [rcx + %d*8]
 `, idx)
 
 	case *parser.StringExpr:
-		panic("expression is a string")
-		return nil
+		return fmt.Errorf("compileExpr cannot handle a string-expression")
 
 	case *parser.BinaryExpr:
 
@@ -224,7 +223,7 @@ cmp rax, 0
 setne al
 movzx rax, al`)
 		default:
-			return fmt.Errorf("unhandled token in compileExpr: %v\n", v)
+			return fmt.Errorf("unhandled token in compileExpr: %v", v)
 		}
 
 	}
@@ -235,18 +234,26 @@ movzx rax, al`)
 // its own function so that we can call it recursively for cases like "if" and "while".
 func (g *generateCommand) generateStmt(out io.Writer, stmt parser.Statement) error {
 
-	switch stmt.(type) {
+	switch s := stmt.(type) {
 
 	case *parser.If:
-		i := stmt.(*parser.If)
 
 		// Generate a unique label
 		n := g.whileCount
 		g.whileCount++
 		n++
 
-		g.compileExpr(out, i.Expression)
+		// Compile the expression, masking off strings.
+		switch s.Expression.(type) {
 
+		case *parser.StringExpr:
+			return fmt.Errorf("'if' only permits a numerical expression")
+		default:
+			err := g.compileExpr(out, s.Expression)
+			if err != nil {
+				return err
+			}
+		}
 		txt := fmt.Sprintf(`
 	cmp rax, 0
 	jz if_%d_end
@@ -254,8 +261,8 @@ func (g *generateCommand) generateStmt(out io.Writer, stmt parser.Statement) err
 		fmt.Fprint(out, txt)
 
 		// assemble the body
-		for _, s := range i.Statements {
-			err := g.generateStmt(out, s)
+		for _, st := range s.Statements {
+			err := g.generateStmt(out, st)
 			if err != nil {
 				return err
 			}
@@ -267,28 +274,28 @@ if_%d_end:
 
 	case *parser.LetStatement:
 
-		// We have two kinds of "LET f = XXX" values we handle
-		// either XXX is a single thing, be it a register or an integer literal,
-		// or it is a simple expression.
-		//
-		// We'll handle them both here
-		l := stmt.(*parser.LetStatement)
-		err := g.compileExpr(out, l.Expression)
-		if err != nil {
-			return err
+		// Compile the expression, masking off strings.
+		switch s.Expression.(type) {
+
+		case *parser.StringExpr:
+			return fmt.Errorf("'let' only permits a numerical expression")
+		default:
+			err := g.compileExpr(out, s.Expression)
+			if err != nil {
+				return err
+			}
 		}
 
 		// The value will be in RAX, save it into the appropriate
 		// variable
-		idx := rune(l.Name[0]) - 'a'
+		idx := rune(s.Name[0]) - 'a'
 		fmt.Fprintf(out, `
 lea rcx, vars
 mov [rcx + %d*8], rax
 `, idx)
 
 	case *parser.Print:
-		prn := stmt.(*parser.Print)
-		for _, item := range prn.Values {
+		for _, item := range s.Values {
 			switch v := item.(type) {
 
 			case *parser.StringExpr:
@@ -308,33 +315,39 @@ mov [rcx + %d*8], rax
 				if err != nil {
 					return err
 				}
-				txt := fmt.Sprintf(`
+				txt := `
 	call print_number
-`)
+`
 				fmt.Fprint(out, txt)
 
 			}
 		}
 
-		if prn.NewLine {
+		if s.NewLine {
 			fmt.Fprint(out, `
 	call newline
 `)
 		}
 	case *parser.Return:
-		rtn := stmt.(*parser.Return)
 
-		err := g.compileExpr(out, rtn.Expression)
-		if err != nil {
-			return err
+		// Compile the expression, masking off strings.
+		switch s.Expression.(type) {
+
+		case *parser.StringExpr:
+			return fmt.Errorf("'return' only permits a numerical expression")
+		default:
+			err := g.compileExpr(out, s.Expression)
+			if err != nil {
+				return err
+			}
 		}
-		txt := fmt.Sprintf(`
+
+		txt := `
 	call exit_with_status
-`)
+`
 		fmt.Fprint(out, txt)
 
 	case *parser.While:
-		whl := stmt.(*parser.While)
 
 		n := g.whileCount
 		g.whileCount++
@@ -345,9 +358,16 @@ while_%d_start:
 `, n)
 		fmt.Fprint(out, txt)
 
-		err := g.compileExpr(out, whl.Expression)
-		if err != nil {
-			return err
+		// Compile the expression, masking off strings.
+		switch s.Expression.(type) {
+
+		case *parser.StringExpr:
+			return fmt.Errorf("'while' only permits a numerical expression")
+		default:
+			err := g.compileExpr(out, s.Expression)
+			if err != nil {
+				return err
+			}
 		}
 
 		txt = fmt.Sprintf(`
@@ -357,7 +377,7 @@ while_%d_start:
 		fmt.Fprint(out, txt)
 
 		// assemble the body
-		for _, s := range whl.Statements {
+		for _, s := range s.Statements {
 			err := g.generateStmt(out, s)
 			if err != nil {
 				return err
@@ -368,8 +388,6 @@ while_%d_start:
 while_%d_end:
 `, n, n)
 		fmt.Fprint(out, txt)
-
-		//
 
 	default:
 		return fmt.Errorf("unhandled token in generateStmt %v", stmt)
