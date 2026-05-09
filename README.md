@@ -15,7 +15,7 @@ I was inspired by a simple compiler I saw recently:
 
 ## Example Programs
 
-See [examples/](examples/) for "real" programs:
+See [examples/](examples/) for "real" programs.  A couple of highlights:
 
 * [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100
@@ -187,7 +187,8 @@ It parses via regexp which is terrible, but also good enough to show that things
 Possible future improvements and additions, to be added slowly if ever.
 
 * [x] negative numbers (implemented in #14).
-* [ ] floating point numbers
 * [x] allow assignment of strings to variables (implemented in #16).
+* [ ] add types to our variables
+* [ ] floating point numbers
 * [ ] allow *x to get the address of x, for working with strings
 * [ ] user-defined functions (e.g. sqrt/abs)
