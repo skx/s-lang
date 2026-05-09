@@ -1,5 +1,8 @@
 ALL: factorial fizzbuzz string while
 
+clean:
+	@rm -f factorial fizzbuzz string while || true
+
 # Ensure we have the compiler
 ../s-lang:
 	cd .. ; go build . ; cd examples
