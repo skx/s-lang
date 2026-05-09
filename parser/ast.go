@@ -25,9 +25,9 @@ type Expr interface {
 	String() string
 }
 
-// IntegerExpr holds a reference to a function to call
+// FunctionCallExpr holds a reference to a function to call.
 type FunctionCallExpr struct {
-	// Name is the name of the function we should call
+	// Name is the name of the function we should call.
 	Name string
 }
 
