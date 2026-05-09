@@ -115,6 +115,7 @@ func (g *generateCommand) processFile(path string) error {
 	for k, v := range g.stringTable {
 		v = strings.Replace(v, "\n", "\\n", -1)
 		fmt.Fprintf(out, "  %s: .ascii \"%s\"\n", k, v)
+		fmt.Fprintf(out, ".skip 1  # null byte at end of string\n")
 		fmt.Fprintf(out, "  %s_end:\n", k)
 	}
 	return nil
@@ -278,10 +279,17 @@ if_%d_end:
 	case *parser.Let:
 
 		// Compile the expression, masking off strings.
-		switch s.Expression.(type) {
+		switch v := s.Expression.(type) {
 
 		case *parser.StringExpr:
-			return fmt.Errorf("'let' only permits a numerical expression")
+			str := v.Value
+			hsh := g.hashString(str)
+			g.stringTable[hsh] = str
+
+			txt := fmt.Sprintf(`
+       mov rax, offset %s
+`, hsh)
+			fmt.Fprint(out, txt)
 		default:
 			err := g.compileExpr(out, s.Expression)
 			if err != nil {
@@ -309,7 +317,7 @@ mov [rcx + %d*8], rax
 				txt := fmt.Sprintf(`
 	mov rsi, offset %s
 	mov rdx, %s_end-%s
-	call print_string
+	call print_string_with_length
 
 `, hsh, hsh, hsh)
 				fmt.Fprint(out, txt)
@@ -423,12 +431,41 @@ newline:
 	mov rdx, 1 # length
 	lea rsi, print_rax_buffer
 	mov byte ptr [rsi], '\n'
-print_string:
+
+	#
+	# RSI should point to the start of the string
+	#
+	# RDX should have the length.
+	#
+print_string_with_length:
 	mov rax, 1 # write
 	mov rdi, 1 # STDOUT
 	syscall
 	ret
 
+
+	#
+	# Print the NULL-terminated string pointed to by RAX.
+	#
+	# The length will be dynamically discovered
+print_string:
+	mov rbx, rax
+
+.loop:
+	mov al, [rbx]         # load one byte
+	test al, al           # is it zero?
+	jz .done
+
+	mov rax, 1            # sys_write
+	mov rdi, 1            # stdout
+	mov rsi, rbx          # pointer to char
+	mov rdx, 1            # length = 1
+	syscall
+
+	inc rbx               # next character
+	jmp .loop
+.done:
+	ret
 
 
 	#
@@ -526,6 +563,7 @@ func (g *generateCommand) writeHeader(f io.Writer) {
 	# Declare our library-functions
 	.global print_number
 	.global print_string
+	.global print_string_with_length
 	.global newline
 	.global exit_with_status
 
