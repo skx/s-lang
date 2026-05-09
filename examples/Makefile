@@ -1,4 +1,4 @@
-ALL: factorial fizzbuzz string
+ALL: factorial fizzbuzz string while
 
 # Ensure we have the compiler
 ../s-lang:
@@ -16,4 +16,6 @@ fizzbuzz: fizzbuzz.in ../s-lang
 string: string.in ../s-lang
 	../s-lang compile -output string string.in
 
-
+# nested while loops
+while: while.in ../s-lang
+	../s-lang compile -output while while.in
