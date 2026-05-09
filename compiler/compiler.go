@@ -116,6 +116,10 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 		fmt.Fprintf(&c.buff, `
 mov rax, %d`, v.Value)
 
+	case *parser.FunctionCallExpr:
+		fmt.Fprintf(&c.buff, `
+call %s`, v.Name)
+
 	case *parser.VariableExpr:
 		idx := rune(v.Name[0]) - 'a'
 
@@ -223,6 +227,37 @@ movzx rax, al`)
 func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 	switch s := stmt.(type) {
+
+	case *parser.Function:
+		// We're going to generate the function
+		// but we're going to do it inline, and
+		// that means we're gonna want to skip over it
+		n := c.labelCount
+		c.labelCount++
+
+		txt := fmt.Sprintf(`
+	jmp function_%d
+
+%s:
+`, n, s.Name)
+
+		fmt.Fprint(&c.buff, txt)
+
+		// Insert the body of the function
+		for _, stm := range s.Statements {
+			err := c.generateStmt(stm)
+			if err != nil {
+				return nil
+			}
+		}
+		// Now the function was written
+		// so we're gonna mark the label
+		txt = fmt.Sprintf(`
+	  # Functions will be CALL'd, so add a RET
+	  ret
+function_%d:
+`, n)
+		fmt.Fprint(&c.buff, txt)
 
 	case *parser.If:
 

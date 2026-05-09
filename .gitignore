@@ -2,5 +2,6 @@ s-lang
 a.out
 examples/factorial
 examples/fizzbuzz
+examples/functions
 examples/string
 examples/while

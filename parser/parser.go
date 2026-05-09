@@ -117,6 +117,21 @@ func (p *Parser) parsePrimary() (Expr, error) {
 			Name: tok.Value.(string),
 		}, nil
 
+	case lexer.FUNCALL:
+		start := p.l.Next()
+		if start.Type != lexer.LPAREN {
+			return nil, fmt.Errorf("missing '(' after function call")
+		}
+
+		start = p.l.Next()
+		if start.Type != lexer.RPAREN {
+			return nil, fmt.Errorf("missing ')' after function call")
+		}
+
+		return &FunctionCallExpr{
+			Name: tok.Value.(string),
+		}, nil
+
 	case lexer.STRING:
 		return &StringExpr{
 			Value: tok.Value.(string),
@@ -280,6 +295,21 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 		case lexer.SEMICOLON:
 			// NOP
+
+		case lexer.FUNCTION:
+			name := p.l.Next()
+			end := p.l.Next()
+			if end.Type != lexer.LBRACE {
+				return res, fmt.Errorf("missing '{' after function")
+			}
+
+			// Now parse the block
+			// that will terminate on "}"
+			stmts, err := p.parseStatements()
+			if err != nil {
+				return res, err
+			}
+			res = append(res, &Function{Name: name.Value.(string), Statements: stmts})
 
 		case lexer.IF:
 			start := p.l.Next()

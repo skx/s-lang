@@ -25,6 +25,18 @@ type Expr interface {
 	String() string
 }
 
+// IntegerExpr holds a reference to a function to call
+type FunctionCallExpr struct {
+	// Name is the name of the function we should call
+	Name string
+}
+
+// String returns the value of the given expression.
+func (f *FunctionCallExpr) String() string {
+	return fmt.Sprintf("%s();", f.Name)
+}
+func (FunctionCallExpr) expr() {}
+
 // IntegerExpr holds a literal integer, positive or negative.
 type IntegerExpr struct {
 	Value int64
@@ -79,6 +91,12 @@ func (BinaryExpr) expr() {}
 type Inline struct {
 	// Text is the raw text to insert into our generated source
 	Text string
+}
+
+// Function holds details about (user-defined) functions.
+type Function struct {
+	Name       string
+	Statements []Statement
 }
 
 // Let holds a let-statemnt.  Shocking.

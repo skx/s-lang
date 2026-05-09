@@ -80,6 +80,7 @@ program         ::= statements
 statements      ::= { statement }
 
 statement       ::= ";"
+                  | "function" IDENT block
                   | "let" IDENT "=" expression
                   | "if" "(" expression ")" block
                   | "inline" "{" LITERAL "}"
@@ -115,6 +116,7 @@ mulDiv          ::= primary
 primary         ::= NUMBER
                   | STRING
                   | IDENT
+                  | FUNCTION()
                   | "(" expression ")"
 ```
 
@@ -191,4 +193,5 @@ Possible future improvements and additions, to be added slowly if ever.
 * [ ] add types to our variables
 * [ ] floating point numbers
 * [ ] allow *x to get the address of x, for working with strings
-* [ ] user-defined functions (e.g. sqrt/abs)
+* [x] user-defined functions (e.g. min/max/abs/etc.)
+* [ ] arguments to user-defined functions.
