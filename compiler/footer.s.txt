@@ -3,7 +3,7 @@
         # terminating RETURN statement.
         #
         xor rax, rax
-        jp exit_with_status
+        jmp exit_with_status
 
 
 
