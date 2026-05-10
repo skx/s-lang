@@ -16,10 +16,6 @@
 print_rax_buffer:
         .skip 32
 
-        # storage for our variables
-vars:
-        .skip 26 * 8
-
         #
         # Code
         #

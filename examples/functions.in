@@ -38,10 +38,13 @@ println("Before function B is: ", b);
 # it's own scope, and the varibles have
 # different values
 #
-function debug(a, b) {
+function debug(my, name) {
 
    print("  Inside debug() A is ", a, "\n");
    print("  Inside debug() B is ", b, "\n");
+   print("  Inside debug() MY is ", my, "\n");
+   print("  Inside debug() NAME is ", name, "\n");
+
 
 }
 

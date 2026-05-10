@@ -45,7 +45,7 @@ The following is a tour of our language:
     # simple loops with "while"
     let x = 10;
 
-    # Only looping on variable values.
+    # Looping on a variable is the same as "while ( x > 0 ) .."
     while(x) {
        print("The value in my loop is ", x, "\n");
        let x = x - 1;
@@ -58,7 +58,7 @@ The following is a tour of our language:
     }
 
     # Conditional expressions are present
-    if (x >= 3 ) {
+    if (x >= 3) {
       print("x >= 3\n");
     }
 
@@ -126,10 +126,12 @@ primary         ::= NUMBER
 
 ## Usage
 
-Once built (and optionally installed) the `s-lang` binary may be used to generate, compile, or
-inspect the output of various stages via a number of sub-commands.
+Once built (and optionally installed) the `s-lang` binary may be used to
+generate, compile, or inspect the output of various stages via a number of
+sub-commands.
 
-Here we see the four sub-commands that you might choose to use, though in practice only the last two are expected to be used regularly.
+Here we see the four sub-commands that you might choose to use, though in
+practice only the last two are expected to be used regularly.
 
 
 ### lex
@@ -206,4 +208,4 @@ Possible future improvements and additions, to be added slowly if ever.
   * Implemented in [#19](https://github.com/skx/s-lang/pull/19)
 * [x] user-defined functions can access (local) variables.
   * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
-* [ ] arguments to user-defined functions.
+* [x] arguments to user-defined functions.
