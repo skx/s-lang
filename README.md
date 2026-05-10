@@ -209,3 +209,4 @@ Possible future improvements and additions, to be added slowly if ever.
 * [x] user-defined functions can access (local) variables.
   * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
 * [x] arguments to user-defined functions.
+  * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
