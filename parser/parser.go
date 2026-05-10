@@ -127,12 +127,12 @@ func (p *Parser) parsePrimary() (Expr, error) {
 		var params []Expr
 
 		for {
-			tok := p.l.Peek()
-			if tok.Type == lexer.RPAREN {
+			t := p.l.Peek()
+			if t.Type == lexer.RPAREN {
 				p.l.Next()
 				break
 			}
-			if tok.Type == lexer.COMMA {
+			if t.Type == lexer.COMMA {
 				p.l.Next()
 				continue
 			}
