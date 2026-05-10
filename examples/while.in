@@ -2,6 +2,8 @@
 # Show a pair of nested while loops
 #
 
+let sum = 0;
+
 let a = 0;
 while( a < 10 ) {
 
@@ -11,7 +13,6 @@ while( a < 10 ) {
    while( b < 10 ) {
 
       let b = b + 1;
-
       let sum = sum + 1;
    }
 }
