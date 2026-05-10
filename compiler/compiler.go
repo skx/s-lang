@@ -33,10 +33,19 @@ type Compiler struct {
 	// output to, as it is generated.
 	buff bytes.Buffer
 
-	// labelCount is used for generating labels
+	// labelCount is used for generating unique labels,
+	// these are used when compiling "if" and "while"
+	// statements.
 	labelCount int
 
 	// stringTable holds (interned) strings
+	//
+	// To ensure that each string has a stable and safe
+	// name we actually hash the string-contents and
+	// refer to them by that; this has the side-effect
+	// of providing interning - the same string might be
+	// defined/used multiple times, but only appear
+	// within the source code we generate a single time.
 	stringTable map[string]string
 
 	// functions stores the name of functions we're compiling
@@ -56,7 +65,7 @@ type Compiler struct {
 	// however for quickness they are here.
 	globalVariables []*GlobalVariable
 
-	// globalCount stores the count of global variables
+	// globalCount stores the count of global variables.
 	globalCount int
 }
 
@@ -215,6 +224,10 @@ func (c *Compiler) emitStoreVariable(name string) error {
 	return nil
 }
 
+// newGlobalLabel returns a suitable label for the global
+// variable named "name".
+//
+// TODO: The numeric suffix is probably not necessary.
 func (c *Compiler) newGlobalLabel(name string) string {
 	lbl := fmt.Sprintf("global_%s_%d", name, c.globalCount)
 	c.globalCount++
@@ -236,7 +249,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 
 	case *parser.IntegerExpr:
 		fmt.Fprintf(&c.buff, `
-mov rax, %d`, v.Value)
+	mov rax, %d`, v.Value)
 
 	case *parser.FunctionCallExpr:
 
@@ -253,8 +266,8 @@ mov rax, %d`, v.Value)
 
 		}
 		fmt.Fprintf(&c.buff, `
-call %s
-add rsp, %d
+	call %s
+	add rsp, %d
 `, v.Name, 8*len(v.Arguments))
 
 	case *parser.VariableExpr:
@@ -334,12 +347,12 @@ add rsp, %d
 
 		case lexer.GT_EQUALS:
 			fmt.Fprintln(&c.buff, `
-cmp rbx, rax
-setge al
-movzx rax, al`)
+	cmp rbx, rax
+	setge al
+	movzx rax, al`)
 		case lexer.AND:
 			fmt.Fprintln(&c.buff, `
-imul rax, rbx`)
+	imul rax, rbx`)
 		case lexer.OR:
 			fmt.Fprintln(&c.buff, `
 or rax, rbx
@@ -370,29 +383,25 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 				return err
 			}
 			fmt.Fprintf(&c.buff, `
-push rax
+	push rax
 `)
 
 		}
 		fmt.Fprintf(&c.buff, `
-call %s
-add rsp, %d
+	call %s
+	add rsp, %d
 `, s.Name, 8*len(s.Arguments))
 
 	case *parser.Function:
-
-		n := c.labelCount
-		c.labelCount++
 
 		// Add the name of this function to the end
 		// of the list.
 		c.functions = append(c.functions, s.Name)
 
 		fmt.Fprintf(&c.buff, `
-	jmp function_%d
-
-%s:
-`, n, s.Name)
+	# Skip inline function implementation
+	jmp over_function_%s
+%s:`, s.Name, s.Name)
 
 		// new function scope
 		c.pushScope()
@@ -425,8 +434,8 @@ add rsp, %d
 	pop rbp
 	ret
 
-function_%d:
-`, s.Name, n)
+over_function_%s:
+`, s.Name, s.Name)
 
 		c.popScope()
 
