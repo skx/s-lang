@@ -65,7 +65,7 @@ type Scope struct {
 func NewScope(parent *Scope) *Scope {
 	s := &Scope{
 		Parent:          parent,
-		Symbols:         map[string]Symbol{},
+		Symbols:         make(map[string]Symbol),
 		nextLocalOffset: -8,
 	}
 
