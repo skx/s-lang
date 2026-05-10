@@ -18,8 +18,10 @@ In terms of features:
 * Strings are interned, so you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
 * [Vaughan] Pratt parsing for operator precedence.
   * We have <, <=, ==, !=, >, >=, +, -, *, / operations available.
+  * We also support && and ||.
+* The ability to include inline assembly via `inline { .. }`.
 
-Limitations:
+Anti-features, or limitations:
 
 * The language is built around integers, with additional support for printing strings.
 * There are no floating-point operations, no typed operations, and only the bare minimum support for strings.
@@ -35,10 +37,9 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100
 * [examples/functions.in](examples/functions.in) - Demonstrates user-defined functions.
 
-Syntax below, and some sample code here:
+Syntax is covered pretty well in our "misc example" file:
 
-* [example.in](example.in) - Misc. Examples.
-* [if.in](if.in) - Examples of comparisons.
+* [examples/examples.in](examples/examples.in) - Misc. Examples.
 
 
 
@@ -80,8 +81,6 @@ The following is a tour of our language:
 
     # Exit with the given status
     return(1 + 2 * 3);
-
-> **NOTE**: Example files include [example.in](example.in) and [if.in](if.in).
 
 Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
 
@@ -151,32 +150,32 @@ practice only the last two are expected to be used regularly.
 
 This is an internal command to show what the lexer makes of a given input file:
 
-     s-lang lex example.in
+     s-lang lex examples/example.in
 
 
 ### parse
 
 This is an internal command to show what the parser makes of a given input file:
 
-     s-lang parse example.in
+     s-lang parse examples/example.in
 
 
 ### generate
 
 This is one of the main commands, and generates an assembly language version of the input file:
 
-     s-lang generate example.in [-o out.s]
+     s-lang generate examples/example.in [-o out.s]
 
 
 ### compile
 
 This performs the same generation as in the `generate` sub-command, but also runs the assembler and linker for you:
 
-     s-lang compile example.in [-o a.out]
+     s-lang compile examples/example.in [-o a.out]
 
 Typically you'd run something like:
 
-     s-lang compile example.in && ./a.out
+     s-lang compile examples/example.in && ./a.out
 
 
 

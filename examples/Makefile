@@ -1,11 +1,15 @@
-ALL: factorial fizzbuzz functions string while
+ALL: example factorial fizzbuzz functions string while
 
 clean:
-	@rm -f factorial fizzbuzz functions string while || true
+	@rm -f example factorial fizzbuzz functions string while || true
 
 # Ensure we have the compiler
 ../s-lang:
 	cd .. ; go build . ; cd examples
+
+# misc. syntax examples
+example: example.in ../s-lang
+	../s-lang compile -output example example.in
 
 # factorial 1-20
 factorial: factorial.in ../s-lang
