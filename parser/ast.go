@@ -128,7 +128,11 @@ type Print struct {
 	NewLine bool
 }
 
-// Return terminates the running program, with a specified exit-code.
+// Return behaves differently depending on the scope.
+//
+// In global scope it terminates the running program, with a specified exit-code.
+// Inside a function it breaks out of that function, allowing execution to continue
+// at the point the function was called from.
 type Return struct {
 	// Expression is the return code we'll have
 	Expression Expr
@@ -136,6 +140,8 @@ type Return struct {
 
 // While is our looping operation which currently allows a block of code to
 // be repeated while a variable contains a non-zero value.
+//
+// TODO: Add "break;" to terminate a while loop cleanly.
 type While struct {
 	// Expression is the expression we evaluate each time through the loop
 	Expression Expr
@@ -146,6 +152,8 @@ type While struct {
 
 // If is our conditional operation - note this is not yet implemented, and
 // when it is we don't have an Else facility in mind.
+//
+// TODO: "Else" block.
 type If struct {
 	// Expression is the expression we test before processing the statements
 	// within the block.

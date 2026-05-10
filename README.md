@@ -29,6 +29,7 @@ Anti-features, or limitations:
 That said the code is clean, readable, and it could be updated to work with floating-point reasonably easily.
 
 
+
 ## Example Programs
 
 See [examples/](examples/) for "real" programs.  A couple of highlights:
@@ -222,3 +223,7 @@ Possible future improvements and additions, to be added slowly if ever.
   * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
 * [x] arguments to user-defined functions.
   * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
+* [ ] Implement `else` support for our `if` statements.
+* [ ] Implement `break` to exit the body of a `while` statement.
+* [ ] Read `as` manual to see if there is support for dead-code elimination.
+* [ ] Constant folding - probably in a new pass after the parser.
