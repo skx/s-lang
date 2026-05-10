@@ -17,6 +17,12 @@ let b = five();
 println( "four() -> ", a, " five() -> ", b)
 
 
+#
+# Of course calling a function doesn't mean
+# we have to care about the return value.
+#
+four();
+
 
 #
 # Set some global variables
@@ -42,7 +48,7 @@ function debug(a, b) {
 #
 # Call the function
 #
-let d = debug(33, 42);
+debug(33, 42);
 
 #
 # And confirm the global scope is unchanged

@@ -254,6 +254,25 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 	switch s := stmt.(type) {
 
+	case *parser.FunctionCallExpr:
+
+		// We have to loop over the arguments in reverse
+		for i := len(s.Arguments) - 1; i >= 0; i-- {
+			// push each argument to the stack
+			err := c.compileExpr(s.Arguments[i])
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(&c.buff, `
+push rax
+`)
+
+		}
+		fmt.Fprintf(&c.buff, `
+call %s
+add rsp, %d
+`, s.Name, 8*len(s.Arguments))
+
 	case *parser.Function:
 		// We're going to generate the function
 		// but we're going to do it inline, and

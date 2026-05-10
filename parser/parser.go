@@ -479,6 +479,42 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			res = append(res, &Return{Expression: expr})
 
+		case lexer.FUNCALL:
+			// save the function name away
+			name := p.curToken.Value.(string)
+			start := p.l.Next()
+			if start.Type != lexer.LPAREN {
+				return nil, fmt.Errorf("missing '(' after function call")
+			}
+
+			// collect the arguments
+			var params []Expr
+
+			for {
+				tok := p.l.Peek()
+				if tok.Type == lexer.RPAREN {
+					p.l.Next()
+					break
+				}
+				if tok.Type == lexer.COMMA {
+					p.l.Next()
+					continue
+				}
+
+				expr, err := p.parseExpr()
+				if err != nil {
+					return nil, err
+				}
+
+				params = append(params, expr)
+			}
+
+			// copy arguments into place ..
+			res = append(res, &FunctionCallExpr{
+				Name:      name,
+				Arguments: params,
+			})
+
 		default:
 			return res, fmt.Errorf("unknown token type %v", p.curToken)
 		}
