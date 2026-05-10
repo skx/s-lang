@@ -12,6 +12,19 @@ I was inspired by a simple compiler I saw recently:
 
 * https://github.com/ismail0098-lang/Y-/tree/main
 
+In terms of features:
+
+* Single-pass compiler, which generates code.
+* Strings are interned, so you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
+* [Vaughan] Pratt parsing for operator precedence.
+  * We have <, <=, ==, !=, >, >=, +, -, *, / operations available.
+
+Limitations:
+
+* The language is built around integers, with additional support for printing strings.
+* There are no floating-point operations, no typed operations, and only the bare minimum support for strings.
+
+That said the code is clean, readable, and it could be updated to work with floating-point reasonably easily.
 
 
 ## Example Programs
