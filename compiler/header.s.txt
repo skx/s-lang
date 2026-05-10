@@ -2,12 +2,11 @@
         .global _start
 
         # Declare our library-functions
+        .global exit_with_status
+        .global newline
         .global print_number
         .global print_string
         .global print_string_with_length
-        .global newline
-        .global exit_with_status
-
 
         # Writeable data storage
         .section .bss

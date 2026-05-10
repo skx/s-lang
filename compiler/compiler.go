@@ -113,7 +113,7 @@ func (c *Compiler) Compile() (string, error) {
 		for k, v := range c.stringTable {
 			v = strings.ReplaceAll(v, "\n", "\\n")
 			fmt.Fprintf(&c.buff, "  %s: .ascii \"%s\"\n", k, v)
-			fmt.Fprintf(&c.buff, ".byte 00  # null byte at end of string\n")
+			fmt.Fprintf(&c.buff, ".byte 00\n")
 			fmt.Fprintf(&c.buff, "  %s_end:\n", k)
 		}
 	}
@@ -121,7 +121,7 @@ func (c *Compiler) Compile() (string, error) {
 	if len(c.globalVariables) > 0 {
 
 		fmt.Fprintf(&c.buff, `
-# globals
+# generated storage for global variables
 .section .data
 `)
 
@@ -129,7 +129,7 @@ func (c *Compiler) Compile() (string, error) {
 
 			fmt.Fprintf(&c.buff, `
 %s:
-    .quad 0
+	.quad 0
 `, g.Label)
 		}
 	}
@@ -194,18 +194,18 @@ func (c *Compiler) emitStoreVariable(name string) error {
 
 		if v.Offset < 0 {
 			fmt.Fprintf(&c.buff, `
-mov [rbp-%d], rax
+	mov [rbp-%d], rax
 `, -v.Offset)
 		} else {
 			fmt.Fprintf(&c.buff, `
-mov [rbp+%d], rax
+	mov [rbp+%d], rax
 `, v.Offset)
 		}
 
 	case *GlobalVariable:
 
 		fmt.Fprintf(&c.buff, `
-mov [%s], rax
+	mov [%s], rax
 `, v.Label)
 
 	default:
