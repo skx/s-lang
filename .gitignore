@@ -1,6 +1,8 @@
 s-lang
 a.out
+examples/example
 examples/factorial
+examples/fibonacci
 examples/fizzbuzz
 examples/functions
 examples/string

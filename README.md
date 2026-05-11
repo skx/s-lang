@@ -34,13 +34,14 @@ That said the code is clean, readable, and it could be updated to work with floa
 
 See [examples/](examples/) for "real" programs.  A couple of highlights:
 
-* [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20
-* [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100
+* [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20.
+* [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
+* [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
 * [examples/functions.in](examples/functions.in) - Demonstrates user-defined functions.
 
 Syntax is covered pretty well in our "misc example" file:
 
-* [examples/examples.in](examples/examples.in) - Misc. Examples.
+* [examples/example.in](examples/example.in) - Misc. Examples.
 
 
 
