@@ -1,32 +1,27 @@
-ALL: example factorial fizzbuzz functions string while
+PROGRAMS := $(basename $(wildcard *.in))
+ASMFILES := $(addsuffix .s,$(PROGRAMS))
+
+.PHONY: all clean
+
+all: $(PROGRAMS)
 
 clean:
-	@rm -f example factorial fizzbuzz functions string while || true
+	@rm -f $(PROGRAMS) $(ASMFILES)
 
 # Ensure we have the compiler
 ../s-lang:
-	cd .. ; go build . ; cd examples
+	cd .. && go build .
 
-# misc. syntax examples
-example: example.in ../s-lang
-	../s-lang compile -output example example.in
+# Optional assembly generation
+ifeq ($(ASM),1)
+GEN_ASM_CMD = ../s-lang generate -output $@.s $<
+else
+GEN_ASM_CMD = @true
+endif
 
-# factorial 1-20
-factorial: factorial.in ../s-lang
-	../s-lang compile -output factorial factorial.in
 
-# fizzbuzz 1-100
-fizzbuzz: fizzbuzz.in ../s-lang
-	../s-lang compile -output fizzbuzz fizzbuzz.in
-
-# user-defined functions
-functions: functions.in ../s-lang
-	../s-lang compile -output functions functions.in
-
-# store a string in a variable, and print it
-string: string.in ../s-lang
-	../s-lang compile -output string string.in
-
-# nested while loops
-while: while.in ../s-lang
-	../s-lang compile -output while while.in
+# Generic rule - "foo.in" becomes "foo.s" and "foo"
+%: %.in ../s-lang
+	$(GEN_ASM_CMD)
+	@# actually compile
+	../s-lang compile -output $@ $<

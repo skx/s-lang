@@ -1,0 +1,21 @@
+#
+# calculate fibonacci numbers, via recursion.
+#
+
+function fib ( n ) {
+   if ( n <= 1 ) {
+      return( 1 );
+   }
+
+   # Recursive calls
+   return ( fib(n - 1) + fib(n - 2) );
+}
+
+let m = 20; # Max number to calculate
+let x = 1;  # Current value being calculated
+
+while ( m ) {
+  print( "Calculating fib(", x, ") ", fib(x), "\n");
+  let m = m - 1;
+  let x = x + 1;
+}
