@@ -227,4 +227,5 @@ Possible future improvements and additions, to be added slowly if ever.
 * [ ] Implement `else` support for our `if` statements.
 * [ ] Implement `break` to exit the body of a `while` statement.
 * [ ] Read `as` manual to see if there is support for dead-code elimination.
-* [ ] Constant folding - probably in a new pass after the parser.
+* [x] Constant folding - probably in a new pass after the parser.
+  * Implemented in [#28](https://github.com/skx/s-lang/pull/28)
