@@ -30,44 +30,53 @@ Example:
 `
 }
 
-func (p *parseCommand) printStmt(st parser.Statement) {
+// printStmt prints out a single statement, but might call itself
+// recursively to handle while-loops and conditionals.
+func (p *parseCommand) printStmt(st parser.Statement) error {
 	switch stmt := st.(type) {
 	case *parser.Function:
-		fmt.Printf("FUNCTION Definition %s(%v);\n", stmt.Name, stmt.Parameters)
+		fmt.Fprintf(output, "FUNCTION Definition %s(%v);\n", stmt.Name, stmt.Parameters)
 	case *parser.Let:
-		fmt.Printf("LET %s = %v;\n", stmt.Name, stmt.Expression)
+		fmt.Fprintf(output, "LET %s = %v;\n", stmt.Name, stmt.Expression)
 	case *parser.Inline:
-		fmt.Printf("INLINE {%s}", stmt.Text)
+		fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
 	case *parser.Print:
 		if stmt.NewLine {
-			fmt.Printf("PRINTLN(")
+			fmt.Fprintf(output, "PRINTLN(")
 		} else {
-			fmt.Printf("PRINT(")
+			fmt.Fprintf(output, "PRINT(")
 		}
 		for _, x := range stmt.Values {
-			fmt.Printf("%v, ", x)
+			fmt.Fprintf(output, "%v, ", x)
 		}
-		fmt.Printf(")\n")
+		fmt.Fprintf(output, ")\n")
 
 	case *parser.Return:
-		fmt.Printf("RETURN(%v)\n", stmt.Expression)
+		fmt.Fprintf(output, "RETURN(%v)\n", stmt.Expression)
 	case *parser.While:
-		fmt.Printf("while(%v) {\n", stmt.Expression)
+		fmt.Fprintf(output, "while(%v) {\n", stmt.Expression)
 		for _, x := range stmt.Statements {
-			fmt.Printf("\t")
-			p.printStmt(x)
+			fmt.Fprintf(output, "\t")
+			err := p.printStmt(x)
+			if err != nil {
+				return err
+			}
 		}
-		fmt.Printf("}\n")
+		fmt.Fprintf(output, "}\n")
 	case *parser.If:
-		fmt.Printf("if(%V) { \n", stmt.Expression)
+		fmt.Fprintf(output, "if(%V) { \n", stmt.Expression)
 		for _, x := range stmt.Statements {
-			fmt.Printf("\t")
-			p.printStmt(x)
+			fmt.Fprintf(output, "\t")
+			err := p.printStmt(x)
+			if err != nil {
+				return err
+			}
 		}
-		fmt.Printf("}\n")
+		fmt.Fprintf(output, "}\n")
 	default:
-		fmt.Printf("Uknown %T %v\n", stmt, stmt)
+		return fmt.Errorf("unknown item at printStmt at %T %v", stmt, stmt)
 	}
+	return nil
 }
 
 func (p *parseCommand) parseFile(path string) error {
@@ -87,7 +96,10 @@ func (p *parseCommand) parseFile(path string) error {
 	}
 
 	for _, stmt := range program.Statements {
-		p.printStmt(stmt)
+		err := p.printStmt(stmt)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
