@@ -27,12 +27,12 @@ func (g *GlobalVariable) SymbolName() string { return g.Name }
 
 // IsGlobal returns true, as global variables are global.  This is part
 // of the Symbol interface.
-func (g *GlobalVariable) IsGlobal() bool     { return true }
+func (g *GlobalVariable) IsGlobal() bool { return true }
 
 // FunctionVariable holds details of scoped/functional variables.
 type FunctionVariable struct {
 	// Name is the name of the variable
-	Name   string
+	Name string
 
 	// Offset, relative to RBP, is where the variable is stored.
 	Offset int
@@ -44,14 +44,14 @@ func (f *FunctionVariable) SymbolName() string { return f.Name }
 
 // IsGlobal returns false, as function variables are never global.  This is part
 // of the Symbol interface.
-func (f *FunctionVariable) IsGlobal() bool     { return false }
+func (f *FunctionVariable) IsGlobal() bool { return false }
 
 // Scope stores stack-frames, and allows us to create new frames for
 // functions.
 type Scope struct {
 	// Parent holds a reference to a possible parent frame,
 	// and allows variables in lower scopes to access parent ones.
-	Parent  *Scope
+	Parent *Scope
 
 	// Symbols holds the symbols in this scope.
 	Symbols map[string]Symbol
