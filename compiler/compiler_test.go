@@ -10,22 +10,29 @@ import (
 func TestSanity(t *testing.T) {
 
 	// Empty program
-	c := New("")
-	txt, err := c.Compile()
+	c, err := New()
 	if err != nil {
-		t.Fatalf("unexpected error compiling empty program: %s", err)
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err2 := c.Compile()
+	if err2 != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err2)
 	}
 	if !strings.Contains(txt, "rax") {
 		t.Fatalf("suspicious output")
 	}
 
 	// Simple program
-	c = New(`
+	c, err = New(WithSource(`
 print("Hello, world!\n");
 
 let a = 3;
 print(a);
-`)
+`))
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+
 	txt, err = c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling basic program: %s", err)
@@ -39,16 +46,67 @@ print(a);
 func TestBroken(t *testing.T) {
 
 	// "return" cannot handle strings
-	c := New(`return "Steve";`)
-	_, err := c.Compile()
+	c, err := New(WithSource(`return "Steve";`))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	_, err = c.Compile()
 	if err == nil {
 		t.Fatalf("expected error, got none.")
 	}
 
 	// "if" doesn't like strings
-	c = New(`if ( "Steve" ) { print( 1 ); } `)
+	c, err = New(WithSource(`if ( "Steve" ) { print( 1 ); } `))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
 	_, err = c.Compile()
 	if err == nil {
 		t.Fatalf("expected error, got none.")
+	}
+}
+
+// TestConstantFolding folding attempts to ensure that constant
+// folding works.
+func TestConstantFolding(t *testing.T) {
+
+	// Simple program
+	c, err := New(WithSource(`
+# 7 is the magic number
+return( 1 + 2 * 3);
+`))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err := c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if !strings.Contains(txt, "rax, 7") {
+		t.Fatalf("suspicious output")
+	}
+
+	// Now do it again, but this time disable constant
+	// folding
+	// Simple program
+	c, err = New(WithSource(`
+# 7 is the magic number
+return( 1 + 2 * 3);
+`), WithConstantFolding(false))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err = c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if strings.Contains(txt, "rax, 7") {
+		t.Fatalf("suspicious output - looks like we've got a constant")
+	}
+	if !strings.Contains(txt, "rax, 3") {
+		t.Fatalf("suspicious output - missing the literal 3")
+	}
+	if !strings.Contains(txt, "rax, 2") {
+		t.Fatalf("suspicious output - missing the literal 2")
 	}
 }

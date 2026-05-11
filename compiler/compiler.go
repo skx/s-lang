@@ -23,6 +23,29 @@ var header string
 //go:embed footer.s.txt
 var footer string
 
+// Option defines a config-setting option for our constructor.
+//
+// We use the decorator-pattern to allow flexible updates for the
+// configuration values we allow.
+type Option func(*Compiler) error
+
+// WithConstantFolding allows specifying whether constant folding
+// is applied
+func WithConstantFolding(enable bool) Option {
+	return func(c *Compiler) error {
+		c.constantFolding = enable
+		return nil
+	}
+}
+
+// WithSource allows specifying the source code to compile
+func WithSource(source string) Option {
+	return func(c *Compiler) error {
+		c.Source = source
+		return nil
+	}
+}
+
 // Compiler holds our internal compiler state.
 type Compiler struct {
 
@@ -67,19 +90,31 @@ type Compiler struct {
 
 	// globalCount stores the count of global variables.
 	globalCount int
+
+	// constantFolding determines whether we try to
+	// optimize our AST, folding constants, before we
+	// generate code
+	constantFolding bool
 }
 
 // New creates a new compiler instance, to compile the
 // given program.
-func New(source string) *Compiler {
-	global := NewScope(nil)
+func New(options ...Option) (*Compiler, error) {
 	tmp := &Compiler{
-		Source:      source,
-		stringTable: make(map[string]string),
-		scope:       global,
+		stringTable:     make(map[string]string),
+		scope:           NewScope(nil),
+		constantFolding: true,
 	}
 
-	return tmp
+	// Allow options to override our defaults
+	for _, option := range options {
+		err := option(tmp)
+		if err != nil {
+			return tmp, err
+		}
+	}
+
+	return tmp, nil
 }
 
 // Compile produces, and returns, an assembly language
@@ -243,8 +278,61 @@ func (c *Compiler) hashString(str string) string {
 	return fmt.Sprintf("msg_%s", sha)
 }
 
+// optimizeExpr optimizes constant expressions.
+func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
+	switch v := expr.(type) {
+
+	case *parser.BinaryExpr:
+		// First recursively fold children
+		v.Left = c.optimizeExpr(v.Left)
+		v.Right = c.optimizeExpr(v.Right)
+
+		// Check if both sides are now integers
+		l, ok1 := v.Left.(*parser.IntegerExpr)
+		r, ok2 := v.Right.(*parser.IntegerExpr)
+
+		if ok1 && ok2 {
+			switch v.Op {
+
+			case lexer.PLUS:
+				return &parser.IntegerExpr{
+					Value: l.Value + r.Value,
+				}
+
+			case lexer.MINUS:
+				return &parser.IntegerExpr{
+					Value: l.Value - r.Value,
+				}
+
+			case lexer.MULTIPLY:
+				return &parser.IntegerExpr{
+					Value: l.Value * r.Value,
+				}
+
+			case lexer.DIVIDE:
+				if r.Value != 0 {
+					return &parser.IntegerExpr{
+						Value: l.Value / r.Value,
+					}
+				}
+			}
+		}
+
+		return v
+
+	default:
+		return expr
+	}
+}
+
 // compileExpr handles compiling an expression.
 func (c *Compiler) compileExpr(e parser.Expr) error {
+
+	// Convert simple expressions to their results
+	if c.constantFolding {
+		e = c.optimizeExpr(e)
+	}
+
 	switch v := e.(type) {
 
 	case *parser.IntegerExpr:
