@@ -74,7 +74,7 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		}
 		fmt.Fprintf(output, "}\n")
 	default:
-		return fmt.Errorf("Unknown item at printStmt at %T %v\n", stmt, stmt)
+		return fmt.Errorf("unknown item at printStmt at %T %v", stmt, stmt)
 	}
 	return nil
 }

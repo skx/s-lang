@@ -32,7 +32,10 @@ func TestLex(t *testing.T) {
 return(3);
 `
 	// The program we'll compile
-	f.Write([]byte(src))
+	_, err = f.Write([]byte(src))
+	if err != nil {
+		t.Fatalf("error writing %s", err)
+	}
 
 	// cleanup once done
 	defer os.Remove(f.Name())
@@ -90,7 +93,10 @@ func TestLexDriver(t *testing.T) {
 return("Steve
 `
 	// The program we'll compile
-	f.Write([]byte(src))
+	_, err = f.Write([]byte(src))
+	if err != nil {
+		t.Fatalf("error writing %s", err)
+	}
 
 	// cleanup once done
 	defer os.Remove(f.Name())
