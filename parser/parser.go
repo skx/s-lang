@@ -113,45 +113,47 @@ func (p *Parser) parsePrimary() (Expr, error) {
 		}, nil
 
 	case lexer.IDENT:
+		name := tok.Value.(string)
+
+		// function call?
+		if p.l.Peek().Type == lexer.LPAREN {
+
+			// consume '('
+			p.l.Next()
+
+			var params []Expr
+
+			for {
+				t := p.l.Peek()
+
+				if t.Type == lexer.RPAREN {
+					p.l.Next()
+					break
+				}
+
+				if t.Type == lexer.COMMA {
+					p.l.Next()
+					continue
+				}
+
+				expr, err := p.parseExpr()
+				if err != nil {
+					return nil, err
+				}
+
+				params = append(params, expr)
+			}
+
+			return &FunctionCallExpr{
+				Name:      name,
+				Arguments: params,
+			}, nil
+		}
+
+		// plain variable
 		return &VariableExpr{
-			Name: tok.Value.(string),
+			Name: name,
 		}, nil
-
-	case lexer.FUNCALL:
-		start := p.l.Next()
-		if start.Type != lexer.LPAREN {
-			return nil, fmt.Errorf("missing '(' after function call")
-		}
-
-		// collect the arguments
-		var params []Expr
-
-		for {
-			t := p.l.Peek()
-			if t.Type == lexer.RPAREN {
-				p.l.Next()
-				break
-			}
-			if t.Type == lexer.COMMA {
-				p.l.Next()
-				continue
-			}
-
-			expr, err := p.parseExpr()
-			if err != nil {
-				return nil, err
-			}
-
-			params = append(params, expr)
-		}
-
-		// copy arguments into place ..
-
-		return &FunctionCallExpr{
-			Name:      tok.Value.(string),
-			Arguments: params,
-		}, nil
-
 	case lexer.STRING:
 		return &StringExpr{
 			Value: tok.Value.(string),
@@ -170,7 +172,7 @@ func (p *Parser) parsePrimary() (Expr, error) {
 		return expr, nil
 	}
 
-	return nil, fmt.Errorf("unexpected token %v", tok)
+	return nil, fmt.Errorf("unexpected token in parsePrimary %v", tok)
 }
 
 func (p *Parser) parseComparison() (Expr, error) {
@@ -479,44 +481,52 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			res = append(res, &Return{Expression: expr})
 
-		case lexer.FUNCALL:
-			// save the function name away
+		case lexer.IDENT:
+
 			name := p.curToken.Value.(string)
-			start := p.l.Next()
-			if start.Type != lexer.LPAREN {
-				return nil, fmt.Errorf("missing '(' after function call")
+
+			// function call?
+			if p.l.Peek().Type == lexer.LPAREN {
+
+				// consume '('
+				p.l.Next()
+
+				var params []Expr
+
+				for {
+					t := p.l.Peek()
+
+					if t.Type == lexer.RPAREN {
+						p.l.Next()
+						break
+					}
+
+					if t.Type == lexer.COMMA {
+						p.l.Next()
+						continue
+					}
+
+					expr, err := p.parseExpr()
+					if err != nil {
+						return nil, err
+					}
+
+					params = append(params, expr)
+				}
+
+				res = append(res, &FunctionCallExpr{
+					Name:      name,
+					Arguments: params,
+				})
+			} else {
+
+				// plain variable
+				res = append(res, &VariableExpr{
+					Name: name,
+				})
 			}
-
-			// collect the arguments
-			var params []Expr
-
-			for {
-				tok := p.l.Peek()
-				if tok.Type == lexer.RPAREN {
-					p.l.Next()
-					break
-				}
-				if tok.Type == lexer.COMMA {
-					p.l.Next()
-					continue
-				}
-
-				expr, err := p.parseExpr()
-				if err != nil {
-					return nil, err
-				}
-
-				params = append(params, expr)
-			}
-
-			// copy arguments into place ..
-			res = append(res, &FunctionCallExpr{
-				Name:      name,
-				Arguments: params,
-			})
-
 		default:
-			return res, fmt.Errorf("unknown token type %v", p.curToken)
+			return res, fmt.Errorf("unknown token type in parseStatements: %v", p.curToken)
 		}
 
 		// repeat
