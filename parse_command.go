@@ -34,6 +34,10 @@ Example:
 // recursively to handle while-loops and conditionals.
 func (p *parseCommand) printStmt(st parser.Statement) error {
 	switch stmt := st.(type) {
+	case *parser.Break:
+		fmt.Fprintf(output, "\tBREAK;\n")
+	case *parser.Continue:
+		fmt.Fprintf(output, "\tCONTINUE;\n")
 	case *parser.Function:
 		fmt.Fprintf(output, "FUNCTION Definition %s(%v);\n", stmt.Name, stmt.Parameters)
 	case *parser.Let:

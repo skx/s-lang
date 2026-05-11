@@ -1,6 +1,9 @@
 #
-# Show a pair of nested while loops
+# Examples of using WHILE loops, nested, and with
+# both BREAK and CONTINUE.
 #
+
+print("Nested while-loops!\n")
 
 let sum = 0;
 
@@ -18,3 +21,36 @@ while( a < 10 ) {
 }
 
 print("SUM:", sum, "\n");
+
+
+
+#
+# While loop with a break in it
+#
+print("Countdown with BREAK\n");
+
+let a = 10;
+while( a > 0) {
+   print("A ", a, "\n");
+   if ( a == 5 ) {
+      break;
+   }
+   let a = a - 1;
+}
+if ( a != 5 ) {
+   print("break didn't break!" );
+}
+
+#
+# While loop with a continue
+#
+print("Countdown with CONTINUE\n");
+let b = 10;
+while( b > 0) {
+   let b = b - 1;
+   if ( b == 2 || b == 4 ) {
+      print(" CONTINUE\n")
+      continue
+   }
+   print("B ", b + 1, "\n");
+}
