@@ -2,10 +2,16 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/skx/subcommands"
 )
+
+// output is used as the output handle for all our
+// commands.  This is so that their output may be
+// captured by our test-cases
+var output io.Writer = os.Stdout
 
 // Recovery is good
 func recoverPanic() {
