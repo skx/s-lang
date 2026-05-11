@@ -63,8 +63,7 @@ func (c *compileCommand) processFile(path string) error {
 
 	err = ass.Run()
 	if err != nil {
-		fmt.Printf("Error launching as: %s\n", err)
-		os.Exit(1)
+		return (fmt.Errorf("error launching assembler: %s", err))
 	}
 
 	// remove the generated object file once complete
@@ -77,8 +76,7 @@ func (c *compileCommand) processFile(path string) error {
 
 	err = ld.Run()
 	if err != nil {
-		fmt.Printf("Error launching ld: %s\n", err)
-		os.Exit(1)
+		return (fmt.Errorf("error launching linker: %s", err))
 	}
 
 	return nil
