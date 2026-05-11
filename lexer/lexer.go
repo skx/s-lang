@@ -31,7 +31,6 @@ const (
 	// Specials
 	ASSIGN    = "="
 	COMMA     = ","
-	FUNCALL   = "FUNCALL"
 	SEMICOLON = ";"
 
 	// Paren
@@ -425,15 +424,6 @@ func (l *Lexer) Next() *Token {
 			return &Token{Value: fmt.Sprintf("unknown character %c", l.input[end]), Type: ERROR}
 		}
 
-		//
-		// We found a non-empty identifier, which
-		// wasn't converted into a `let` keyword.
-		//
-		// Return it.
-		//
-		if l.Peek().Type == LPAREN {
-			return &Token{Value: token, Type: FUNCALL}
-		}
 		return &Token{Value: token, Type: IDENT}
 
 	}

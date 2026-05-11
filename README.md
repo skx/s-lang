@@ -16,7 +16,7 @@ In terms of features:
 
 * Single-pass compiler, which generates code.
 * Strings are interned, so you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
-* [Vaughan] Pratt parsing for operator precedence.
+* Parsing using recursive descent with precedence layers.
   * We have <, <=, ==, !=, >, >=, +, -, *, / operations available.
   * We also support && and ||.
 * The ability to include inline assembly via `inline { .. }`.
@@ -131,7 +131,7 @@ mulDiv          ::= primary
 primary         ::= NUMBER
                   | STRING
                   | IDENT
-                  | FUNCTION()
+                  | FUNCTION( exprList )
                   | "(" expression ")"
 ```
 
