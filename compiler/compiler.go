@@ -61,6 +61,12 @@ type Compiler struct {
 	// statements.
 	labelCount int
 
+	// inWhile is incremented every time we enter a new
+	// while-scope.  This is required because a BREAK
+	// or CONTINUE statement is only valid inside such
+	// a loop.
+	whiles []int
+
 	// stringTable holds (interned) strings
 	//
 	// To ensure that each string has a stable and safe
@@ -461,6 +467,31 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 	switch s := stmt.(type) {
 
+	case *parser.Break:
+		if len(c.whiles) == 0 {
+			return fmt.Errorf("BREAK outside WHILE")
+		}
+		label := c.whiles[len(c.whiles)-1]
+
+		// Jump to end of the while-loop
+		txt := fmt.Sprintf(`
+	# BREAK
+	jmp while_%d_end
+`, label)
+		fmt.Fprint(&c.buff, txt)
+
+	case *parser.Continue:
+		if len(c.whiles) == 0 {
+			return fmt.Errorf("CONTINUE outside WHILE")
+		}
+
+		label := c.whiles[len(c.whiles)-1]
+		txt := fmt.Sprintf(`
+	# CONTINUE
+	jmp while_%d_start
+`, label)
+		fmt.Fprint(&c.buff, txt)
+
 	case *parser.FunctionCallExpr:
 
 		// We have to loop over the arguments in reverse
@@ -701,6 +732,9 @@ if_%d_end:
 		n := c.labelCount
 		c.labelCount++
 
+		// record the number of this while statement
+		c.whiles = append(c.whiles, n)
+
 		txt := fmt.Sprintf(`
 while_%d_start:
 `, n)
@@ -741,6 +775,9 @@ while_%d_start:
 while_%d_end:
 `, n, n)
 		fmt.Fprint(&c.buff, txt)
+
+		// remove the number from the most recent while-list
+		c.whiles = c.whiles[:len(c.whiles)-1]
 
 	default:
 		return fmt.Errorf("unhandled token in generateStmt %v", stmt)
