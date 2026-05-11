@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"os"
 
 	"s-lang/compiler"
@@ -49,9 +48,6 @@ func (g *generateCommand) processFile(path string) error {
 		return err
 	}
 
-	// Default output destination is the console
-	var out io.Writer = os.Stdout
-
 	// If a file was provided, use it instead
 	if g.output != "" {
 		var file *os.File
@@ -60,7 +56,7 @@ func (g *generateCommand) processFile(path string) error {
 			return err
 		}
 		defer file.Close()
-		out = file
+		output = file
 	}
 
 	// Create a compiler object
@@ -73,7 +69,7 @@ func (g *generateCommand) processFile(path string) error {
 	}
 
 	// Write the text to the output file/handle.
-	fmt.Fprintf(out, "%s", txt)
+	fmt.Fprintf(output, "%s", txt)
 
 	return nil
 }
