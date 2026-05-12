@@ -158,15 +158,15 @@ type While struct {
 	Statements []Statement
 }
 
-// If is our conditional operation - note this is not yet implemented, and
-// when it is we don't have an Else facility in mind.
-//
-// TODO: "Else" block.
+// If is our conditional operation.
 type If struct {
 	// Expression is the expression we test before processing the statements
 	// within the block.
 	Expression Expr
 
-	// Statements are the things we execute if the condition is true
-	Statements []Statement
+	// True are the things we execute if the condition is true.
+	True []Statement
+
+	// False are the statements we execute if the condition is not true.
+	False []Statement
 }

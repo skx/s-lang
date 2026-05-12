@@ -143,7 +143,7 @@ func TestParsePrintStmt(t *testing.T) {
 
 	// nil statement in if() body
 	i := &parser.If{
-		Statements: []parser.Statement{nil},
+		True: []parser.Statement{nil},
 	}
 	err = p.printStmt(i)
 	if err == nil {

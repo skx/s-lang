@@ -7,3 +7,4 @@ examples/fizzbuzz
 examples/functions
 examples/string
 examples/while
+examples/*.s

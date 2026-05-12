@@ -580,20 +580,42 @@ over_function_%s:
 		}
 		txt := fmt.Sprintf(`
 	cmp rax, 0
-	jz if_%d_end
+	jz if_%d_false
 `, n)
 		fmt.Fprint(&c.buff, txt)
 
 		c.pushScope()
 
 		// assemble the body
-		for _, st := range s.Statements {
+		for _, st := range s.True {
 			err := c.generateStmt(st)
 			if err != nil {
 				return err
 			}
 		}
+		txt = fmt.Sprintf(`
+	jmp if_%d_end
+`, n)
+		fmt.Fprint(&c.buff, txt)
 
+		c.popScope()
+
+		// else - might be empty
+		txt = fmt.Sprintf(`
+if_%d_false:
+`, n)
+		fmt.Fprint(&c.buff, txt)
+		c.pushScope()
+
+		if len(s.False) > 0 {
+			// assemble the body
+			for _, st := range s.False {
+				err := c.generateStmt(st)
+				if err != nil {
+					return err
+				}
+			}
+		}
 		c.popScope()
 
 		txt = fmt.Sprintf(`
