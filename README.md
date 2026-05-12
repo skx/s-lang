@@ -217,6 +217,41 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
 
 
 
+## Testing / Development
+
+Testing is largely done interactively, but there are golang tests for all the internal packages and code, with pretty high/good coverage:
+
+```
+$ cover ./...
+ok      s-lang	0.004s	coverage: 75.2% of statements
+ok      s-lang/compiler	(cached)	coverage: 75.5% of statements
+ok      s-lang/lexer	(cached)	coverage: 93.9% of statements
+ok      s-lang/parser	(cached)	coverage: 93.0% of statements
+```
+
+Run the tests as you usually would:
+
+```
+$ go test ./...
+ok      s-lang	0.005s
+ok      s-lang/compiler	0.009s
+ok      s-lang/lexer	0.006s
+ok      s-lang/parser	0.003s
+```
+
+For _real_ testing compile all the examples and run them:
+
+```
+$ cd examples && make
+$ ./factorial
+$ ./fibonacci
+$ ./functions
+$ ./while
+..
+```
+
+
+
 ## History
 
 There is a simple perl-based prototype, beneath [prototype/](prototype/), which I hacked up to see if this would be a project that was within my means.
