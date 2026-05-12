@@ -21,3 +21,9 @@ while( f ) {
   print( "Loop ", f, "\n" );
   let f = f - 1;
 }
+
+if ( 2 == 1 ) {
+   println("cats and dogs living together" );
+} else {
+   println("ELSE works :)\n");
+}
