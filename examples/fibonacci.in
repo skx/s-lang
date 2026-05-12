@@ -14,8 +14,7 @@ function fib ( n ) {
 let m = 20; # Max number to calculate
 let x = 1;  # Current value being calculated
 
-while ( m ) {
+while ( x < m ) {
   print( "Calculating fib(", x, ") ", fib(x), "\n");
-  let m = m - 1;
   let x = x + 1;
 }

@@ -1,20 +1,25 @@
+#
+# Naive recursive factorial program
+#
+
+function fact(x) {
+    if ( x < 2 ) {
+       return (1);
+    }
+    return( x * fact(x - 1) );
+}
+
+
 let m = 20; # Max number to calculate
 let n = 1;  # Current value being calculated
-let o = 1;  # old value
 
-
-while ( m ) {
+while ( n < m ) {
 
   print( "Calculating the factorial of ", n);
 
-  let f = 1;   # factorial
-  while( n ) {
-    let f = f * n;
-    let n = n - 1;
-  }
+  let f = fact(n);
 
   print(" result ", f, "\n" );
-  let m = m - 1 ;
-  let n = o + 1;
-  let o = o + 1;
+
+  let n = n + 1;
 }
