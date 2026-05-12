@@ -69,7 +69,7 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "}\n")
 	case *parser.If:
 		fmt.Fprintf(output, "if(%V) { \n", stmt.Expression)
-		for _, x := range stmt.Statements {
+		for _, x := range stmt.True {
 			fmt.Fprintf(output, "\t")
 			err := p.printStmt(x)
 			if err != nil {
@@ -77,6 +77,19 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 			}
 		}
 		fmt.Fprintf(output, "}\n")
+
+		if len(stmt.False) > 0 {
+			fmt.Fprintf(output, "else {\n")
+			for _, x := range stmt.False {
+				fmt.Fprintf(output, "\t")
+				err := p.printStmt(x)
+				if err != nil {
+					return err
+				}
+			}
+			fmt.Fprintf(output, "}\n")
+		}
+
 	default:
 		return fmt.Errorf("unknown item at printStmt at %T %v", stmt, stmt)
 	}
