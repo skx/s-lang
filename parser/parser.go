@@ -390,7 +390,26 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			if err != nil {
 				return res, err
 			}
-			res = append(res, &If{Expression: expr, Statements: stmts})
+
+			var False []Statement
+
+			// Is there a false block?
+			tok := p.l.Peek()
+			if tok.Type == lexer.ELSE {
+				p.l.Next()
+
+				end := p.l.Next()
+				if end.Type != lexer.LBRACE {
+					return res, fmt.Errorf("missing '{' after else")
+				}
+
+				False, err = p.parseStatements()
+				if err != nil {
+					return res, err
+				}
+			}
+
+			res = append(res, &If{Expression: expr, True: stmts, False: False})
 
 		case lexer.INLINE:
 			res = append(res, &Inline{Text: p.curToken.Value.(string)})

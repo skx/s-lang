@@ -48,10 +48,16 @@ func TestValid(t *testing.T) {
 		input string
 	}{
 
-		{"if(1) { return( 1 ) ; }"},
+		{"break; "},
+		{"continue; "},
+
+		{"if(1) { return( 1 ) ; } else { return (3); }"},
 		{"if(a) { return( 1 ) ; }"},
 		{"if(a < b) { return( 1 ) ; }"},
-
+		{"function test() { return ( 1 ); } ; return( test() );"},
+		{"function test() { return ( 1 ); } ; test();"},
+		{"function test(a, b, c) { return ( a + b + c ); } ; return( test(1, 2, 3) );"},
+		{"function test(a, b, c) { return ( a + b + c ); } ; test(1, 2, 3) ;"},
 		{"inline{ }"},
 
 		{"let a = 3;"},
@@ -88,8 +94,12 @@ func TestErrors(t *testing.T) {
 		{"return("},
 		{"return(3"},
 
+		{"function foo { return 3; } "},
+		{"function test() ; return ( 1 );"},
+
 		{"if ( a ) "},
 		{"if ( a * ) { return 1: } "},
+		{"if ( a * ) { return 1: } else ; "},
 		{"if ( a ) { return \"steve\"; }"},
 		{"if ( a  "},
 		{"if  a  "},
