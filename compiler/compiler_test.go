@@ -110,3 +110,42 @@ return( 1 + 2 * 3);
 		t.Fatalf("suspicious output - missing the literal 2")
 	}
 }
+
+// TestAll tests generation of code for "all things"
+func TestAll(t *testing.T) {
+
+	// Simple program
+	c, err := New(WithSource(`
+function test (n) {
+  let n = 10 - 4;
+  return( n ) ;
+}
+function testing () {
+   return( 1 + ( 4 / 2) );
+}
+let a = test(2);
+let a = a + 2;
+
+while( a ) {
+  let a = a - 1;
+}
+if ( a ) {
+  print("non-zero\n");
+}
+let s = "Steve";
+print( s );
+print( test(3));
+inline { }
+`))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err := c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if !strings.Contains(txt, "rax, 6") {
+		t.Fatalf("suspicious output")
+	}
+
+}
