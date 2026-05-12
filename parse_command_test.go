@@ -38,6 +38,10 @@ println("hello, world!\n");
 let a = 3;
 while( a ) {
   let a = a - 1;
+  continue;
+}
+while( 1 ) {
+  break;
 }
 if ( 1 ) {
   print("one\n");
