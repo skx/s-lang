@@ -1,11 +1,14 @@
 # s-lang
 
-This repository contains a minimal linux x86 compiler, which generates
-assembly language, and may be compiled statically.  The generated binaries
-start at approximately 8k.
+This repository contains a minimal linux x86 compiler, which generates assembly language for `amd64`.
+
+The generated code contains no external dependencies, so they are static and do not depend upon libC, etc.
+
+With our bundled "runtime functions" the generated binaries start at approximately 8k.
 
 * Written in Golang for portability, although the generated code is AMD64-specific.
-* We have a real lexer, and parser, and internally generate an AST which is transformed into code-generation.
+* We have a real lexer, and parser, and internally generate an AST.
+  * The AST is walked to generate an assembly representation of the program.
 * We can automatically invokes the external `as` and `ld` binaries to compile and link if desired.
 
 I was inspired by a simple compiler I saw recently:
@@ -14,19 +17,21 @@ I was inspired by a simple compiler I saw recently:
 
 In terms of features:
 
-* Single-pass compiler, which generates code.
-* Strings are interned, so you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
-* Parsing using recursive descent with precedence layers.
-  * We have <, <=, ==, !=, >, >=, +, -, *, / operations available.
-  * We also support && and ||.
+* Single-pass compiler, which generates an assembly output for programs.
+* Parsing using recursive descent with precedence layers:
+  * Maths operations: `+`, `-`, `*`, `/`
+  * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`,
+  * Logical operations: `&&` and `||`.
+* Strings are interned:
+  * So you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
 * The ability to include inline assembly via `inline { .. }`.
 * Loops via `while` (with support for `break` and `continue`).
-* Conditional support with `if`.
+* Conditional support with `if` with `else` branch too.
 
 Anti-features, or limitations:
 
 * The language is built around integers, with additional support for printing strings.
-* There are no floating-point operations, no typed operations, and only the bare minimum support for strings.
+* There are no floating-point operations, no typed operations.
 
 That said the code is clean, readable, and it could be updated to work with floating-point reasonably easily.
 
@@ -78,6 +83,8 @@ The following is a tour of our language:
     # Conditional expressions are present
     if (x >= 3) {
       print("x >= 3\n");
+    } else {
+      print("x is not >= 3\n");
     }
 
     # Printing of integer and string literal works too.
@@ -100,7 +107,7 @@ statements      ::= { statement }
 statement       ::= ";"
                   | "function" IDENT block
                   | "let" IDENT "=" expression
-                  | "if" "(" expression ")" block
+                  | "if" "(" expression ")" block [ else block ]
                   | "inline" "{" LITERAL "}"
                   | "while" "(" expression ")" block
                   | "print" "(" exprList ")"
@@ -168,16 +175,27 @@ This is an internal command to show what the parser makes of a given input file:
 
 This is one of the main commands, and generates an assembly language version of the input file:
 
-     s-lang generate examples/example.in [-o out.s]
+     s-lang generate [-output out.s] examples/example.in
+
+You could assemble that output, and link it, like so:
+
+     as -msyntax=intel -mnaked-reg out.s -o out.o
+     ld -s -o out out.o
+
+Then run:
+
+    ./out
+
+Though the `compile` sub-command does that for you.
 
 
 ### compile
 
 This performs the same generation as in the `generate` sub-command, but also runs the assembler and linker for you:
 
-     s-lang compile examples/example.in [-o a.out]
+     s-lang compile [-output a.out] examples/example.in
 
-Typically you'd run something like:
+Typically you'd run something like this to generate and execute in one go:
 
      s-lang compile examples/example.in && ./a.out
 
@@ -215,9 +233,6 @@ Possible future improvements and additions, to be added slowly if ever.
   * Implemented in [#14](https://github.com/skx/s-lang/pull/14)
 * [x] allow assignment of strings to variables.
   * Implemented in [#16](https://github.com/skx/s-lang/pull/16)
-* [ ] add types to our variables
-* [ ] floating point numbers
-* [ ] allow *x to get the address of x, for working with strings
 * [x] user-defined functions (e.g. min/max/abs/etc.)
   * Implemented in [#18](https://github.com/skx/s-lang/pull/18)
 * [x] user-defined functions can `return` values.
@@ -230,6 +245,10 @@ Possible future improvements and additions, to be added slowly if ever.
   * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
 * [x] Implement `break` and `continue` within a `while` statement.
   * Implemented in [#30](https://github.com/skx/s-lang/pull/30)
-* [ ] Read `as` manual to see if there is support for dead-code elimination.
 * [x] Constant folding - probably in a new pass after the parser.
   * Implemented in [#28](https://github.com/skx/s-lang/pull/28)
+* [ ] Read `as` manual to see if there is support for dead-code elimination.
+  * https://www.gnu.org/software/binutils/
+* [ ] add types to our variables
+* [ ] floating point numbers
+* [ ] allow *x to get the address of x, for working with strings
