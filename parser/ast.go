@@ -90,6 +90,16 @@ func (b *BinaryExpr) String() string {
 
 func (BinaryExpr) expr() {}
 
+// Break holds a break-statement, only valid within a while loop
+type Break struct {
+	// Empty
+}
+
+// Continue holds a continue-statement, only valid within a while loop
+type Continue struct {
+	// Empty
+}
+
 // Inline holds inline assembly the user wants to add to the program
 type Inline struct {
 	// Text is the raw text to insert into our generated source
@@ -140,8 +150,6 @@ type Return struct {
 
 // While is our looping operation which currently allows a block of code to
 // be repeated while a variable contains a non-zero value.
-//
-// TODO: Add "break;" to terminate a while loop cleanly.
 type While struct {
 	// Expression is the expression we evaluate each time through the loop
 	Expression Expr

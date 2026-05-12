@@ -20,6 +20,8 @@ In terms of features:
   * We have <, <=, ==, !=, >, >=, +, -, *, / operations available.
   * We also support && and ||.
 * The ability to include inline assembly via `inline { .. }`.
+* Loops via `while` (with support for `break` and `continue`).
+* Conditional support with `if`.
 
 Anti-features, or limitations:
 
@@ -225,7 +227,8 @@ Possible future improvements and additions, to be added slowly if ever.
 * [x] arguments to user-defined functions.
   * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
 * [ ] Implement `else` support for our `if` statements.
-* [ ] Implement `break` to exit the body of a `while` statement.
+* [x] Implement `break` and `continue` within a `while` statement.
+  * Implemented in [#29](https://github.com/skx/s-lang/pull/29)
 * [ ] Read `as` manual to see if there is support for dead-code elimination.
 * [x] Constant folding - probably in a new pass after the parser.
   * Implemented in [#28](https://github.com/skx/s-lang/pull/28)

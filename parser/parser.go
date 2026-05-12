@@ -315,6 +315,12 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 		switch p.curToken.Type {
 
+		case lexer.BREAK:
+			res = append(res, &Break{})
+
+		case lexer.CONTINUE:
+			res = append(res, &Continue{})
+
 		case lexer.SEMICOLON:
 			// NOP
 

@@ -119,7 +119,8 @@ func TestGenerateBroken(t *testing.T) {
 
 	src := `
 # This is an error
-return("Steve
+while( 1 ) { break; }
+break;
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))
@@ -195,8 +196,7 @@ func TestGenerateDriver(t *testing.T) {
 	}
 
 	src := `
-# This is an error
-return("Steve
+# This is fine
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))
