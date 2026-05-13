@@ -21,6 +21,7 @@ const (
 	// Statements
 	BREAK    = "BREAK"
 	CONTINUE = "CONTINUE"
+	DATA     = "DATA"
 	ELSE     = "ELSE"
 	FUNCTION = "FUNCTION"
 	IF       = "IF"
@@ -362,8 +363,7 @@ func (l *Lexer) Next() *Token {
 		//
 		// We only need handle a few.
 		//
-		if strings.ToLower(token) == "inline" {
-
+		if strings.ToLower(token) == "inline" || strings.ToLower(token) == "data" {
 			// We want to be able to handle input of
 			// the form :
 			//
@@ -398,8 +398,12 @@ func (l *Lexer) Next() *Token {
 				// and we've already bumped ot the next
 				// character so all is okay.
 				if c == '}' {
-					return &Token{Value: txt, Type: INLINE}
-
+					if strings.ToLower(token) == "inline" {
+						return &Token{Value: txt, Type: INLINE}
+					}
+					if strings.ToLower(token) == "data" {
+						return &Token{Value: txt, Type: DATA}
+					}
 				}
 				txt += string(c)
 			}

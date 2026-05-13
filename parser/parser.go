@@ -321,6 +321,9 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 		case lexer.CONTINUE:
 			res = append(res, &Continue{})
 
+		case lexer.DATA:
+			res = append(res, &Data{Text: p.curToken.Value.(string)})
+
 		case lexer.SEMICOLON:
 			// NOP
 

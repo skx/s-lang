@@ -270,3 +270,7 @@ print_rax_buffer:
 {{.Label}}: .quad 0
 {{end}}
 {{end}}
+
+{{range .Data}}
+{{.}}
+{{end}}

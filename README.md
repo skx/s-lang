@@ -21,6 +21,8 @@ In terms of features:
 * Strings are interned:
   * So you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
 * The ability to include inline assembly via `inline { .. }`.
+  * And inline data with `data { ..  }` which are guaranteed to be at the end of the file.
+  * So you can add "`.section blah .. ..`" without fear of breaking things.
 * Loops via `while` (with support for `break` and `continue`).
 * Conditional support with `if` with `else` branch too.
 
