@@ -1,0 +1,62 @@
+#
+# Get the type of the given value.
+#
+# This relies upon the fact that the function
+# returns the value of RAX, which is a string
+# containing the type.
+#
+function gettype( x ) {
+   inline {
+       call type
+   }
+}
+
+
+#
+print( "Type of int : \n\t");
+let tmp = 332;
+print(type(tmp) );
+let b = type(tmp);
+print( "\n\tAgain ", b, "\n");
+newline();
+
+
+print( "Type of string : \n\t");
+let tmp = "Steve";
+print(type(tmp) );
+let b = type(tmp);
+print( "\n\tAgain ", b, "\n");
+newline();
+
+
+#
+# We type values, so we need to shift if we want
+# to add a literal integer
+#
+# This ensures the lowest two bits are `00`.
+#
+inline {
+   mov rax, 42 << 2
+   # call print
+   # call newline
+}
+
+
+#
+# Confirm that the type persists in called functions
+#
+function typePrint( x ) {
+
+   # The first parameter will be in RAX
+   inline {
+       call type
+       call print
+   }
+   println(" Value: ", x);
+}
+
+print( "Doing stuff with inline assembly:\n");
+let a = 43;
+typePrint(a);
+let a = "This is the end";
+typePrint(a);

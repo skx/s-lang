@@ -7,27 +7,94 @@
 
 
 
+#####
+#####  Standard Library
+#####
+
         #
         # Write a newline to STDOUT.
         #
-        # Uses the "print_rax_buffer" as temporary
-        # storage, and will trash it.
-        #
 newline:
-        mov rdx, 1 # length
-        lea rsi, print_rax_buffer
-        mov byte ptr [rsi], '\n'
-
-        #
-        # RSI should point to the start of the string
-        #
-        # RDX should have the length.
-        #
-print_string_with_length:
-        mov rax, 1 # write
-        mov rdi, 1 # STDOUT
+        mov rax, 1            # sys_write
+        mov rdi, 1            # stdout
+        mov rsi, offset newline_buffer
+        mov rdx, 1            # length = 1
         syscall
         ret
+
+        #
+        # Type will return a string which describes
+        # the type of a variable
+        #
+type:
+        # Mask off the lower two bits, to get the type info
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je type_is_int
+
+        cmp rcx, 1
+        je type_is_string
+
+        cmp rcx, 2
+        je type_is_float
+
+        cmp rcx, 3
+        je type_is_reserved
+        ret
+
+type_is_int:
+        mov rax, offset type_is_int_str
+        or rax, 1
+        ret
+
+type_is_string:
+        mov rax, offset type_is_string_str
+        or rax, 1
+        ret
+
+type_is_float:
+        mov rax, offset type_is_float_str
+        or rax, 1
+        ret
+
+type_is_reserved:
+        mov rax, offset type_is_reserved_str
+        or rax, 1
+        ret
+
+
+        #
+        # Print will use the bottom bits of RAX to
+        # determine type, and call the appropriate routine
+        #
+print:
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je print_integer
+
+        cmp rcx, 1
+        je print_string
+
+        cmp rcx, 2
+        je print_float
+
+        cmp rcx, 3
+        je print_reserved
+        ret
+
+print_float:
+        lea rax, float_stub_msg
+        or rax, 1
+        jmp print_string
+
+print_reserved:
+        lea rax, reserved_stub_msg
+        or rax, 1
+        jmp print_string
 
 
         #
@@ -35,6 +102,7 @@ print_string_with_length:
         #
         # The length will be dynamically discovered
 print_string:
+        and rax, -4  # Undo typing
         mov rbx, rax
 
 .loop:
@@ -42,12 +110,13 @@ print_string:
         test al, al           # is it zero?
         jz .done
 
+        push rbx
         mov rax, 1            # sys_write
         mov rdi, 1            # stdout
         mov rsi, rbx          # pointer to char
         mov rdx, 1            # length = 1
         syscall
-
+        pop rbx
         inc rbx               # next character
         jmp .loop
 .done:
@@ -60,6 +129,7 @@ print_string:
         # Status code to use is stored in RAX
         #
 exit_with_status:
+        sar rax, 2  # undo typing
         mov rdi, rax
         mov rax, 60     # sys_exit
         syscall
@@ -76,7 +146,8 @@ exit_with_status:
 #
 # Clobbers: rax, rbx, rcx, rdx, rdi, rsi
 #
-print_number:
+print_integer:
+        sar rax, 2  # undo typing
         mov rbx, 10
         lea rdi, [print_rax_buffer+31]
         mov byte ptr [rdi], 0
@@ -135,3 +206,47 @@ print_number:
         syscall
 
         ret
+
+
+        # Writeable data storage
+        .section .data
+
+        .align 4
+newline_buffer:
+        .ascii "\n"
+
+
+        .align 4
+float_stub_msg:
+        .ascii "placeholder for FLOAT print\n"
+        .byte 00
+
+        .align 4
+reserved_stub_msg:
+        .ascii "placeholder for RESERVED print\n"
+        .byte 00
+
+        # Type strings - as returned by a call to type/type()
+        .align 4
+type_is_int_str:
+        .ascii "INTEGER"
+        .byte 00
+        .align 4
+type_is_float_str:
+        .ascii "FLOAT"
+        .byte 00
+        .align 4
+type_is_string_str:
+        .ascii "STRING"
+        .byte 00
+        .align 4
+type_is_reserved_str:
+        .ascii "RESERVED"
+        .byte 00
+
+        .section .data
+
+        # Buffer for printing numbers, and newlines
+        .align 16
+print_rax_buffer:
+        .skip 32
