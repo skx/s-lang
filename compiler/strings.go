@@ -1,4 +1,5 @@
-// Functions for our string table
+// Functions for our string table.
+
 package compiler
 
 import (

@@ -141,7 +141,7 @@ func (c *Compiler) Compile() (string, error) {
 
 	// compile each statement
 	for _, stmt := range program.Statements {
-		err := c.generateStmt(stmt)
+		err = c.generateStmt(stmt)
 		if err != nil {
 			return "", err
 		}
@@ -374,8 +374,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	sar rax, 2  # undo the type-storage
 	sar rbx, 2  # undo the type-storage
 	add rax, rbx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.MINUS:
 			fmt.Fprintln(&c.buff, `
@@ -384,8 +383,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	sar rbx, 2  # undo the type-storage
 	sub rbx, rax
 	mov rax, rbx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
@@ -393,8 +391,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	sar rax, 2  # undo the type-storage
 	sar rbx, 2  # undo the type-storage
 	imul rax, rbx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(&c.buff, `
@@ -405,8 +402,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	mov rcx, rax
 	mov rax, rbx
 	idiv rcx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# ==
@@ -415,8 +411,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	sete al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.NOT_EQUALS:
 			fmt.Fprintln(&c.buff, `
@@ -426,8 +421,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setne al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.LT:
 			fmt.Fprintln(&c.buff, `
@@ -437,8 +431,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setl al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.LT_EQUALS:
 			fmt.Fprintln(&c.buff, `
@@ -448,8 +441,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setle al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.GT:
 			fmt.Fprintln(&c.buff, `
@@ -459,8 +451,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setg al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.GT_EQUALS:
 			fmt.Fprintln(&c.buff, `
@@ -470,16 +461,14 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setge al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 		case lexer.AND:
 			fmt.Fprintln(&c.buff, `
 	# &&
 	sar rax, 2  # undo the type-storage
 	sar rbx, 2  # undo the type-storage
 	imul rax, rbx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 		case lexer.OR:
 			fmt.Fprintln(&c.buff, `
 	# ||
@@ -489,8 +478,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rax, 0
 	setne al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 		default:
 			return fmt.Errorf("unhandled token in compileExpr: %v", v)
 		}
