@@ -7,14 +7,12 @@ package compiler
 
 import (
 	"bytes"
-	"crypto/sha1"
 	_ "embed"
-	"encoding/hex"
 	"fmt"
-	"strings"
 
 	"s-lang/lexer"
 	"s-lang/parser"
+	"text/template"
 )
 
 //go:embed header.s.txt
@@ -75,7 +73,7 @@ type Compiler struct {
 	// of providing interning - the same string might be
 	// defined/used multiple times, but only appear
 	// within the source code we generate a single time.
-	stringTable map[string]string
+	stringTable *StringTable
 
 	// functions stores the name of functions we're compiling
 	// We should only be compiling one function at a time,
@@ -107,7 +105,7 @@ type Compiler struct {
 // given program.
 func New(options ...Option) (*Compiler, error) {
 	tmp := &Compiler{
-		stringTable:     make(map[string]string),
+		stringTable:     NewStringTable(),
 		scope:           NewScope(nil),
 		constantFolding: true,
 	}
@@ -143,44 +141,33 @@ func (c *Compiler) Compile() (string, error) {
 
 	// compile each statement
 	for _, stmt := range program.Statements {
-		err := c.generateStmt(stmt)
+		err = c.generateStmt(stmt)
 		if err != nil {
 			return "", err
 		}
 	}
 
-	// Write the footer
-	fmt.Fprintf(&c.buff, "%s", footer)
+	// Helper struct
+	type FooterData struct {
 
-	// If there are any string-table entries then we write them
-	// to the foot of the file.
-	if len(c.stringTable) > 0 {
+		// String data for the template rendering
+		StringTable []StringEntry
 
-		// The header
-		fmt.Fprintf(&c.buff, "\n# generated string table\n.section .data\n")
-
-		// The actual strings.
-		for k, v := range c.stringTable {
-			v = strings.ReplaceAll(v, "\n", "\\n")
-			fmt.Fprintf(&c.buff, ".align 4\n  %s: .ascii \"%s\"\n", k, v)
-			fmt.Fprintf(&c.buff, ".byte 00\n")
-		}
+		// GlobalVars has global variable storage
+		Globals []*GlobalVariable
 	}
 
-	if len(c.globalVariables) > 0 {
+	vars := &FooterData{
+		StringTable: c.stringTable.GetAll(),
+		Globals:     c.globalVariables,
+	}
 
-		fmt.Fprintf(&c.buff, `
-# generated storage for global variables
-.section .data
-`)
+	// Create a template for the footer
+	tmpl := template.Must(template.New("tmpl").Parse(footer))
 
-		for _, g := range c.globalVariables {
-
-			fmt.Fprintf(&c.buff, `
-%s:
-	.quad 0
-`, g.Label)
-		}
+	err = tmpl.Execute(&c.buff, vars)
+	if err != nil {
+		return "", err
 	}
 
 	return c.buff.String(), nil
@@ -272,15 +259,6 @@ func (c *Compiler) newGlobalLabel(name string) string {
 	lbl := fmt.Sprintf("global_%s_%d", name, c.globalCount)
 	c.globalCount++
 	return lbl
-}
-
-// hashString is used to generate a stable identifier for any string literals within
-// the program we generate - this is used primarily to allow string interning.
-func (c *Compiler) hashString(str string) string {
-	hasher := sha1.New()
-	hasher.Write([]byte(str))
-	sha := hex.EncodeToString(hasher.Sum(nil))
-	return fmt.Sprintf("msg_%s", sha)
 }
 
 // optimizeExpr optimizes constant expressions.
@@ -396,8 +374,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	sar rax, 2  # undo the type-storage
 	sar rbx, 2  # undo the type-storage
 	add rax, rbx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.MINUS:
 			fmt.Fprintln(&c.buff, `
@@ -406,8 +383,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	sar rbx, 2  # undo the type-storage
 	sub rbx, rax
 	mov rax, rbx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
@@ -415,8 +391,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	sar rax, 2  # undo the type-storage
 	sar rbx, 2  # undo the type-storage
 	imul rax, rbx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(&c.buff, `
@@ -427,8 +402,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	mov rcx, rax
 	mov rax, rbx
 	idiv rcx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# ==
@@ -437,8 +411,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	sete al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.NOT_EQUALS:
 			fmt.Fprintln(&c.buff, `
@@ -448,8 +421,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setne al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.LT:
 			fmt.Fprintln(&c.buff, `
@@ -459,8 +431,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setl al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.LT_EQUALS:
 			fmt.Fprintln(&c.buff, `
@@ -470,8 +441,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setle al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.GT:
 			fmt.Fprintln(&c.buff, `
@@ -481,8 +451,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setg al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 
 		case lexer.GT_EQUALS:
 			fmt.Fprintln(&c.buff, `
@@ -492,16 +461,14 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rbx, rax
 	setge al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 		case lexer.AND:
 			fmt.Fprintln(&c.buff, `
 	# &&
 	sar rax, 2  # undo the type-storage
 	sar rbx, 2  # undo the type-storage
 	imul rax, rbx
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 		case lexer.OR:
 			fmt.Fprintln(&c.buff, `
 	# ||
@@ -511,8 +478,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	cmp rax, 0
 	setne al
 	movzx rax, al
-	shl rax, 2  # add typing
-`)
+	shl rax, 2  # add typing`)
 		default:
 			return fmt.Errorf("unhandled token in compileExpr: %v", v)
 		}
@@ -695,14 +661,13 @@ if_%d_end:
 
 		case *parser.StringExpr:
 			str := v.Value
-			hsh := c.hashString(str)
-			c.stringTable[hsh] = str
+			id := c.stringTable.Add(str)
 
 			// remember to set the type
 			txt := fmt.Sprintf(`
        mov rax, offset %s
        or rax, 1           # store string-type
-`, hsh)
+`, id)
 			fmt.Fprint(&c.buff, txt)
 		default:
 			err := c.compileExpr(s.Expression)
@@ -753,14 +718,13 @@ if_%d_end:
 
 			case *parser.StringExpr:
 				str := v.Value
-				hsh := c.hashString(str)
-				c.stringTable[hsh] = str
+				id := c.stringTable.Add(str)
 
 				txt := fmt.Sprintf(`
 	mov rax, offset %s
 	or rax, 1   # tagged as a string
 	call print
-`, hsh)
+`, id)
 				fmt.Fprint(&c.buff, txt)
 			default:
 				err := c.compileExpr(v)
