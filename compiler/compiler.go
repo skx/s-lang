@@ -162,9 +162,8 @@ func (c *Compiler) Compile() (string, error) {
 		// The actual strings.
 		for k, v := range c.stringTable {
 			v = strings.ReplaceAll(v, "\n", "\\n")
-			fmt.Fprintf(&c.buff, "  %s: .ascii \"%s\"\n", k, v)
+			fmt.Fprintf(&c.buff, ".align 4\n  %s: .ascii \"%s\"\n", k, v)
 			fmt.Fprintf(&c.buff, ".byte 00\n")
-			fmt.Fprintf(&c.buff, "  %s_end:\n", k)
 		}
 	}
 
@@ -342,8 +341,9 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	switch v := e.(type) {
 
 	case *parser.IntegerExpr:
+		// This is an integer
 		fmt.Fprintf(&c.buff, `
-	mov rax, %d`, v.Value)
+	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
 
 	case *parser.FunctionCallExpr:
 
@@ -392,67 +392,127 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 
 		case lexer.PLUS:
 			fmt.Fprintln(&c.buff, `
-	add rax, rbx`)
+	# +
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
+	add rax, rbx
+	shl rax, 2  # add typing
+`)
 
 		case lexer.MINUS:
 			fmt.Fprintln(&c.buff, `
+	# -
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
 	sub rbx, rax
-	mov rax, rbx`)
+	mov rax, rbx
+	shl rax, 2  # add typing
+`)
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
-	imul rax, rbx`)
+	# *
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
+	imul rax, rbx
+	shl rax, 2  # add typing
+`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(&c.buff, `
+	# /
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
 	mov rdx, 0
 	mov rcx, rax
 	mov rax, rbx
-	idiv rcx`)
+	idiv rcx
+	shl rax, 2  # add typing
+`)
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
+	# ==
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
 	cmp rbx, rax
 	sete al
-	movzx rax, al`)
+	movzx rax, al
+	shl rax, 2  # add typing
+`)
 
 		case lexer.NOT_EQUALS:
 			fmt.Fprintln(&c.buff, `
+	# !=
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
 	cmp rbx, rax
 	setne al
-	movzx rax, al`)
+	movzx rax, al
+	shl rax, 2  # add typing
+`)
 
 		case lexer.LT:
 			fmt.Fprintln(&c.buff, `
+	# <
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
 	cmp rbx, rax
 	setl al
-	movzx rax, al`)
+	movzx rax, al
+	shl rax, 2  # add typing
+`)
 
 		case lexer.LT_EQUALS:
 			fmt.Fprintln(&c.buff, `
+	# <=
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
 	cmp rbx, rax
 	setle al
-	movzx rax, al`)
+	movzx rax, al
+	shl rax, 2  # add typing
+`)
 
 		case lexer.GT:
 			fmt.Fprintln(&c.buff, `
+	# >
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
 	cmp rbx, rax
 	setg al
-	movzx rax, al`)
+	movzx rax, al
+	shl rax, 2  # add typing
+`)
 
 		case lexer.GT_EQUALS:
 			fmt.Fprintln(&c.buff, `
+	# >=
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
 	cmp rbx, rax
 	setge al
-	movzx rax, al`)
+	movzx rax, al
+	shl rax, 2  # add typing
+`)
 		case lexer.AND:
 			fmt.Fprintln(&c.buff, `
-	imul rax, rbx`)
+	# &&
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
+	imul rax, rbx
+	shl rax, 2  # add typing
+`)
 		case lexer.OR:
 			fmt.Fprintln(&c.buff, `
-or rax, rbx
-cmp rax, 0
-setne al
-movzx rax, al`)
+	# ||
+	sar rax, 2  # undo the type-storage
+	sar rbx, 2  # undo the type-storage
+	or rax, rbx
+	cmp rax, 0
+	setne al
+	movzx rax, al
+	shl rax, 2  # add typing
+`)
 		default:
 			return fmt.Errorf("unhandled token in compileExpr: %v", v)
 		}
@@ -534,10 +594,10 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		}
 
 		// crude stack reservation for now
-		fmt.Fprintf(&c.buff, `
+		fmt.Fprint(&c.buff, `
 	push rbp
 	mov rbp, rsp
-	sub rsp, 8 * 64
+	sub rsp, 8 * 64  # Space for local variables
 `)
 
 		for _, stm := range s.Statements {
@@ -579,6 +639,7 @@ over_function_%s:
 			}
 		}
 		txt := fmt.Sprintf(`
+	shl rax, 2 # Undo function typing
 	cmp rax, 0
 	jz if_%d_false
 `, n)
@@ -637,8 +698,10 @@ if_%d_end:
 			hsh := c.hashString(str)
 			c.stringTable[hsh] = str
 
+			// remember to set the type
 			txt := fmt.Sprintf(`
        mov rax, offset %s
+       or rax, 1           # store string-type
 `, hsh)
 			fmt.Fprint(&c.buff, txt)
 		default:
@@ -694,11 +757,10 @@ if_%d_end:
 				c.stringTable[hsh] = str
 
 				txt := fmt.Sprintf(`
-	mov rsi, offset %s
-	mov rdx, %s_end-%s
-	call print_string_with_length
-
-`, hsh, hsh, hsh)
+	mov rax, offset %s
+	or rax, 1   # tagged as a string
+	call print
+`, hsh)
 				fmt.Fprint(&c.buff, txt)
 			default:
 				err := c.compileExpr(v)
@@ -706,7 +768,7 @@ if_%d_end:
 					return err
 				}
 				txt := `
-	call print_number
+	call print
 `
 				fmt.Fprint(&c.buff, txt)
 
@@ -739,6 +801,7 @@ if_%d_end:
 		if len(c.functions) > 0 {
 
 			txt := `
+	# RETURN
 	jmp %s_cleanup
 `
 			fmt.Fprintf(&c.buff, txt, c.functions[len(c.functions)-1])

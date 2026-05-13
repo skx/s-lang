@@ -2,7 +2,7 @@
 
 This repository contains a minimal linux x86 compiler, which generates assembly language for `amd64`.
 
-The generated code contains no external dependencies, so they are static and do not depend upon libC, etc.
+The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.
 
 With our bundled "runtime functions" the generated binaries start at approximately 8k.
 
@@ -10,10 +10,6 @@ With our bundled "runtime functions" the generated binaries start at approximate
 * We have a real lexer, and parser, and internally generate an AST.
   * The AST is walked to generate an assembly representation of the program.
 * We can automatically invokes the external `as` and `ld` binaries to compile and link if desired.
-
-I was inspired by a simple compiler I saw recently:
-
-* https://github.com/ismail0098-lang/Y-/tree/main
 
 In terms of features:
 
@@ -30,8 +26,12 @@ In terms of features:
 
 Anti-features, or limitations:
 
-* The language is built around integers, with additional support for printing strings.
-* There are no floating-point operations, no typed operations.
+* The language is built around integers, and strings.
+  * There are only a few functions in the standard library.
+  * We do have the ability to get a variable's type though.
+  * [ ] missing: strlen
+  * [ ] missing: strcmp
+* There are no floating-point operations.
 
 That said the code is clean, readable, and it could be updated to work with floating-point reasonably easily.
 
@@ -45,6 +45,7 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
 * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
 * [examples/functions.in](examples/functions.in) - Demonstrates user-defined functions.
+* [examples/types.in](examples/types.in) - Demonstrates getting variable types.
 
 Syntax is covered pretty well in our "misc example" file:
 
@@ -217,6 +218,24 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
 
 
 
+## Types
+
+At the moment we have two types:
+
+* integer
+  * Stored directly.
+* string (which is basically a pointer and a string).
+  * Stored offset
+
+We use the lowest two bits of values to denote type:
+
+* decimal 00 binary 00 -> integer
+* decimal 01 binary 01 -> pointer/string
+* decimal 02 binary 10 -> float (in the future)
+* decimal 03 binary 11 -> reserved
+
+
+
 ## Testing / Development
 
 Testing is largely done interactively, but there are golang tests for all the internal packages and code, with pretty high/good coverage:
@@ -284,6 +303,8 @@ Possible future improvements and additions, to be added slowly if ever.
   * Implemented in [#28](https://github.com/skx/s-lang/pull/28)
 * [ ] Read `as` manual to see if there is support for dead-code elimination.
   * https://www.gnu.org/software/binutils/
-* [ ] add types to our variables
+* [x] add types to our variables
+  * Implemented in [#31](https://github.com/skx/s-lang/pull/31)
+* [ ] string comparison should work
 * [ ] floating point numbers
 * [ ] allow *x to get the address of x, for working with strings
