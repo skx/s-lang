@@ -92,6 +92,12 @@ type Compiler struct {
 	// however for quickness they are here.
 	globalVariables []*GlobalVariable
 
+	// rawData stores raw data from `data { .. }` blocks
+	// inside the programs.
+	// We save them so that we can generate them, in order,
+	// at the end of our file.
+	rawData []string
+
 	// globalCount stores the count of global variables.
 	globalCount int
 
@@ -155,11 +161,15 @@ func (c *Compiler) Compile() (string, error) {
 
 		// GlobalVars has global variable storage
 		Globals []*GlobalVariable
+
+		// Data holds raw data for the file footer
+		Data []string
 	}
 
 	vars := &FooterData{
 		StringTable: c.stringTable.GetAll(),
 		Globals:     c.globalVariables,
+		Data:        c.rawData,
 	}
 
 	// Create a template for the footer
@@ -652,6 +662,9 @@ if_%d_end:
 
 	case *parser.Inline:
 		fmt.Fprint(&c.buff, "\n"+s.Text+"\n")
+
+	case *parser.Data:
+		c.rawData = append(c.rawData, s.Text)
 
 	case *parser.Let:
 

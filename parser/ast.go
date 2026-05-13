@@ -100,8 +100,18 @@ type Continue struct {
 	// Empty
 }
 
-// Inline holds inline assembly the user wants to add to the program
+// Inline holds inline assembly the user wants to add to the program.
+// Inline data is embedded whenever it is seen, unlike Data which is
+// added to the end of the program.
 type Inline struct {
+	// Text is the raw text to insert into our generated source
+	Text string
+}
+
+// Data holds inline assembly the user wants to add to the program.
+// Data is like Inline, but guaranteed to be added at the end of the
+// generated source.
+type Data struct {
 	// Text is the raw text to insert into our generated source
 	Text string
 }
