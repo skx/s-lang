@@ -13,16 +13,12 @@
 # your choice.
 #
 newline:
-        mov rax, 1                     # sys_write
-        mov rdi, 1                     # stdout
-        mov rdx, 1                     # length = 1
-        mov rsi, offset newline_buffer
+        sub     rsp, 8
+        mov     byte ptr [rsp], 10 # "\n"
+        mov     eax, 1
+        mov     edi, 1
+        mov     rsi, rsp
+        mov     edx, 1
         syscall
+        add     rsp, 8
         ret
-
-
-.section .data.newline,"aw",@progbits
-
-.align 4
-newline_buffer:
-        .ascii "\n"
