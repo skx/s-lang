@@ -47,6 +47,10 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 			s = append(s, a.String())
 		}
 		fmt.Fprintf(output, "%s(%s);\n", stmt.Name, strings.Join(s, ","))
+	case *parser.IntegerLiteral:
+		fmt.Fprintf(output, "Integer Literal %d;\n", stmt.Value)
+	case *parser.FloatLiteral:
+		fmt.Fprintf(output, "Float Literal %f;\n", stmt.Value)
 	case *parser.Let:
 		fmt.Fprintf(output, "LET %s = %v;\n", stmt.Name, stmt.Expression)
 	case *parser.Inline:
