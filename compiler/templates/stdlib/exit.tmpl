@@ -1,7 +1,18 @@
 #
-# Exit with the given status.
+# Exit the process with the status code stored in RAX
 #
-# Status code to use is stored in RAX
+# NOTE
+#######
+#
+# This is unlike all other internal functions,
+# which use the stack for parameters and RAX
+# for the argument count.
+#
+# This is because we compile "return; " statements
+# specially.  If the user were to write "exit(33);"
+# that would actually exit, but with the wrong
+# value.  (RAX would be 1 for the argument count,
+# and shifting that would result in an exit code of zero).
 #
 
 .section .text.exit,"ax",@progbits

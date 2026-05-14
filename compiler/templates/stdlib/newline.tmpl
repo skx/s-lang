@@ -4,6 +4,14 @@
 
 .section .text.newline,"ax",@progbits
 
+
+#
+# NOTE
+#######
+#
+# Zero arguments.  Or arguments are ignored, take
+# your choice.
+#
 newline:
         mov rax, 1                     # sys_write
         mov rdi, 1                     # stdout
