@@ -1,10 +1,8 @@
 # s-lang
 
-This repository contains a minimal linux x86 compiler, which generates assembly language for `amd64`.
+This repository contains a compiler for a minimal programming language, targeting linux/amd64 systems.
 
-The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.
-
-With our bundled "runtime functions" the generated binaries start at approximately 8k.
+The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 4k.
 
 * Written in Golang for portability, although the generated code is obviously Linux/AMD64-specific.
 * We have a real lexer, and parser, and internally generate an AST.
