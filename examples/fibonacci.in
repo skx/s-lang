@@ -3,10 +3,10 @@
 #
 
 function fib ( n ) {
-   if ( n == 0 ) {
+   if ( n == 1 ) {
       return( 0 );
    }
-   if ( n == 1 ) {
+   if ( n == 2 ) {
       return( 1 );
    }
 
@@ -17,7 +17,7 @@ function fib ( n ) {
 let m = 20; # Max number to calculate
 let x = 1;  # Current value being calculated
 
-while ( x < m ) {
+while ( x <= m ) {
   print( "Calculating fib(", x, ") ", fib(x), "\n");
   let x = x + 1;
 }
