@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-
-	"github.com/skx/subcommands"
 	"s-lang/lexer"
 	"s-lang/parser"
+	"strings"
+
+	"github.com/skx/subcommands"
 )
 
 // Structure for our options and state.
@@ -40,6 +41,12 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "\tCONTINUE;\n")
 	case *parser.Function:
 		fmt.Fprintf(output, "FUNCTION Definition %s(%v);\n", stmt.Name, stmt.Parameters)
+	case *parser.FunctionCallExpr:
+		s := []string{}
+		for _, a := range stmt.Arguments {
+			s = append(s, a.String())
+		}
+		fmt.Fprintf(output, "%s(%s);\n", stmt.Name, strings.Join(s, ","))
 	case *parser.Let:
 		fmt.Fprintf(output, "LET %s = %v;\n", stmt.Name, stmt.Expression)
 	case *parser.Inline:
