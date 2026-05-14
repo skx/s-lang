@@ -52,7 +52,7 @@ function typePrint( x ) {
        call type
        call print
    }
-   println(" Value: ", x);
+   print(" Value: ", x, "\n");
 }
 
 print( "Doing stuff with inline assembly:\n");
