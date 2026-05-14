@@ -13,5 +13,5 @@ jobs:
        with:
          go-version: '1.26.x'
 
-     - name: generate test coverage
+     - name: Actually run the tests
        run: go test ./...
