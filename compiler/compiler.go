@@ -713,30 +713,16 @@ if_%d_end:
 
 	case *parser.Let:
 
-		// Compile the expression, masking off strings.
-		// which require special handling.
-		switch v := s.Expression.(type) {
-
-		case *parser.StringExpr:
-			str := v.Value
-			id := c.stringTable.Add(str)
-
-			// remember to set the type
-			txt := fmt.Sprintf(`
-       mov rax, offset %s
-       or rax, 1           # store string-type
-`, id)
-			fmt.Fprint(&c.buff, txt)
-		default:
-			err := c.compileExpr(s.Expression)
-			if err != nil {
-				return err
-			}
+		// Compile the expression, leaving
+		// the result in RAX
+		err := c.compileExpr(s.Expression)
+		if err != nil {
+			return err
 		}
 
 		_, exists := c.scope.Lookup(s.Name)
 
-		// If we're compiling a function..
+		// Create a lable for the value, if necessary
 		if len(c.functions) > 0 {
 
 			// define local only if it doesn't exist already
@@ -766,6 +752,12 @@ if_%d_end:
 				c.globalVariables = append(c.globalVariables, g)
 
 			}
+		}
+
+		// Actually store RAX into the value
+		err = c.emitStoreVariable(s.Name)
+		if err != nil {
+			return err
 		}
 	case *parser.Return:
 
