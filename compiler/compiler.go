@@ -343,6 +343,7 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 	switch v := expr.(type) {
 
 	case *parser.BinaryExpr:
+
 		// First recursively fold children
 		v.Left = c.optimizeExpr(v.Left)
 		v.Right = c.optimizeExpr(v.Right)
@@ -411,12 +412,8 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 			}
 			return v
 		}
-
-		return v
-
-	default:
-		return expr
 	}
+	return expr
 }
 
 // compileExpr handles compiling an expression.
