@@ -7,7 +7,57 @@
 
 .section .text.print,"ax",@progbits
 
+         #
+         # process all variadic arguments and print
+         # each one in turn.
+         #
+         # When functions are called all arguments
+         # are pushed on the stack, and RAX is set to
+         # their count.
+         #
+         # We use the RAX/argument count to handle
+         # the looping appropriately here.
+         #
 print:
+        push rbp
+        mov  rbp, rsp
+
+        mov  rcx, rax        # rcx = argument count
+        lea  rbx, [rbp+16]   # rbx points to first argument
+
+.print_loop:
+        test rcx, rcx
+        jz   .print_done
+
+        mov  rax, [rbx]      # load current argument
+
+        push rbx
+        push rcx
+        push rbp
+
+        call print_single
+
+        pop rbp
+        pop rcx
+        pop rbx
+
+        add  rbx, 8          # next stack argument
+        dec  rcx
+        jmp  .print_loop
+
+.print_done:
+        pop  rbp
+        ret
+
+
+        #
+        # print a single thing, appropriately.
+        #
+        # The item to print is stored in RAX,
+        # and the two lower bits are used to
+        # encode the type of that item.
+        #
+print_single:
         mov rcx, rax
         and rcx, 3
 

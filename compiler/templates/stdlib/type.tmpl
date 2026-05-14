@@ -6,6 +6,11 @@
 .section .text.type,"ax",@progbits
 
 type:
+        push rbp
+        mov rbp, rsp
+
+        mov rax, [rbp+16]    # Get the argument
+
         # Mask off the lower two bits, to get the type info
         mov rcx, rax
         and rcx, 3
@@ -21,27 +26,32 @@ type:
 
         cmp rcx, 3
         je type_is_reserved
+
+type_cleanup:
+        pop rbp
         ret
+
 
 type_is_int:
         mov rax, offset type_is_int_str
         or rax, 1
-        ret
+        jmp type_cleanup
 
 type_is_string:
         mov rax, offset type_is_string_str
         or rax, 1
-        ret
+        jmp type_cleanup
 
 type_is_float:
         mov rax, offset type_is_float_str
         or rax, 1
-        ret
+        jmp type_cleanup
 
 type_is_reserved:
         mov rax, offset type_is_reserved_str
         or rax, 1
-        ret
+        jmp type_cleanup
+
 
 
 .section .data.type,"aw",@progbits

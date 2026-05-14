@@ -59,13 +59,10 @@ func TestValid(t *testing.T) {
 		{"function test(a, b, c) { return ( a + b + c ); } ; return( test(1, 2, 3) );"},
 		{"function test(a, b, c) { return ( a + b + c ); } ; test(1, 2, 3) ;"},
 		{"inline{ }"},
+		{"data{ }"},
 
-		{"let a = 3;"},
+		{"let a = 3; a ;"},
 		{"let a = 3 * 3;"},
-
-		{"print(3);"},
-		{"print(3, 3, 4);"},
-		{"println(3, 3, 4);"},
 
 		{"return(1);"},
 		{"return(a);"},
@@ -104,13 +101,13 @@ func TestErrors(t *testing.T) {
 		{"if ( a  "},
 		{"if  a  "},
 
+		{"if ( a  ) { return(1); } else "},
+
+		{"data {"},
+		{"inline {"},
+
 		{"let a = ( 3 + 3"},
 		{"let a "},
-
-		{"print"},
-		{"print( 3 +"},
-		{"print( 3 + 3 *"},
-		{"print( 3, 3 *"},
 
 		{"while "},
 		{"while ("},

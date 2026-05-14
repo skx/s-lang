@@ -14,7 +14,8 @@ function five () {
 #
 let a = four();
 let b = five();
-println( "four() -> ", a, " five() -> ", b)
+print( "four() -> ", a, " five() -> ", b);
+newline();
 
 
 #
@@ -30,8 +31,8 @@ four();
 let a = 13;
 let b = 17;
 
-println("Before function A is: ", a);
-println("Before function B is: ", b);
+print("Before function A is: ", a, "\n");
+print("Before function B is: ", b, "\n");
 
 #
 # Define a function to show that it gets
@@ -45,6 +46,10 @@ function debug(my, name) {
    print("  Inside debug() MY is ", my, "\n");
    print("  Inside debug() NAME is ", name, "\n");
 
+   let my = " my name";
+   let name = "Marlo";
+   print("  Inside debug() MY is ", my, "\n");
+   print("  Inside debug() NAME is ", name, "\n");
 
 }
 
@@ -56,8 +61,8 @@ debug(33, 42);
 #
 # And confirm the global scope is unchanged
 #
-println("A should still be 13: ", a);
-println("B should still be 17: ", b);
+print("A should still be 13: ", a, "\n");
+print("B should still be 17: ", b, "\n");
 
 
 

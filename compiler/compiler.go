@@ -384,15 +384,23 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 
 		}
 		fmt.Fprintf(&c.buff, `
+	mov rax, %d   # ABI: RAX contains argument count
 	call %s
 	add rsp, %d
-`, v.Name, 8*len(v.Arguments))
+`, len(v.Arguments), v.Name, 8*len(v.Arguments))
 
 	case *parser.VariableExpr:
 		return c.emitLoadVariable(v.Name)
 
 	case *parser.StringExpr:
-		return fmt.Errorf("compileExpr cannot handle a string-expression")
+		str := v.Value
+		id := c.stringTable.Add(str)
+
+		txt := fmt.Sprintf(`
+	mov rax, offset %s
+	or rax, 1   # tagged as a string
+`, id)
+		fmt.Fprint(&c.buff, txt)
 
 	case *parser.BinaryExpr:
 
@@ -579,9 +587,10 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 		}
 		fmt.Fprintf(&c.buff, `
+	mov rax, %d   # ABI: RAX contains argument count
 	call %s
 	add rsp, %d
-`, s.Name, 8*len(s.Arguments))
+`, len(s.Arguments), s.Name, 8*len(s.Arguments))
 
 	case *parser.Function:
 
@@ -651,7 +660,7 @@ over_function_%s:
 			}
 		}
 		txt := fmt.Sprintf(`
-	shl rax, 2 # Undo function typing
+	sar rax, 2  # undo the type-storage
 	cmp rax, 0
 	jz if_%d_false
 `, n)
@@ -704,30 +713,16 @@ if_%d_end:
 
 	case *parser.Let:
 
-		// Compile the expression, masking off strings.
-		// which require special handling.
-		switch v := s.Expression.(type) {
-
-		case *parser.StringExpr:
-			str := v.Value
-			id := c.stringTable.Add(str)
-
-			// remember to set the type
-			txt := fmt.Sprintf(`
-       mov rax, offset %s
-       or rax, 1           # store string-type
-`, id)
-			fmt.Fprint(&c.buff, txt)
-		default:
-			err := c.compileExpr(s.Expression)
-			if err != nil {
-				return err
-			}
+		// Compile the expression, leaving
+		// the result in RAX
+		err := c.compileExpr(s.Expression)
+		if err != nil {
+			return err
 		}
 
 		_, exists := c.scope.Lookup(s.Name)
 
-		// If we're compiling a function..
+		// Create a lable for the value, if necessary
 		if len(c.functions) > 0 {
 
 			// define local only if it doesn't exist already
@@ -759,39 +754,10 @@ if_%d_end:
 			}
 		}
 
-		return c.emitStoreVariable(s.Name)
-
-	case *parser.Print:
-		for _, item := range s.Values {
-			switch v := item.(type) {
-
-			case *parser.StringExpr:
-				str := v.Value
-				id := c.stringTable.Add(str)
-
-				txt := fmt.Sprintf(`
-	mov rax, offset %s
-	or rax, 1   # tagged as a string
-	call print
-`, id)
-				fmt.Fprint(&c.buff, txt)
-			default:
-				err := c.compileExpr(v)
-				if err != nil {
-					return err
-				}
-				txt := `
-	call print
-`
-				fmt.Fprint(&c.buff, txt)
-
-			}
-		}
-
-		if s.NewLine {
-			fmt.Fprint(&c.buff, `
-	call newline
-`)
+		// Actually store RAX into the value
+		err = c.emitStoreVariable(s.Name)
+		if err != nil {
+			return err
 		}
 	case *parser.Return:
 
