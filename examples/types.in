@@ -16,7 +16,7 @@ let tmp = "Steve";
 print("\t", type(tmp), "\n");
 
 let b = type(tmp);
-print( "\tAgain ", b, "\n");
+print( "\t", b, "\n");
 newline();
 
 #

@@ -46,6 +46,10 @@ function debug(my, name) {
    print("  Inside debug() MY is ", my, "\n");
    print("  Inside debug() NAME is ", name, "\n");
 
+   let my = " my name";
+   let name = "Marlo";
+   print("  Inside debug() MY is ", my, "\n");
+   print("  Inside debug() NAME is ", name, "\n");
 
 }
 
