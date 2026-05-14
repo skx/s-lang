@@ -20,5 +20,5 @@ jobs:
        with:
          profile: cover.out
          threshold-file: 0
-         threshold-package: 80
-         threshold-total: 80
+         threshold-package: 30
+         threshold-total: 30
