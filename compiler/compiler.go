@@ -392,7 +392,14 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 		return c.emitLoadVariable(v.Name)
 
 	case *parser.StringExpr:
-		return fmt.Errorf("compileExpr cannot handle a string-expression")
+		str := v.Value
+		id := c.stringTable.Add(str)
+
+		txt := fmt.Sprintf(`
+	mov rax, offset %s
+	or rax, 1   # tagged as a string
+`, id)
+		fmt.Fprint(&c.buff, txt)
 
 	case *parser.BinaryExpr:
 
@@ -757,41 +764,6 @@ if_%d_end:
 				c.globalVariables = append(c.globalVariables, g)
 
 			}
-		}
-
-		return c.emitStoreVariable(s.Name)
-
-	case *parser.Print:
-		for _, item := range s.Values {
-			switch v := item.(type) {
-
-			case *parser.StringExpr:
-				str := v.Value
-				id := c.stringTable.Add(str)
-
-				txt := fmt.Sprintf(`
-	mov rax, offset %s
-	or rax, 1   # tagged as a string
-	call print
-`, id)
-				fmt.Fprint(&c.buff, txt)
-			default:
-				err := c.compileExpr(v)
-				if err != nil {
-					return err
-				}
-				txt := `
-	call print
-`
-				fmt.Fprint(&c.buff, txt)
-
-			}
-		}
-
-		if s.NewLine {
-			fmt.Fprint(&c.buff, `
-	call newline
-`)
 		}
 	case *parser.Return:
 
