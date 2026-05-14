@@ -57,6 +57,8 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
 	case *parser.Return:
 		fmt.Fprintf(output, "RETURN(%v)\n", stmt.Expression)
+	case *parser.StringLiteral:
+		fmt.Fprintf(output, "String Literal %s;\n", stmt.Value)
 	case *parser.While:
 		fmt.Fprintf(output, "while(%v) {\n", stmt.Expression)
 		for _, x := range stmt.Statements {

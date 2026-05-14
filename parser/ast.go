@@ -62,16 +62,16 @@ func (n *FloatLiteral) String() string {
 }
 func (FloatLiteral) expr() {}
 
-// StringExpr holds a literal String.
-type StringExpr struct {
+// StringLiteral holds a literal String.
+type StringLiteral struct {
 	Value string
 }
 
 // String returns the value of the given expression.
-func (s *StringExpr) String() string {
+func (s *StringLiteral) String() string {
 	return fmt.Sprintf("\"%s\"", s.Value)
 }
-func (StringExpr) expr() {}
+func (StringLiteral) expr() {}
 
 // VariableExpr holds a variable reference.
 type VariableExpr struct {

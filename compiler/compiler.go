@@ -471,7 +471,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	case *parser.VariableExpr:
 		return c.emitLoadVariable(v.Name)
 
-	case *parser.StringExpr:
+	case *parser.StringLiteral:
 		str := v.Value
 		id := c.stringTable.Add(str)
 
@@ -736,7 +736,7 @@ over_function_%s:
 		// Compile the expression, masking off strings.
 		switch s.Expression.(type) {
 
-		case *parser.StringExpr:
+		case *parser.StringLiteral:
 			return fmt.Errorf("'if' only permits a numerical expression")
 		default:
 			err := c.compileExpr(s.Expression)
@@ -849,7 +849,7 @@ if_%d_end:
 		// Compile the expression, masking off strings.
 		switch s.Expression.(type) {
 
-		case *parser.StringExpr:
+		case *parser.StringLiteral:
 			return fmt.Errorf("'return' only permits a numerical expression")
 		default:
 			err := c.compileExpr(s.Expression)
@@ -892,7 +892,7 @@ while_%d_start:
 		// Compile the expression, masking off strings.
 		switch s.Expression.(type) {
 
-		case *parser.StringExpr:
+		case *parser.StringLiteral:
 			return fmt.Errorf("'while' only permits a numerical expression")
 		default:
 			err := c.compileExpr(s.Expression)

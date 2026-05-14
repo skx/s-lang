@@ -160,7 +160,7 @@ func (p *Parser) parsePrimary() (Expr, error) {
 			Name: name,
 		}, nil
 	case lexer.STRING:
-		return &StringExpr{
+		return &StringLiteral{
 			Value: tok.Value.(string),
 		}, nil
 
