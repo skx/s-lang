@@ -100,14 +100,6 @@ type Continue struct {
 	// Empty
 }
 
-// Inline holds inline assembly the user wants to add to the program.
-// Inline data is embedded whenever it is seen, unlike Data which is
-// added to the end of the program.
-type Inline struct {
-	// Text is the raw text to insert into our generated source
-	Text string
-}
-
 // Data holds inline assembly the user wants to add to the program.
 // Data is like Inline, but guaranteed to be added at the end of the
 // generated source.
@@ -128,6 +120,27 @@ type Function struct {
 	Statements []Statement
 }
 
+// If is our conditional operation.
+type If struct {
+	// Expression is the expression we test before processing the statements
+	// within the block.
+	Expression Expr
+
+	// True are the things we execute if the condition is true.
+	True []Statement
+
+	// False are the statements we execute if the condition is not true.
+	False []Statement
+}
+
+// Inline holds inline assembly the user wants to add to the program.
+// Inline data is embedded whenever it is seen, unlike Data which is
+// added to the end of the program.
+type Inline struct {
+	// Text is the raw text to insert into our generated source
+	Text string
+}
+
 // Let holds a let-statemnt.  Shocking.
 type Let struct {
 	// Name is the name of the variable to which we're assigning
@@ -135,17 +148,6 @@ type Let struct {
 
 	// Expression is the thing to set the name to.
 	Expression Expr
-}
-
-// Print represents a call to our stdlib "print(...)" function.
-// This is also called by the "println(...)" function parser too.
-type Print struct {
-	// Values holds a list of IDENTIFIER, INTEGERLITERAL, and STRINGLITERAL
-	// which should be printed
-	Values []Expr
-
-	// Show a newline afterward?
-	NewLine bool
 }
 
 // Return behaves differently depending on the scope.
@@ -166,17 +168,4 @@ type While struct {
 
 	// Statements are the things we execute while the condition is true
 	Statements []Statement
-}
-
-// If is our conditional operation.
-type If struct {
-	// Expression is the expression we test before processing the statements
-	// within the block.
-	Expression Expr
-
-	// True are the things we execute if the condition is true.
-	True []Statement
-
-	// False are the statements we execute if the condition is not true.
-	False []Statement
 }

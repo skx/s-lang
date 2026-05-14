@@ -457,41 +457,6 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			}
 			res = append(res, &While{Expression: val, Statements: stmts})
 
-		case lexer.PRINT, lexer.PRINTLN:
-			calledAs := p.curToken.Type
-			start := p.l.Next()
-
-			if start.Type != lexer.LPAREN {
-				return res, fmt.Errorf("missing '(' after print")
-			}
-
-			var x []Expr
-
-			expr, err := p.parseExpr()
-			if err != nil {
-				return nil, err
-			}
-			x = append(x, expr)
-
-			for {
-				tok := p.l.Peek()
-				if tok.Type == lexer.RPAREN {
-					p.l.Next()
-					break
-				}
-				if tok.Type == lexer.COMMA {
-					p.l.Next()
-					expr, err = p.parseExpr()
-					if err != nil {
-						return nil, err
-					}
-
-					x = append(x, expr)
-				}
-			}
-
-			res = append(res, &Print{Values: x, NewLine: (calledAs == lexer.PRINTLN)})
-
 		case lexer.RETURN:
 			start := p.l.Next()
 			if start.Type != lexer.LPAREN {
