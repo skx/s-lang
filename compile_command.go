@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -51,7 +52,11 @@ func (c *compileCommand) processFile(path string) error {
 	}
 
 	// cleanup once done
-	defer os.Remove(f.Name())
+	defer func() {
+		if err := os.Remove(f.Name()); err != nil {
+			log.Printf("Removing %s failed %s\n", f.Name(), err)
+		}
+	}()
 
 	// Use our generate Command as a helper
 	g := &generateCommand{output: f.Name()}
@@ -71,7 +76,11 @@ func (c *compileCommand) processFile(path string) error {
 	}
 
 	// remove the generated object file once complete
-	defer os.Remove(f.Name() + ".o")
+	defer func() {
+		if err := os.Remove(f.Name() + ".o"); err != nil {
+			log.Printf("Removing %s.o failed %s\n", f.Name(), err)
+		}
+	}()
 
 	// link command - might be more verbose
 	ldArgs := []string{"ld", "--gc-sections", "-s", "-o", c.output, f.Name() + ".o"}
