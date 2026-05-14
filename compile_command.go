@@ -12,11 +12,15 @@ type compileCommand struct {
 
 	// output will be the file to generate
 	output string
+
+	// verbose will show sections which were removed
+	verbose bool
 }
 
 // Arguments adds per-command args to the object.
 func (c *compileCommand) Arguments(f *flag.FlagSet) {
 	f.StringVar(&c.output, "output", "a.out", "Where to write the generated binary")
+	f.BoolVar(&c.verbose, "verbose", false, "Show more detail")
 }
 
 // Info returns the name of this subcommand.
@@ -69,8 +73,13 @@ func (c *compileCommand) processFile(path string) error {
 	// remove the generated object file once complete
 	defer os.Remove(f.Name() + ".o")
 
-	// link
-	ld := exec.Command("ld", "--gc-sections", "--print-gc-sections", "-s", "-o", c.output, f.Name()+".o")
+	// link command - might be more verbose
+	ldArgs := []string{"ld", "--gc-sections", "-s", "-o", c.output, f.Name() + ".o"}
+	if c.verbose {
+		ldArgs = append(ldArgs, "--print-gc-sections")
+	}
+
+	ld := exec.Command(ldArgs[0], ldArgs[1:]...)
 	ld.Stdout = os.Stdout
 	ld.Stderr = os.Stderr
 
