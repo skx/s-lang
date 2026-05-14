@@ -1,61 +1,31 @@
 #
-# Get the type of the given value.
+# Show type of variables.
 #
-# This relies upon the fact that the function
-# returns the value of RAX, which is a string
-# containing the type.
-#
-function gettype( x ) {
-   inline {
-       call type
-   }
-}
 
-
-#
-print( "Type of int : \n\t");
+print( "Type of int : \n");
 let tmp = 332;
-print(type(tmp) );
+print("\t", type(tmp), "\n" );
+
 let b = type(tmp);
-print( "\n\tAgain ", b, "\n");
+print( "\t", b, "\n");
 newline();
 
 
-print( "Type of string : \n\t");
+print( "Type of string : \n");
 let tmp = "Steve";
-print(type(tmp) );
+print("\t", type(tmp), "\n");
+
 let b = type(tmp);
-print( "\n\tAgain ", b, "\n");
+print( "\tAgain ", b, "\n");
 newline();
-
-
-#
-# We type values, so we need to shift if we want
-# to add a literal integer
-#
-# This ensures the lowest two bits are `00`.
-#
-inline {
-   mov rax, 42 << 2
-   # call print
-   # call newline
-}
-
 
 #
 # Confirm that the type persists in called functions
 #
 function typePrint( x ) {
-
-   # The first parameter will be in RAX
-   inline {
-       call type
-       call print
-   }
-   print(" Value: ", x, "\n");
+   print("Value:", x, " Type:", type(x), "\n");
 }
 
-print( "Doing stuff with inline assembly:\n");
 let a = 43;
 typePrint(a);
 let a = "This is the end";
