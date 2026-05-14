@@ -1,0 +1,17 @@
+name: Run Tests
+on: [pull_request]
+
+jobs:
+  test-cases:
+    runs-on: ubuntu-latest
+    steps:
+     - name: Checkout repo
+       uses: actions/checkout@v3
+
+     - name: Setup Go
+       uses: actions/setup-go@v6
+       with:
+         go-version: '1.26.x'
+
+     - name: Actually run the tests
+       run: go test ./...
