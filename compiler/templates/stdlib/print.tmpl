@@ -1,0 +1,153 @@
+#
+# Print a thing to STDOUT.
+#
+# The lower two bits will determine the type of the thing
+# to be printed, and dispatch to the correct location.
+#
+
+.section .text.print,"ax",@progbits
+
+print:
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je print_integer
+
+        cmp rcx, 1
+        je print_string
+
+        cmp rcx, 2
+        je print_float
+
+        cmp rcx, 3
+        je print_reserved
+        ret
+
+
+#
+# Convert the integer in RAX into ASCII and print it to the console.
+#
+# Uses the "print_rax_buffer" as temporary storage, and will trash it.
+#
+print_integer:
+        sar rax, 2  # undo typing
+        mov rbx, 10
+        lea rdi, [print_rax_buffer+31]
+        mov byte ptr [rdi], 0
+        dec rdi
+
+        # Track sign in rcx
+        xor rcx, rcx
+
+        # If negative:
+        test rax, rax
+        jns .convert_loop_start
+
+        neg rax
+        mov rcx, 1              # remember number was negative
+
+.convert_loop_start:
+
+        # Special case for 0
+        test rax, rax
+        jnz .convert_loop
+
+        mov byte ptr [rdi], '0'
+        dec rdi
+        jmp .after_convert
+
+.convert_loop:
+        xor rdx, rdx
+        div rbx
+        add dl, '0'
+        mov [rdi], dl
+        dec rdi
+        test rax, rax
+        jnz .convert_loop
+
+.after_convert:
+
+        # Add minus sign if needed
+        test rcx, rcx
+        jz .done_sign
+
+        mov byte ptr [rdi], '-'
+        dec rdi
+
+.done_sign:
+
+        inc rdi              # rdi = pointer to string start
+
+        # compute length in rdx
+        lea rsi, [print_rax_buffer+31]
+        mov rdx, rsi
+        sub rdx, rdi
+
+        mov rax, 1           # sys_write
+        mov rsi, rdi         # buffer
+        mov rdi, 1           # stdout
+        syscall
+
+        ret
+
+
+#
+# Print the NULL-terminated string pointed to by RAX.
+#
+print_string:
+        and rax, -4  # Undo typing
+        mov rbx, rax
+
+.loop:
+        mov al, [rbx]         # load one byte
+        test al, al           # is it zero?
+        jz .done
+
+        push rbx
+        mov rax, 1            # sys_write
+        mov rdi, 1            # stdout
+        mov rsi, rbx          # pointer to char
+        mov rdx, 1            # length = 1
+        syscall
+        pop rbx
+        inc rbx               # next character
+        jmp .loop
+.done:
+        ret
+
+
+#
+# Printing of floats is not yet supported.
+#
+print_float:
+        lea rax, float_stub_msg
+        or rax, 1
+        jmp print_string
+
+#
+# This type is not yet used for anything
+#
+print_reserved:
+        lea rax, reserved_stub_msg
+        or rax, 1
+        jmp print_string
+
+
+.section .data.print,"aw",@progbits
+
+.align 4
+float_stub_msg:
+        .ascii "placeholder for FLOAT print\n"
+        .byte 00
+
+.align 4
+reserved_stub_msg:
+        .ascii "placeholder for RESERVED print\n"
+        .byte 00
+
+
+# Buffer for printing integers
+.align 16
+print_rax_buffer:
+        .skip 32

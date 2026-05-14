@@ -6,185 +6,18 @@
         jmp exit
 
 
-{{template "stdlib" .}}
-
-.section .text
-
 #####
 #####  Standard Library
 #####
 
+{{template "stdlib" .}}
 
-
-        #
-        # Write a newline to STDOUT.
-        #
-newline:
-        mov rax, 1            # sys_write
-        mov rdi, 1            # stdout
-        mov rsi, offset newline_buffer
-        mov rdx, 1            # length = 1
-        syscall
-        ret
-
-
-        #
-        # Print will use the bottom bits of RAX to
-        # determine type, and call the appropriate routine
-        #
-print:
-        mov rcx, rax
-        and rcx, 3
-
-        cmp rcx, 0
-        je print_integer
-
-        cmp rcx, 1
-        je print_string
-
-        cmp rcx, 2
-        je print_float
-
-        cmp rcx, 3
-        je print_reserved
-        ret
-
-print_float:
-        lea rax, float_stub_msg
-        or rax, 1
-        jmp print_string
-
-print_reserved:
-        lea rax, reserved_stub_msg
-        or rax, 1
-        jmp print_string
-
-
-        #
-        # Print the NULL-terminated string pointed to by RAX.
-        #
-        # The length will be dynamically discovered
-print_string:
-        and rax, -4  # Undo typing
-        mov rbx, rax
-
-.loop:
-        mov al, [rbx]         # load one byte
-        test al, al           # is it zero?
-        jz .done
-
-        push rbx
-        mov rax, 1            # sys_write
-        mov rdi, 1            # stdout
-        mov rsi, rbx          # pointer to char
-        mov rdx, 1            # length = 1
-        syscall
-        pop rbx
-        inc rbx               # next character
-        jmp .loop
-.done:
-        ret
-
-
-
-#
-# Convert the integer in RAX into
-# ASCII and print it to the console.
-#
-# Uses the "print_rax_buffer" as temporary
-# storage, and will trash it.
-#
-# Clobbers: rax, rbx, rcx, rdx, rdi, rsi
-#
-print_integer:
-        sar rax, 2  # undo typing
-        mov rbx, 10
-        lea rdi, [print_rax_buffer+31]
-        mov byte ptr [rdi], 0
-        dec rdi
-
-        # Track sign in rcx
-        xor rcx, rcx
-
-        # If negative:
-        test rax, rax
-        jns .convert_loop_start
-
-        neg rax
-        mov rcx, 1              # remember number was negative
-
-.convert_loop_start:
-
-        # Special case for 0
-        test rax, rax
-        jnz .convert_loop
-
-        mov byte ptr [rdi], '0'
-        dec rdi
-        jmp .after_convert
-
-.convert_loop:
-        xor rdx, rdx
-        div rbx
-        add dl, '0'
-        mov [rdi], dl
-        dec rdi
-        test rax, rax
-        jnz .convert_loop
-
-.after_convert:
-
-        # Add minus sign if needed
-        test rcx, rcx
-        jz .done_sign
-
-        mov byte ptr [rdi], '-'
-        dec rdi
-
-.done_sign:
-
-        inc rdi              # rdi = pointer to string start
-
-        # compute length in rdx
-        lea rsi, [print_rax_buffer+31]
-        mov rdx, rsi
-        sub rdx, rdi
-
-        mov rax, 1           # sys_write
-        mov rsi, rdi         # buffer
-        mov rdi, 1           # stdout
-        syscall
-
-        ret
-
-
-        # Writeable data storage
-        .section .data
-
-        .align 4
-newline_buffer:
-        .ascii "\n"
-
-
-        .align 4
-float_stub_msg:
-        .ascii "placeholder for FLOAT print\n"
-        .byte 00
-
-        .align 4
-reserved_stub_msg:
-        .ascii "placeholder for RESERVED print\n"
-        .byte 00
-
-        .section .data
-
-        # Buffer for printing numbers, and newlines
-        .align 16
-print_rax_buffer:
-        .skip 32
 
 {{ if .StringTable }}
-# Storage for static strings
+
+#####
+##### Storage for strings
+#####
 .section .data
 
 {{range .StringTable }}
@@ -196,13 +29,23 @@ print_rax_buffer:
 {{end}}
 
 {{if .Globals}}
-# Storage for global variables
+
+#####
+##### Storage for global variables
+#####
 .section .data
+
 {{range .Globals }}
 {{.Label}}: .quad 0
 {{end}}
 {{end}}
+{{if .Data}}
+
+#####
+##### User-Defined "data { ... }" blocks
+#####
 
 {{range .Data}}
 {{.}}
+{{end}}
 {{end}}

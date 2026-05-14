@@ -1,0 +1,20 @@
+#
+# Write a newline to STDOUT.
+#
+
+.section .text.newline,"ax",@progbits
+
+newline:
+        mov rax, 1                     # sys_write
+        mov rdi, 1                     # stdout
+        mov rdx, 1                     # length = 1
+        mov rsi, offset newline_buffer
+        syscall
+        ret
+
+
+.section .data.newline,"aw",@progbits
+
+.align 4
+newline_buffer:
+        .ascii "\n"
