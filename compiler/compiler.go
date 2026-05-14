@@ -348,34 +348,68 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 		v.Right = c.optimizeExpr(v.Right)
 
 		// Check if both sides are now integers
-		l, ok1 := v.Left.(*parser.IntegerLiteral)
-		r, ok2 := v.Right.(*parser.IntegerLiteral)
+		lI, okI1 := v.Left.(*parser.IntegerLiteral)
+		rI, okI2 := v.Right.(*parser.IntegerLiteral)
 
-		if ok1 && ok2 {
+		if okI1 && okI2 {
 			switch v.Op {
 
 			case lexer.PLUS:
 				return &parser.IntegerLiteral{
-					Value: l.Value + r.Value,
+					Value: lI.Value + rI.Value,
 				}
 
 			case lexer.MINUS:
 				return &parser.IntegerLiteral{
-					Value: l.Value - r.Value,
+					Value: lI.Value - rI.Value,
 				}
 
 			case lexer.MULTIPLY:
 				return &parser.IntegerLiteral{
-					Value: l.Value * r.Value,
+					Value: lI.Value * rI.Value,
 				}
 
 			case lexer.DIVIDE:
-				if r.Value != 0 {
+				if rI.Value != 0 {
 					return &parser.IntegerLiteral{
-						Value: l.Value / r.Value,
+						Value: lI.Value / rI.Value,
 					}
 				}
 			}
+
+			return v
+		}
+
+		// Check if both sides are now floats
+		lF, okF1 := v.Left.(*parser.FloatLiteral)
+		rF, okF2 := v.Right.(*parser.FloatLiteral)
+
+		if okF1 && okF2 {
+			switch v.Op {
+
+			case lexer.PLUS:
+				return &parser.FloatLiteral{
+					Value: lF.Value + rF.Value,
+				}
+
+			case lexer.MINUS:
+				return &parser.FloatLiteral{
+					Value: lF.Value - rF.Value,
+				}
+
+			case lexer.MULTIPLY:
+				return &parser.FloatLiteral{
+					Value: lF.Value * rF.Value,
+				}
+
+			case lexer.DIVIDE:
+				if rF.Value != 0 {
+					return &parser.FloatLiteral{
+						Value: lF.Value / rF.Value,
+					}
+				}
+			}
+			return v
 		}
 
 		return v
