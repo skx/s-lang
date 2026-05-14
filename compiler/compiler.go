@@ -51,10 +51,15 @@ func WithSource(source string) Option {
 type Compiler struct {
 
 	// Source holds the source program we'll work on.
+
 	Source string
 
-	// buff is the writer object we use to send our
-	// output to, as it is generated.
+	// buff is the writer object we send all generated
+	// assembly code to - as well as the static header,
+	// footer, and standard library code.
+	//
+	// We use a handle so we may easily have the output
+	// sent to an actual file, or STDOUT.
 	buff bytes.Buffer
 
 	// labelCount is used for generating unique labels,
@@ -62,13 +67,18 @@ type Compiler struct {
 	// statements.
 	labelCount int
 
-	// inWhile is incremented every time we enter a new
-	// while-scope.  This is required because a BREAK
-	// or CONTINUE statement is only valid inside such
-	// a loop.
+	// whiles is updated every time we enter a new
+	// while-scope.
+	//
+	// We need this because BREAK and CONTINUE statements
+	// are only valid inside such a loop, and so we want
+	// to do two things: 1.  Check we're inside one,
+	// 2. Know _which_ one we're dealing with.
+	//
 	whiles []int
 
-	// stringTable holds (interned) strings
+	// stringTable holds a table of all the (interned)
+	// static strings we've encountered while parsing.
 	//
 	// To ensure that each string has a stable and safe
 	// name we actually hash the string-contents and
@@ -85,6 +95,10 @@ type Compiler struct {
 	//
 	// The most recent function we've entered is the LAST
 	// item on the array.
+	//
+	// We need to know if we're compiling code within the
+	// body of a function so we can handle the correct
+	// generation of a "RETURN" statement.
 	functions []string
 
 	// scope stores stack-frames which are used to hold
@@ -97,8 +111,10 @@ type Compiler struct {
 
 	// rawData stores raw data from `data { .. }` blocks
 	// inside the programs.
-	// We save them so that we can generate them, in order,
-	// at the end of our file.
+	//
+	// We save them here as we encounter them, and then
+	// when all our compilation is complete we can insert
+	// them at the very end of the program.
 	rawData []string
 
 	// globalCount stores the count of global variables.
@@ -739,7 +755,7 @@ if_%d_end:
 
 			// define local only if it doesn't exist already
 			if !exists {
-				_, err := c.scope.DefineLocal(s.Name)
+				_, err = c.scope.DefineLocal(s.Name)
 				if err != nil {
 					return err
 				}
@@ -756,7 +772,7 @@ if_%d_end:
 					Label: label,
 				}
 
-				err := c.scope.Define(g)
+				err = c.scope.Define(g)
 				if err != nil {
 					return err
 				}
