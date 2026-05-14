@@ -1,0 +1,51 @@
+        #
+        # Exit explicitly, just in case the program was missing a
+        # terminating RETURN statement.
+        #
+        xor rax, rax
+        jmp exit
+
+
+#####
+#####  Standard Library
+#####
+
+{{template "stdlib" .}}
+
+
+{{ if .StringTable }}
+
+#####
+##### Storage for strings
+#####
+.section .data
+
+{{range .StringTable }}
+        .align 4
+{{.Identifier }}:
+        .ascii "{{.Value}}"
+        .byte 00
+{{end}}
+{{end}}
+
+{{if .Globals}}
+
+#####
+##### Storage for global variables
+#####
+.section .data
+
+{{range .Globals }}
+{{.Label}}: .quad 0
+{{end}}
+{{end}}
+{{if .Data}}
+
+#####
+##### User-Defined "data { ... }" blocks
+#####
+
+{{range .Data}}
+{{.}}
+{{end}}
+{{end}}

@@ -1,0 +1,67 @@
+#
+# Type will return a string which describes
+# the type of a variable.
+#
+
+.section .text.type,"ax",@progbits
+
+type:
+        # Mask off the lower two bits, to get the type info
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je type_is_int
+
+        cmp rcx, 1
+        je type_is_string
+
+        cmp rcx, 2
+        je type_is_float
+
+        cmp rcx, 3
+        je type_is_reserved
+        ret
+
+type_is_int:
+        mov rax, offset type_is_int_str
+        or rax, 1
+        ret
+
+type_is_string:
+        mov rax, offset type_is_string_str
+        or rax, 1
+        ret
+
+type_is_float:
+        mov rax, offset type_is_float_str
+        or rax, 1
+        ret
+
+type_is_reserved:
+        mov rax, offset type_is_reserved_str
+        or rax, 1
+        ret
+
+
+.section .data.type,"aw",@progbits
+
+.align 4
+type_is_int_str:
+        .ascii "INTEGER"
+        .byte 00
+
+.align 4
+type_is_float_str:
+        .ascii "FLOAT"
+        .byte 00
+
+.align 4
+type_is_string_str:
+        .ascii "STRING"
+        .byte 00
+
+.align 4
+type_is_reserved_str:
+        .ascii "RESERVED"
+        .byte 00
