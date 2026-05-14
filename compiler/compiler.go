@@ -386,8 +386,14 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 		fmt.Fprintf(&c.buff, `
 	mov rax, %d   # ABI: RAX contains argument count
 	call %s
+`, len(v.Arguments), v.Name)
+
+		if len(v.Arguments) > 0 {
+			fmt.Fprintf(&c.buff, `
 	add rsp, %d
-`, len(v.Arguments), v.Name, 8*len(v.Arguments))
+`,
+				8*len(v.Arguments))
+		}
 
 	case *parser.VariableExpr:
 		return c.emitLoadVariable(v.Name)
@@ -589,8 +595,14 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		fmt.Fprintf(&c.buff, `
 	mov rax, %d   # ABI: RAX contains argument count
 	call %s
+`, len(s.Arguments), s.Name)
+
+		if len(s.Arguments) > 0 {
+			fmt.Fprintf(&c.buff, `
 	add rsp, %d
-`, len(s.Arguments), s.Name, 8*len(s.Arguments))
+`,
+				8*len(s.Arguments))
+		}
 
 	case *parser.Function:
 
