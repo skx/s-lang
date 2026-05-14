@@ -107,9 +107,14 @@ func (p *Parser) parsePrimary() (Expr, error) {
 
 	switch tok.Type {
 
-	case lexer.NUMBER:
-		return &IntegerExpr{
+	case lexer.INTEGER:
+		return &IntegerLiteral{
 			Value: int64(tok.Value.(float64)),
+		}, nil
+
+	case lexer.FLOAT:
+		return &FloatLiteral{
+			Value: tok.Value.(float64),
 		}, nil
 
 	case lexer.IDENT:
