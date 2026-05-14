@@ -320,6 +320,8 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 		switch p.curToken.Type {
 
+		case lexer.INTEGER, lexer.FLOAT, lexer.STRING:
+			return res, fmt.Errorf("bare literal is illegal: %s", p.curToken.String())
 		case lexer.BREAK:
 			res = append(res, &Break{})
 
