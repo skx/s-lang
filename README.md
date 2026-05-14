@@ -206,15 +206,16 @@ Typically you'd run something like this to generate and execute in one go:
 
 _Standard library_ is a grandiose term for the simple library routines we embed, but we have a couple of reusable functions within the generated assembly:
 
+* exit
+  * Assumes the value in the RAX register is the desired exit-code and terminates execution with that value.
 * newline
-  * Prints a newline.
-  * Invoked if you call `println`, which terminates output with a newline.  `print` trusts you to add `\n` if you want a newline.
-* print_number
-  * Assumes the value in the RAX register is a decimal integer, and prints it.
-* print_string
-  * Assumes RSI holds the address of the string, and RDX holds the length.
-* exit_with_status
-  * Assumes the value in the RAS register is the desired exit-code and terminates execution with that value.
+  * Prints a newline - Invoked if you call `println`, which terminates output with a newline.  `print` trusts you to add `\n` if you want a newline.
+* print
+  * Determine the type of the given variable, and print it appropriately.
+* strlen
+  * Return the length of the given string.
+
+You can see our standard library routines beneath the [compiler/templates/stdlib](compiler/templates/stdlib) directory.
 
 
 
@@ -301,8 +302,9 @@ Possible future improvements and additions, to be added slowly if ever.
   * Implemented in [#30](https://github.com/skx/s-lang/pull/30)
 * [x] Constant folding - probably in a new pass after the parser.
   * Implemented in [#28](https://github.com/skx/s-lang/pull/28)
-* [ ] Read `as` manual to see if there is support for dead-code elimination.
-  * https://www.gnu.org/software/binutils/
+* [x] Read [the `as` manual](https://www.gnu.org/software/binutils/) to see if there is support for dead-code elimination.
+  * There is support for removing unused sections inside the `ld` linker.
+  * See [#39](https://github.com/skx/s-lang/issues/39) for details.
 * [x] add types to our variables
   * Implemented in [#31](https://github.com/skx/s-lang/pull/31)
 * [x] string comparison should work
