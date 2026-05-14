@@ -35,59 +35,126 @@ Example:
 func (p *parseCommand) printStmt(st parser.Statement) error {
 	switch stmt := st.(type) {
 	case *parser.Break:
-		fmt.Fprintf(output, "\tBREAK;\n")
+		_, err := fmt.Fprintf(output, "\tBREAK;\n")
+		if err != nil {
+			return err
+		}
+
 	case *parser.Continue:
-		fmt.Fprintf(output, "\tCONTINUE;\n")
+		_, err := fmt.Fprintf(output, "\tCONTINUE;\n")
+		if err != nil {
+			return err
+		}
+
 	case *parser.Function:
-		fmt.Fprintf(output, "FUNCTION Definition %s(%v);\n", stmt.Name, stmt.Parameters)
+		_, err := fmt.Fprintf(output, "FUNCTION Definition %s(%v);\n", stmt.Name, stmt.Parameters)
+		if err != nil {
+			return err
+		}
+
 	case *parser.Let:
-		fmt.Fprintf(output, "LET %s = %v;\n", stmt.Name, stmt.Expression)
+		_, err := fmt.Fprintf(output, "LET %s = %v;\n", stmt.Name, stmt.Expression)
+		if err != nil {
+			return err
+		}
+
 	case *parser.Inline:
-		fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
+		_, err := fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
+		if err != nil {
+			return err
+		}
 	case *parser.Print:
 		if stmt.NewLine {
-			fmt.Fprintf(output, "PRINTLN(")
+			_, err := fmt.Fprintf(output, "PRINTLN(")
+			if err != nil {
+				return err
+			}
+
 		} else {
-			fmt.Fprintf(output, "PRINT(")
+			_, err := fmt.Fprintf(output, "PRINT(")
+			if err != nil {
+				return err
+			}
+
 		}
 		for _, x := range stmt.Values {
-			fmt.Fprintf(output, "%v, ", x)
+			_, err := fmt.Fprintf(output, "%v, ", x)
+			if err != nil {
+				return err
+			}
+
 		}
-		fmt.Fprintf(output, ")\n")
+		_, err := fmt.Fprintf(output, ")\n")
+		if err != nil {
+			return err
+		}
 
 	case *parser.Return:
-		fmt.Fprintf(output, "RETURN(%v)\n", stmt.Expression)
+		_, err := fmt.Fprintf(output, "RETURN(%v)\n", stmt.Expression)
+		if err != nil {
+			return err
+		}
+
 	case *parser.While:
-		fmt.Fprintf(output, "while(%v) {\n", stmt.Expression)
+		_, err := fmt.Fprintf(output, "while(%v) {\n", stmt.Expression)
+		if err != nil {
+			return err
+		}
 		for _, x := range stmt.Statements {
-			fmt.Fprintf(output, "\t")
-			err := p.printStmt(x)
+			_, err := fmt.Fprintf(output, "\t")
+			if err != nil {
+				return err
+			}
+			err = p.printStmt(x)
 			if err != nil {
 				return err
 			}
 		}
-		fmt.Fprintf(output, "}\n")
+		_, err = fmt.Fprintf(output, "}\n")
+		if err != nil {
+			return err
+		}
+
 	case *parser.If:
-		fmt.Fprintf(output, "if(%V) { \n", stmt.Expression)
+		_, err := fmt.Fprintf(output, "if(%V) { \n", stmt.Expression)
+		if err != nil {
+			return err
+		}
 		for _, x := range stmt.True {
-			fmt.Fprintf(output, "\t")
-			err := p.printStmt(x)
+			_, err = fmt.Fprintf(output, "\t")
+			if err != nil {
+				return err
+			}
+			err = p.printStmt(x)
 			if err != nil {
 				return err
 			}
 		}
-		fmt.Fprintf(output, "}\n")
+		_, err = fmt.Fprintf(output, "}\n")
+		if err != nil {
+			return err
+		}
 
 		if len(stmt.False) > 0 {
-			fmt.Fprintf(output, "else {\n")
+			_, err = fmt.Fprintf(output, "else {\n")
+			if err != nil {
+				return err
+			}
+
 			for _, x := range stmt.False {
-				fmt.Fprintf(output, "\t")
-				err := p.printStmt(x)
+				_, err = fmt.Fprintf(output, "\t")
+				if err != nil {
+					return err
+				}
+				err = p.printStmt(x)
 				if err != nil {
 					return err
 				}
 			}
-			fmt.Fprintf(output, "}\n")
+			_, err = fmt.Fprintf(output, "}\n")
+			if err != nil {
+				return err
+			}
 		}
 
 	default:

@@ -72,9 +72,9 @@ func (g *generateCommand) processFile(path string) error {
 	}
 
 	// Write the text to the output file/handle.
-	fmt.Fprintf(output, "%s", txt)
+	_, err = fmt.Fprintf(output, "%s", txt)
 
-	return nil
+	return err
 }
 
 // Execute is invoked if the user specifies `generate` as the subcommand.
