@@ -10,7 +10,7 @@ print("Hello, world!  The magic number is ", b, "\n");
 
 # comments are good
 let a = 4;
-println( "A=4: ", a );  # println is like print, but adds a newline
+print( "A=4: ", a, "\n" );
 
 print("Steve Did this!\n");
 
@@ -23,7 +23,7 @@ while( f ) {
 }
 
 if ( 2 == 1 ) {
-   println("cats and dogs living together" );
+   print("cats and dogs living together\n" );
 } else {
-   println("ELSE works :)\n");
+   print("ELSE works :)\n");
 }

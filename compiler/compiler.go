@@ -51,10 +51,15 @@ func WithSource(source string) Option {
 type Compiler struct {
 
 	// Source holds the source program we'll work on.
+
 	Source string
 
-	// buff is the writer object we use to send our
-	// output to, as it is generated.
+	// buff is the writer object we send all generated
+	// assembly code to - as well as the static header,
+	// footer, and standard library code.
+	//
+	// We use a handle so we may easily have the output
+	// sent to an actual file, or STDOUT.
 	buff bytes.Buffer
 
 	// labelCount is used for generating unique labels,
@@ -62,13 +67,18 @@ type Compiler struct {
 	// statements.
 	labelCount int
 
-	// inWhile is incremented every time we enter a new
-	// while-scope.  This is required because a BREAK
-	// or CONTINUE statement is only valid inside such
-	// a loop.
+	// whiles is updated every time we enter a new
+	// while-scope.
+	//
+	// We need this because BREAK and CONTINUE statements
+	// are only valid inside such a loop, and so we want
+	// to do two things: 1.  Check we're inside one,
+	// 2. Know _which_ one we're dealing with.
+	//
 	whiles []int
 
-	// stringTable holds (interned) strings
+	// stringTable holds a table of all the (interned)
+	// static strings we've encountered while parsing.
 	//
 	// To ensure that each string has a stable and safe
 	// name we actually hash the string-contents and
@@ -85,6 +95,10 @@ type Compiler struct {
 	//
 	// The most recent function we've entered is the LAST
 	// item on the array.
+	//
+	// We need to know if we're compiling code within the
+	// body of a function so we can handle the correct
+	// generation of a "RETURN" statement.
 	functions []string
 
 	// scope stores stack-frames which are used to hold
@@ -97,8 +111,10 @@ type Compiler struct {
 
 	// rawData stores raw data from `data { .. }` blocks
 	// inside the programs.
-	// We save them so that we can generate them, in order,
-	// at the end of our file.
+	//
+	// We save them here as we encounter them, and then
+	// when all our compilation is complete we can insert
+	// them at the very end of the program.
 	rawData []string
 
 	// globalCount stores the count of global variables.
@@ -384,15 +400,29 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 
 		}
 		fmt.Fprintf(&c.buff, `
+	mov rax, %d   # ABI: RAX contains argument count
 	call %s
+`, len(v.Arguments), v.Name)
+
+		if len(v.Arguments) > 0 {
+			fmt.Fprintf(&c.buff, `
 	add rsp, %d
-`, v.Name, 8*len(v.Arguments))
+`,
+				8*len(v.Arguments))
+		}
 
 	case *parser.VariableExpr:
 		return c.emitLoadVariable(v.Name)
 
 	case *parser.StringExpr:
-		return fmt.Errorf("compileExpr cannot handle a string-expression")
+		str := v.Value
+		id := c.stringTable.Add(str)
+
+		txt := fmt.Sprintf(`
+	mov rax, offset %s
+	or rax, 1   # tagged as a string
+`, id)
+		fmt.Fprint(&c.buff, txt)
 
 	case *parser.BinaryExpr:
 
@@ -579,9 +609,16 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 		}
 		fmt.Fprintf(&c.buff, `
+	mov rax, %d   # ABI: RAX contains argument count
 	call %s
+`, len(s.Arguments), s.Name)
+
+		if len(s.Arguments) > 0 {
+			fmt.Fprintf(&c.buff, `
 	add rsp, %d
-`, s.Name, 8*len(s.Arguments))
+`,
+				8*len(s.Arguments))
+		}
 
 	case *parser.Function:
 
@@ -651,7 +688,7 @@ over_function_%s:
 			}
 		}
 		txt := fmt.Sprintf(`
-	shl rax, 2 # Undo function typing
+	sar rax, 2  # undo the type-storage
 	cmp rax, 0
 	jz if_%d_false
 `, n)
@@ -704,35 +741,21 @@ if_%d_end:
 
 	case *parser.Let:
 
-		// Compile the expression, masking off strings.
-		// which require special handling.
-		switch v := s.Expression.(type) {
-
-		case *parser.StringExpr:
-			str := v.Value
-			id := c.stringTable.Add(str)
-
-			// remember to set the type
-			txt := fmt.Sprintf(`
-       mov rax, offset %s
-       or rax, 1           # store string-type
-`, id)
-			fmt.Fprint(&c.buff, txt)
-		default:
-			err := c.compileExpr(s.Expression)
-			if err != nil {
-				return err
-			}
+		// Compile the expression, leaving
+		// the result in RAX
+		err := c.compileExpr(s.Expression)
+		if err != nil {
+			return err
 		}
 
 		_, exists := c.scope.Lookup(s.Name)
 
-		// If we're compiling a function..
+		// Create a lable for the value, if necessary
 		if len(c.functions) > 0 {
 
 			// define local only if it doesn't exist already
 			if !exists {
-				_, err := c.scope.DefineLocal(s.Name)
+				_, err = c.scope.DefineLocal(s.Name)
 				if err != nil {
 					return err
 				}
@@ -749,7 +772,7 @@ if_%d_end:
 					Label: label,
 				}
 
-				err := c.scope.Define(g)
+				err = c.scope.Define(g)
 				if err != nil {
 					return err
 				}
@@ -759,39 +782,10 @@ if_%d_end:
 			}
 		}
 
-		return c.emitStoreVariable(s.Name)
-
-	case *parser.Print:
-		for _, item := range s.Values {
-			switch v := item.(type) {
-
-			case *parser.StringExpr:
-				str := v.Value
-				id := c.stringTable.Add(str)
-
-				txt := fmt.Sprintf(`
-	mov rax, offset %s
-	or rax, 1   # tagged as a string
-	call print
-`, id)
-				fmt.Fprint(&c.buff, txt)
-			default:
-				err := c.compileExpr(v)
-				if err != nil {
-					return err
-				}
-				txt := `
-	call print
-`
-				fmt.Fprint(&c.buff, txt)
-
-			}
-		}
-
-		if s.NewLine {
-			fmt.Fprint(&c.buff, `
-	call newline
-`)
+		// Actually store RAX into the value
+		err = c.emitStoreVariable(s.Name)
+		if err != nil {
+			return err
 		}
 	case *parser.Return:
 

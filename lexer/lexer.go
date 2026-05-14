@@ -27,8 +27,6 @@ const (
 	IF       = "IF"
 	INLINE   = "INLINE"
 	LET      = "LET"
-	PRINT    = "PRINT"
-	PRINTLN  = "PRINTLN"
 	RETURN   = "RETURN"
 	WHILE    = "WHILE"
 
@@ -136,8 +134,6 @@ func NewLexer(input string) *Lexer {
 	l.keywords["function"] = true
 	l.keywords["if"] = true
 	l.keywords["let"] = true
-	l.keywords["print"] = true
-	l.keywords["println"] = true
 	l.keywords["return"] = true
 	l.keywords["while"] = true
 

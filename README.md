@@ -1,15 +1,13 @@
 # s-lang
 
-This repository contains a minimal linux x86 compiler, which generates assembly language for `amd64`.
+This repository contains a compiler for a minimal programming language, targeting linux/amd64 systems.
 
-The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.
+The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 4k.
 
-With our bundled "runtime functions" the generated binaries start at approximately 8k.
-
-* Written in Golang for portability, although the generated code is AMD64-specific.
+* Written in Golang for portability, although the generated code is obviously Linux/AMD64-specific.
 * We have a real lexer, and parser, and internally generate an AST.
-  * The AST is walked to generate an assembly representation of the program.
-* We can automatically invokes the external `as` and `ld` binaries to compile and link if desired.
+  * The AST is then walked to generate the assembly language representation of the program.
+* We can automatically invoke the external `as` and `ld` binaries to compile and link if desired.
 
 In terms of features:
 
@@ -18,11 +16,11 @@ In terms of features:
   * Maths operations: `+`, `-`, `*`, `/`
   * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`,
   * Logical operations: `&&` and `||`.
-* Strings are interned:
+* Support for integers and strings.  Strings are interned.
   * So you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
 * The ability to include inline assembly via `inline { .. }`.
-  * And inline data with `data { ..  }` which are guaranteed to be at the end of the file.
-  * So you can add "`.section blah .. ..`" without fear of breaking things.
+  * `inline` statements are generated inline with the current code-position.
+  * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the file.  So you can add "`.section blah .. ..`" without fear of breaking things.
 * Loops via `while` (with support for `break` and `continue`).
 * Conditional support with `if` with `else` branch too.
 
@@ -30,7 +28,6 @@ Anti-features, or limitations:
 
 * The language is built around integers, and strings.
   * There are only a few functions in the standard library.
-  * We do have the ability to get a variable's type though.
 * There are no floating-point operations.
 
 That said the code is clean, readable, and it could be updated to work with floating-point reasonably easily.
@@ -63,8 +60,8 @@ The following is a tour of our language:
     let a = 3;
     print( a );
 
-    # A newline will be added if you use "println"
-    println(a);
+    # Printing a newline is common.
+    newline();
 
     # simple loops with "while"
     let x = 10;
@@ -78,6 +75,7 @@ The following is a tour of our language:
     inline {
        # Inline assembly here
        mov rax, 32
+       shr 2  # type information in the lower two bits
        call print_number
     }
 
@@ -206,34 +204,57 @@ Typically you'd run something like this to generate and execute in one go:
 
 _Standard library_ is a grandiose term for the simple library routines we embed, but we have a couple of reusable functions within the generated assembly:
 
-* exit
+* `exit`
   * Assumes the value in the RAX register is the desired exit-code and terminates execution with that value.
-* newline
+* `newline`
   * Prints a newline - Invoked if you call `println`, which terminates output with a newline.  `print` trusts you to add `\n` if you want a newline.
-* print
+* `print`
   * Determine the type of the given variable, and print it appropriately.
-* strlen
+* `strlen`
   * Return the length of the given string.
 
 You can see our standard library routines beneath the [compiler/templates/stdlib](compiler/templates/stdlib) directory.
+
+You don't need to do anything special to add new standard library functions, if you were to add a new standard-library function beneath `compiler/templates/stdlib` it would become immediately available for calling:
+
+* Define a new template function "`foo: .. ret;`", within `compiler/templates/stdlib/foo.tmpl`.
+* Your code can immediately call it `let a = foo(17);`
+
+This is because internally a call to `foo( [args] )` is converted into a call to the assembly-language function named `foo`.  (i.e. Defined with the label `foo:`).  You can use `inline` to define/call such a function manually if you wish, providing you follow our ABI.
 
 
 
 ## Types
 
-At the moment we have two types:
+At the moment we have scope for four types, stored within the last two bits of the variable values:
 
-* integer
-  * Stored directly.
-* string (which is basically a pointer and a string).
-  * Stored offset
+* decimal 00 binary `00` -> integer
+* decimal 01 binary `01` -> pointer/string
+* decimal 02 binary `10` -> float (in the future)
+* decimal 03 binary `11` -> reserved
 
-We use the lowest two bits of values to denote type:
 
-* decimal 00 binary 00 -> integer
-* decimal 01 binary 01 -> pointer/string
-* decimal 02 binary 10 -> float (in the future)
-* decimal 03 binary 11 -> reserved
+
+## ABI
+
+We define a simple ABI for function invocation:
+
+* All function parameters are passed on the stack.
+* The _number_ of parameters is passed in the RAX register.
+
+You can see how this is handled in [our standard-library functions](compiler/templates/stdlib) for reference, but do remember that variables have types.   As an example if you want to print the integer 17  using inline assembly you would run:
+
+     inline {
+        mov rax, 17  # The value
+        shl rax, 2   # Shift left by two:
+                     #   Setting the lower bits to 00
+                     #   marking this as "integer"
+
+        push rax     # parameters are passed on the stack
+        mov rax, 1   # one argument is being passed
+
+        call print   # call the stdlib function
+     }
 
 
 

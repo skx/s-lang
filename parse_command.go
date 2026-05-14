@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
-
-	"github.com/skx/subcommands"
 	"s-lang/lexer"
 	"s-lang/parser"
+	"strings"
+
+	"github.com/skx/subcommands"
 )
 
 // Structure for our options and state.
@@ -52,6 +53,13 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 			return err
 		}
 
+	case *parser.FunctionCallExpr:
+		s := []string{}
+		for _, a := range stmt.Arguments {
+			s = append(s, a.String())
+		}
+		fmt.Fprintf(output, "%s(%s);\n", stmt.Name, strings.Join(s, ","))
+
 	case *parser.Let:
 		_, err := fmt.Fprintf(output, "LET %s = %v;\n", stmt.Name, stmt.Expression)
 		if err != nil {
@@ -59,35 +67,7 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		}
 
 	case *parser.Inline:
-		_, err := fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
-		if err != nil {
-			return err
-		}
-	case *parser.Print:
-		if stmt.NewLine {
-			_, err := fmt.Fprintf(output, "PRINTLN(")
-			if err != nil {
-				return err
-			}
-
-		} else {
-			_, err := fmt.Fprintf(output, "PRINT(")
-			if err != nil {
-				return err
-			}
-
-		}
-		for _, x := range stmt.Values {
-			_, err := fmt.Fprintf(output, "%v, ", x)
-			if err != nil {
-				return err
-			}
-
-		}
-		_, err := fmt.Fprintf(output, ")\n")
-		if err != nil {
-			return err
-		}
+		fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
 
 	case *parser.Return:
 		_, err := fmt.Fprintf(output, "RETURN(%v)\n", stmt.Expression)
