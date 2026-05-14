@@ -44,17 +44,6 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "LET %s = %v;\n", stmt.Name, stmt.Expression)
 	case *parser.Inline:
 		fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
-	case *parser.Print:
-		if stmt.NewLine {
-			fmt.Fprintf(output, "PRINTLN(")
-		} else {
-			fmt.Fprintf(output, "PRINT(")
-		}
-		for _, x := range stmt.Values {
-			fmt.Fprintf(output, "%v, ", x)
-		}
-		fmt.Fprintf(output, ")\n")
-
 	case *parser.Return:
 		fmt.Fprintf(output, "RETURN(%v)\n", stmt.Expression)
 	case *parser.While:
