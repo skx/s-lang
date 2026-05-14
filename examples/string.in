@@ -1,26 +1,28 @@
-
-# This saves the value in RAX of the string address.
-let a = "Steve Kemp\n";
-
-# Save a copy of the address
-let b = a;
-
-# Print the string address
-print("The string is stored at address ", a, "\n");
-
-# Now print the string
-let a = b;
-
 #
-# Since we know RAX has a pointer to the string,
-# and the string is null-terminated, we can print
-# it via some inline assembly.
+# Show a string, and it's length
 #
-inline {
-       call print_string
+function show( a ) {
+   print("The string '", a, "' is ", strlen(a), " bytes long\n");
 }
 
 #
-# And print the address again
+# Use that function
 #
-print("Back to normal code\n");
+let x = "steve";
+show(x);
+
+
+#
+# Now do some string comparisons.
+#
+let a = "steve";
+let b = "rteve";
+print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
+
+let a = "Steve";
+let b = "rteve";
+print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
+
+let a = "Steve";
+let b = "Tteve";
+print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");

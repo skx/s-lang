@@ -8,3 +8,4 @@ examples/functions
 examples/string
 examples/while
 examples/*.s
+examples/types

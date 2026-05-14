@@ -12,6 +12,67 @@
 #####
 
         #
+        # Return the length of the given string
+        #
+
+strlen:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]    # Get the string
+        and rdi, -4          # Remove typing
+
+        xor rax, rax
+.strlen_next_char:
+        cmp byte ptr [rdi + rax], 0
+        je .strlen_done
+        inc rax
+        jmp .strlen_next_char
+.strlen_done:
+        shl rax, 2   # Add typing
+        mov rsp, rbp
+        pop rbp
+        ret
+
+
+
+        #
+        # Compare strings for equality.
+        #
+        # Return zero if equal
+        #
+strcmp:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]    # Get the string
+        and rdi, -4          # Remove typing
+        mov rsi, [rbp+24]    # Get the string
+        and rsi, -4          # Remove typing
+
+        xor rax, rax
+.strcmp_next_char:
+        mov al, [rdi]
+        cmp al, [rsi]
+        jne .strcmp_diff
+        test al, al
+        je .strcmp_done
+        inc rdi
+        inc rsi
+        jmp .strcmp_next_char
+.strcmp_diff:
+        sub rax, [rsi]
+.strcmp_done:
+        movsx rax, al   # Truncate, but keep the sign
+        shl rax, 2   # Add typing
+        mov rsp, rbp
+        pop rbp
+        ret
+
+
+
+
+        #
         # Write a newline to STDOUT.
         #
 newline:

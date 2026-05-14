@@ -31,8 +31,6 @@ Anti-features, or limitations:
 * The language is built around integers, and strings.
   * There are only a few functions in the standard library.
   * We do have the ability to get a variable's type though.
-  * [ ] missing: strlen
-  * [ ] missing: strcmp
 * There are no floating-point operations.
 
 That said the code is clean, readable, and it could be updated to work with floating-point reasonably easily.
@@ -307,6 +305,6 @@ Possible future improvements and additions, to be added slowly if ever.
   * https://www.gnu.org/software/binutils/
 * [x] add types to our variables
   * Implemented in [#31](https://github.com/skx/s-lang/pull/31)
-* [ ] string comparison should work
+* [x] string comparison should work
 * [ ] floating point numbers
 * [ ] allow *x to get the address of x, for working with strings
