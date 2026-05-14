@@ -14,8 +14,6 @@ func TestLexer(t *testing.T) {
 		expectedLiteral string
 	}{
 		{LET, "let"},
-		{PRINT, "print"},
-		{PRINTLN, "println"},
 		{IF, "if"},
 		{COMMA, ","},
 		{WHILE, "while"},
@@ -45,7 +43,7 @@ func TestLexer(t *testing.T) {
 		{EOF, ""},
 	}
 
-	l := NewLexer("LEt PrinT printLn if, WHILE      retURN * = 3 + 4 * 5 - 1 / 2 == <= >= != < > && || ! & |")
+	l := NewLexer("LEt if, WHILE      retURN * = 3 + 4 * 5 - 1 / 2 == <= >= != < > && || ! & |")
 
 	for i, tt := range tests {
 		tok := l.Next()
@@ -187,6 +185,26 @@ func TestString(t *testing.T) {
 	}
 }
 
+func TestData(t *testing.T) {
+	lexer := NewLexer(`data { `)
+	out := lexer.Next()
+	if out.Type != ERROR {
+		t.Fatalf("expected error, got none")
+	}
+	if !strings.Contains(out.Value.(string), "unterminated") {
+		t.Fatalf("got error, but wrong one")
+	}
+
+	lexer = NewLexer(`data { # test "steve } `)
+	out = lexer.Next()
+	if out.Type != DATA {
+		t.Fatalf("expected string, got %v", out)
+	}
+	if !strings.Contains(out.Value.(string), "# test \"steve") {
+		t.Fatalf("got value, but wrong one")
+	}
+}
+
 func TestInline(t *testing.T) {
 	lexer := NewLexer(`inline { `)
 	out := lexer.Next()
@@ -220,5 +238,31 @@ func TestComment(t *testing.T) {
 	out = lexer.Next()
 	if out.Type != EOF {
 		t.Fatalf("expected EOF, got none")
+	}
+}
+
+func TestPeek(t *testing.T) {
+	lexer := NewLexer(`let a = 3;`)
+
+	first := lexer.Peek()
+	if first.Type != LET {
+		t.Fatalf("peek gave the wrong result")
+	}
+
+	// Peek should always match what Next returns
+	i := 0
+	for i < 20 {
+		peek := lexer.Peek()
+		real := lexer.Next()
+		if peek.Type != real.Type {
+			t.Fatalf("type mismatch")
+		}
+		if peek.Value != real.Value {
+			t.Fatalf("value mismatch")
+		}
+		if peek.String() != real.String() {
+			t.Fatalf("String() mismatch")
+		}
+		i++
 	}
 }
