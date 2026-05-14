@@ -12,11 +12,12 @@ import (
 // These constants are used to describe the type of token which has been lexed.
 const (
 	// Basic token-types
-	EOF    = "EOF"
-	ERROR  = "ERROR"
-	IDENT  = "IDENT"
-	NUMBER = "NUMBER"
-	STRING = "STRING"
+	EOF     = "EOF"
+	ERROR   = "ERROR"
+	IDENT   = "IDENT"
+	INTEGER = "INTEGER"
+	FLOAT   = "FLOAT"
+	STRING  = "STRING"
 
 	// Statements
 	BREAK    = "BREAK"
@@ -77,8 +78,11 @@ type Token struct {
 }
 
 func (t Token) String() string {
-	if t.Type == NUMBER {
+	if t.Type == INTEGER {
 		return fmt.Sprintf("Token{Type:%s Value:%s}", t.Type, fmt.Sprintf("%d", int64(t.Value.(float64))))
+	}
+	if t.Type == FLOAT {
+		return fmt.Sprintf("Token{Type:%s Value:%s}", t.Type, fmt.Sprintf("%f", t.Value.(float64)))
 	}
 	return fmt.Sprintf("Token{Type:%s Value:%s}", t.Type, t.Value)
 }
@@ -318,7 +322,11 @@ func (l *Lexer) Next() *Token {
 				return &Token{Value: fmt.Sprintf("failed to parse number: %s", err.Error()), Type: ERROR}
 			}
 
-			return &Token{Value: number, Type: NUMBER}
+			// Is this an int?  Or a float?
+			if float64(int64(number)) == number {
+				return &Token{Value: number, Type: INTEGER}
+			}
+			return &Token{Value: number, Type: FLOAT}
 		}
 
 		//

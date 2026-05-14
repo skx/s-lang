@@ -20,15 +20,15 @@ func TestLexer(t *testing.T) {
 		{RETURN, "return"},
 		{MULTIPLY, "*"},
 		{ASSIGN, "="},
-		{NUMBER, "3"},
+		{INTEGER, "3"},
 		{PLUS, "+"},
-		{NUMBER, "4"},
+		{INTEGER, "4"},
 		{MULTIPLY, "*"},
-		{NUMBER, "5"},
+		{INTEGER, "5"},
 		{MINUS, "-"},
-		{NUMBER, "1"},
+		{INTEGER, "1"},
 		{DIVIDE, "/"},
-		{NUMBER, "2"},
+		{INTEGER, "2"},
 		{EQUALS, "=="},
 		{LT_EQUALS, "<="},
 		{GT_EQUALS, ">="},
@@ -127,17 +127,26 @@ func TestIssue15(t *testing.T) {
 		{LET, "let"},
 		{IDENT, "b"},
 		{ASSIGN, "="},
-		{NUMBER, "1"},
+		{INTEGER, "1"},
 		{SEMICOLON, ";"},
+
 		{LPAREN, "("},
 		{IDENT, "b"},
 		{MINUS, "-"},
 		{IDENT, "b"},
 		{RPAREN, ")"},
+		{SEMICOLON, ";"},
+
+		{LET, "let"},
+		{IDENT, "C"},
+		{ASSIGN, "="},
+		{FLOAT, "3.1"},
+		{SEMICOLON, ";"},
+
 		{EOF, ""},
 	}
 
-	l := NewLexer("LeT b = 1; ( b -b)")
+	l := NewLexer("LeT b = 1; ( b -b); LET C = 3.1;")
 
 	for i, tt := range tests {
 		tok := l.Next()
