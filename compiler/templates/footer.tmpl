@@ -28,6 +28,18 @@
 {{end}}
 {{end}}
 
+{{ if .FloatTable }}
+
+#####
+##### Storage for floats
+#####
+.section .data
+
+{{range .FloatTable }}
+{{.Identifier }}:  .double {{.Value}}
+{{end}}
+{{end}}
+
 {{if .Globals}}
 
 #####

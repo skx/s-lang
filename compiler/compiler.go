@@ -88,6 +88,16 @@ type Compiler struct {
 	// within the source code we generate a single time.
 	stringTable *StringTable
 
+	// floatTable serves basically the same purpose as
+	// our string table.
+	//
+	// We intern literal floats, and generate a label
+	// to hold them in our generated source.  This is
+	// necessary because you cannot write "mov rax, 3.1",
+	// instead you store the value in a memory location
+	// and then run "mov rax, [float_name]".
+	floatTable *FloatTable
+
 	// functions stores the name of functions we're compiling
 	// We should only be compiling one function at a time,
 	// but this way we could allow nested functions if we
@@ -131,6 +141,7 @@ type Compiler struct {
 func New(options ...Option) (*Compiler, error) {
 	tmp := &Compiler{
 		stringTable:     NewStringTable(),
+		floatTable:      NewFloatTable(),
 		scope:           NewScope(nil),
 		constantFolding: true,
 	}
@@ -212,6 +223,9 @@ func (c *Compiler) Compile() (string, error) {
 		// String data for the template rendering
 		StringTable []StringEntry
 
+		// Float data for the template rendering
+		FloatTable []FloatEntry
+
 		// GlobalVars has global variable storage
 		Globals []*GlobalVariable
 
@@ -221,6 +235,7 @@ func (c *Compiler) Compile() (string, error) {
 
 	vars := &FooterData{
 		StringTable: c.stringTable.GetAll(),
+		FloatTable:  c.floatTable.GetAll(),
 		Globals:     c.globalVariables,
 		Data:        c.rawData,
 	}
@@ -333,30 +348,30 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 		v.Right = c.optimizeExpr(v.Right)
 
 		// Check if both sides are now integers
-		l, ok1 := v.Left.(*parser.IntegerExpr)
-		r, ok2 := v.Right.(*parser.IntegerExpr)
+		l, ok1 := v.Left.(*parser.IntegerLiteral)
+		r, ok2 := v.Right.(*parser.IntegerLiteral)
 
 		if ok1 && ok2 {
 			switch v.Op {
 
 			case lexer.PLUS:
-				return &parser.IntegerExpr{
+				return &parser.IntegerLiteral{
 					Value: l.Value + r.Value,
 				}
 
 			case lexer.MINUS:
-				return &parser.IntegerExpr{
+				return &parser.IntegerLiteral{
 					Value: l.Value - r.Value,
 				}
 
 			case lexer.MULTIPLY:
-				return &parser.IntegerExpr{
+				return &parser.IntegerLiteral{
 					Value: l.Value * r.Value,
 				}
 
 			case lexer.DIVIDE:
 				if r.Value != 0 {
-					return &parser.IntegerExpr{
+					return &parser.IntegerLiteral{
 						Value: l.Value / r.Value,
 					}
 				}
@@ -380,10 +395,21 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 
 	switch v := e.(type) {
 
-	case *parser.IntegerExpr:
+	case *parser.IntegerLiteral:
 		// This is an integer
 		fmt.Fprintf(&c.buff, `
 	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
+
+	case *parser.FloatLiteral:
+		str := v.Value
+		id := c.floatTable.Add(str)
+
+		txt := fmt.Sprintf(`
+	mov rax, [%s]
+	and rax, -4     # last two bits will be 10 - this is float
+	or  rax, 2
+`, id)
+		fmt.Fprint(&c.buff, txt)
 
 	case *parser.FunctionCallExpr:
 
