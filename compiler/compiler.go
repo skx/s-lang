@@ -7,19 +7,22 @@ package compiler
 
 import (
 	"bytes"
-	_ "embed"
+	"embed"
 	"fmt"
+	"io/fs"
+	"path/filepath"
+	"strings"
+	"text/template"
 
 	"s-lang/lexer"
 	"s-lang/parser"
-	"text/template"
 )
 
-//go:embed header.s.txt
-var header string
-
-//go:embed footer.s.txt
-var footer string
+// templateFS holds the templates for our prelude/prologue and standard library
+//
+//go:embed templates/*.tmpl
+//go:embed templates/stdlib/*.tmpl
+var templateFS embed.FS
 
 // Option defines a config-setting option for our constructor.
 //
@@ -132,6 +135,37 @@ func New(options ...Option) (*Compiler, error) {
 // our constructor.
 func (c *Compiler) Compile() (string, error) {
 
+	//
+	// Create a buffer which will be used to include
+	// all of our standard library files - in order
+	//
+	// Which we can then include in our prologue.
+	//
+	var buf strings.Builder
+	buf.WriteString(`{{define "stdlib"}}`)
+	entries, err := fs.Glob(templateFS, "templates/stdlib/*.tmpl")
+	if err != nil {
+		return "", err
+	}
+	for _, f := range entries {
+		buf.WriteString(fmt.Sprintf(`{{template "%s" .}}`, filepath.Base(f)))
+	}
+	buf.WriteString(`{{end}}`)
+
+	//
+	// Load all our templates
+	//
+	tmpl := template.Must(
+		template.New("stdlib").
+			ParseFS(templateFS, "templates/*.tmpl", "templates/stdlib/*.tmpl"),
+	)
+
+	//
+	// Ensure we have the generated template too,
+	// which defines the "stdlib" inclusion text
+	//
+	tmpl = template.Must(tmpl.Parse(buf.String()))
+
 	// Create a lexer and parser
 	lex := lexer.NewLexer(string(c.Source))
 	parse := parser.New(lex)
@@ -142,8 +176,11 @@ func (c *Compiler) Compile() (string, error) {
 		return "", err
 	}
 
-	// Write the header
-	fmt.Fprintf(&c.buff, "%s", header)
+	// Render the header into our output
+	err = tmpl.ExecuteTemplate(&c.buff, "header.tmpl", nil)
+	if err != nil {
+		return "", err
+	}
 
 	// compile each statement
 	for _, stmt := range program.Statements {
@@ -172,10 +209,9 @@ func (c *Compiler) Compile() (string, error) {
 		Data:        c.rawData,
 	}
 
-	// Create a template for the footer
-	tmpl := template.Must(template.New("tmpl").Parse(footer))
-
-	err = tmpl.Execute(&c.buff, vars)
+	// Render the footer, which will also include
+	// our standard library
+	err = tmpl.ExecuteTemplate(&c.buff, "footer.tmpl", vars)
 	if err != nil {
 		return "", err
 	}
