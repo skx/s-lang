@@ -1,0 +1,14 @@
+#
+# Exit with the given status.
+#
+# Status code to use is stored in RAX
+#
+
+.section .text.exit,"ax",@progbits
+
+exit:
+        sar rax, 2  # undo typing
+        mov rdi, rax
+        mov rax, 60     # sys_exit
+        syscall
+        ret

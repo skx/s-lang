@@ -821,7 +821,7 @@ if_%d_end:
 		} else {
 
 			txt := `
-	call exit_with_status
+	call exit
 `
 			fmt.Fprint(&c.buff, txt)
 		}

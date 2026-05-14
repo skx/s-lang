@@ -70,7 +70,7 @@ func (c *compileCommand) processFile(path string) error {
 	defer os.Remove(f.Name() + ".o")
 
 	// link
-	ld := exec.Command("ld", "-s", "-o", c.output, f.Name()+".o")
+	ld := exec.Command("ld", "--gc-sections", "--print-gc-sections", "-s", "-o", c.output, f.Name()+".o")
 	ld.Stdout = os.Stdout
 	ld.Stderr = os.Stderr
 
