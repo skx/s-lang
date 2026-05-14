@@ -660,7 +660,7 @@ over_function_%s:
 			}
 		}
 		txt := fmt.Sprintf(`
-	shl rax, 2 # Undo function typing
+	sar rax, 2  # undo the type-storage
 	cmp rax, 0
 	jz if_%d_false
 `, n)
