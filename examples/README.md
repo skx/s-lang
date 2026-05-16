@@ -8,6 +8,9 @@ If you'd like to see the generated assembly for each example as well as produce 
 
 ## Contents
 
+* [brainfuck.in](brainfuck.in) - Brainfuck interpreter.
+  * Runs the classic "Hello World" example program.
+  * Fails to run the mandelbrot example, but I've not looked into why yet.
 * [example.in](example.in)
   * Misc. examples.
 * [factorial.in](factorial.in)
@@ -29,4 +32,3 @@ Trivial ones:
 
 * [empty.in](empty.in) - Literally an empty source file.
 * [return.in](return.in) - Return a given status-code.
-
