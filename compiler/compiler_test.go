@@ -82,7 +82,7 @@ return( 1 + 2 * 3);
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
 	}
-	if !strings.Contains(txt, "rax, 7") {
+	if !strings.Contains(txt, "[rax], 7") {
 		t.Fatalf("suspicious output")
 	}
 
@@ -100,13 +100,13 @@ return( 1 + 2 * 3);
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
 	}
-	if strings.Contains(txt, "rax, 7") {
+	if strings.Contains(txt, "[rax], 7") {
 		t.Fatalf("suspicious output - looks like we've got a constant")
 	}
-	if !strings.Contains(txt, "rax, 3") {
+	if !strings.Contains(txt, "[rax], 3") {
 		t.Fatalf("suspicious output - missing the literal 3")
 	}
-	if !strings.Contains(txt, "rax, 2") {
+	if !strings.Contains(txt, "[rax], 2") {
 		t.Fatalf("suspicious output - missing the literal 2")
 	}
 }

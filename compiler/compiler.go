@@ -427,20 +427,39 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	switch v := e.(type) {
 
 	case *parser.IntegerLiteral:
-		// This is an integer
+
 		fmt.Fprintf(&c.buff, `
-	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
+	# Integer literal %d
+
+	# allocate 8-byte boxed integer
+	call alloc8
+
+	# store payload
+	mov qword ptr [rax], %d
+
+	# tag pointer as integer (00)
+	or rax, 0
+`, v.Value, v.Value)
 
 	case *parser.FloatLiteral:
-		str := v.Value
-		id := c.floatTable.Add(str)
 
-		txt := fmt.Sprintf(`
-	mov rax, [%s]
-	and rax, -4     # last two bits will be 10 - this is float
-	or  rax, 2
-`, id)
-		fmt.Fprint(&c.buff, txt)
+		id := c.floatTable.Add(v.Value)
+
+		fmt.Fprintf(&c.buff, `
+	# Float literal %f
+
+	# allocate 8-byte boxed float
+	call alloc8
+
+	# load float constant
+	movsd xmm0, [%s]
+
+	# store payload
+	movsd [rax], xmm0
+
+	# tag pointer as float (10)
+	or rax, 2
+`, v.Value, id)
 
 	case *parser.FunctionCallExpr:
 
@@ -504,114 +523,194 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 		case lexer.PLUS:
 			fmt.Fprintln(&c.buff, `
 	# +
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	# untag
+	and rax, -4
+	and rbx, -4
+	# load payloads
+	mov rax, [rax]
+	mov rbx, [rbx]
+	# compute
 	add rax, rbx
-	shl rax, 2  # add typing`)
+	# preserve result
+	push rax
+	# allocate boxed result
+	call alloc8
+	# restore payload
+	pop rbx
+	# store payload
+	mov [rax], rbx
+	# tag as int
+	or rax, 0`)
 
 		case lexer.MINUS:
 			fmt.Fprintln(&c.buff, `
 	# -
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	sub rbx, rax
-	mov rax, rbx
-	shl rax, 2  # add typing`)
+	push rbx
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
 	# *
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	imul rax, rbx
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(&c.buff, `
 	# /
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
-	mov rdx, 0
-	mov rcx, rax
-	mov rax, rbx
+	and rax, -4
+	and rbx, -4
+	mov rcx, [rax]
+	mov rax, [rbx]
+	xor rdx, rdx
 	idiv rcx
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# ==
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	sete al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.NOT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# !=
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setne al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.LT:
 			fmt.Fprintln(&c.buff, `
 	# <
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setl al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.LT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# <=
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setle al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.GT:
 			fmt.Fprintln(&c.buff, `
 	# >
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setg al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.GT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# >=
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setge al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 		case lexer.AND:
 			fmt.Fprintln(&c.buff, `
 	# &&
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
-	imul rax, rbx
-	shl rax, 2  # add typing`)
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
+	and rax, rbx
+	cmp rax, 0
+	setne al
+	movzx rax, al
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 		case lexer.OR:
 			fmt.Fprintln(&c.buff, `
 	# ||
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	or rax, rbx
 	cmp rax, 0
 	setne al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 		default:
 			return fmt.Errorf("unhandled token in compileExpr: %v", v)
 		}
@@ -745,7 +844,9 @@ over_function_%s:
 			}
 		}
 		txt := fmt.Sprintf(`
-	sar rax, 2  # undo the type-storage
+	# IF condition
+	and rax, -4	# remove type tag
+	mov rax, [rax]  # load boxed integer payload
 	cmp rax, 0
 	jz if_%d_false
 `, n)
@@ -902,6 +1003,9 @@ while_%d_start:
 		}
 
 		txt = fmt.Sprintf(`
+	# WHILE condition
+	and rax, -4           # remove type tag
+	mov rax, [rax]        # load boxed integer
 	cmp rax, 0
 	jz while_%d_end
 `, n)

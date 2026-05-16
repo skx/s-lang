@@ -6,3 +6,8 @@
         #
         .section .text
 _start:
+
+        #
+        # Setup our initial heap allocator
+        #
+        call init_heap

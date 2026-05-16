@@ -92,12 +92,13 @@ function max (a, b ) {
 #
 function steve () {
   inline {
-      # Set the return value
-      mov rax, 42
-      # cleanup stack-frame
-      mov rsp, rbp
-      pop rbp
-      ret
+     call alloc8              # allocate 8-byte boxed integer
+     mov qword ptr [rax], 42  # store payload
+     or rax, 0                # integer
+
+     mov rsp, rbp             # cleanup stack-frame
+     pop rbp
+     ret
   }
 }
 

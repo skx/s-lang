@@ -81,7 +81,9 @@ print_single:
 # Uses the "print_rax_buffer" as temporary storage, and will trash it.
 #
 print_integer:
-        sar rax, 2  # undo typing
+        and rax, -4     # remove tag bits
+        mov rax, [rax]  # dereference boxed payload
+
         mov rbx, 10
         lea rdi, [print_rax_buffer+31]
         mov byte ptr [rdi], 0
@@ -171,9 +173,8 @@ print_string:
 # Printing of a float.
 #
 print_float:
-    or rax, 2
-    and rax, -4
-    movq xmm0, rax
+    and rax, -4       # Remove tag
+    movsd xmm0, [rax] # Load payload
 
 print_double:
 

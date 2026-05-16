@@ -1,3 +1,7 @@
+inline {
+  TRACE_ALLOCATIONS :
+}
+
 #
 # calculate fibonacci numbers, via recursion.
 #
