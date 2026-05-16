@@ -39,6 +39,8 @@ That said the code is clean, readable, and it could be updated to work with floa
 
 See [examples/](examples/) for "real" programs.  A couple of highlights:
 
+* [examples/brainfuck.in](examples/brainfuck.in) - Brainfuck interpreter.
+  * Runs the classic "Hello World" example program.
 * [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20.
 * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
