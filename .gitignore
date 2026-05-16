@@ -1,10 +1,12 @@
 s-lang
 a.out
+examples/empty
 examples/example
 examples/factorial
 examples/fibonacci
 examples/fizzbuzz
 examples/functions
+examples/return
 examples/string
 examples/while
 examples/*.s
