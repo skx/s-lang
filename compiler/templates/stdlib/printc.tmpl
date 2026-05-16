@@ -1,0 +1,32 @@
+#
+# printc - Print the ASCII character specified
+# by the given number.
+#
+# printc(42) -> "*" written to STDOUT
+#
+#
+# print the single character in RAX
+#
+
+
+.section .text.printc,"ax",@progbits
+
+printc:
+        push rbp
+        mov rbp, rsp
+        mov rax, [rbp+16]    # get the integer
+        and rax, -4          # remove tag bits
+        mov rax, [rax]       # get the actual value
+printchar_internal:
+        mov byte ptr [printc_buffer], al
+        mov     eax, 1
+        mov     edi, 1
+        mov     rsi, offset printc_buffer
+        mov     edx, 1
+        syscall
+        pop rbp
+        ret
+
+.section .data.printc,"aw",@progbits
+
+printc_buffer: .byte 0x00
