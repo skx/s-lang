@@ -1,14 +1,133 @@
 let program = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
 let length = strlen(program);
 let index = 0;
+let cellptr = 0;
 
-while( index < length ) {
-   let c = getindex( program, index );
-   print("Program opcode ", index, "/", length, ": ", c, " " );
-   printchar(c);
-   newline();
-   let index = index + 1;
+
+function getClose(i) {
+   let count = 1;
+   while( count ) {
+
+       # get the next opcode
+       let c = getindex( program, i );
+
+       if ( c == 93 ) {  # close
+          let count = count - 1;
+          if ( count == 0 ) {
+              return (i + 1);
+          }
+       }
+       if ( c == 91 ) {
+          let count = count + 1;
+       }
+       let i = i + 1;
+   }
 }
+
+
+function getOpen(i) {
+   let count = 1;
+   while( count ) {
+
+       # get the next opcode
+       let c = getindex( program, i );
+
+       if ( c == 93 ) {  # close
+          let count = count + 1;
+       }
+       if ( c == 91 ) {
+          let count = count - 1;
+          if ( count == 0 ) {
+              return (i + 1);
+          }
+
+       }
+       let i = i - 1;
+   }
+}
+
+
+# while we have the program
+while( index < length ) {
+
+   # get the next opcode
+   let c = getindex( program, index );
+
+   # show it
+   #print("Program opcode ", index, "/", length, ": ", c, " " );
+   #printchar(c);
+   #newline();
+
+   # 43 +: increment the value at the cellptr
+   if (c == 43) {
+      let n = getramindex(cellptr);
+      let n = n + 1 ;
+      if(  n > 255 ) {
+        let n = 0;
+      }
+      setramindex(cellptr, n);
+   }
+
+   # 45 -: decrement the value at the cellptr
+   if (c == 45) {
+      let n = getramindex(cellptr);
+      let n = n - 1 ;
+      if(  n < 0 ) {
+         let n = 255;
+      }
+      setramindex(cellptr, n);
+   }
+
+   # 46 .: print contents of cellptr
+   if (c == 46) {
+      let n = getramindex(cellptr);
+      printchar(n);
+   }
+
+   # 60 < : decrement cellptr
+   if (c == 60) {
+      let cellptr = cellptr - 1;
+      if ( cellptr < 0 ) {
+         let cellptr = 255;
+      }
+   }
+
+   # 62 > : increment cellptr
+   if (c == 62) {
+      let cellptr = cellptr + 1;
+      if ( cellptr > 255 ) {
+         let cellptr = 0;
+      }
+   }
+
+   # 91 [: loop open
+   if (c == 91) {
+     # is the byte at the data pointer zero?
+     let n = getramindex(cellptr);
+     if ( n == 0 ) {
+       let index = getClose(index + 1);
+       continue;
+     }
+
+     # continue as normal
+   }
+
+   # 93 ] : loop close
+   if (c == 93) {
+     # is the byte at the data pointer zero?
+     let n = getramindex(cellptr);
+     if ( n != 0 ) {
+       let index = getOpen(index - 1);
+       continue;
+     }
+
+     # continue as normal
+   }
+   # next opcode
+   let index = index + 1;
+
+}
+
 
 return( 0);
 
@@ -38,9 +157,58 @@ getindex:
         call alloc8
         pop rbx
         mov [rax], rbx
- #       mov byte ptr [rax], 42 # XXX *
         or rax, 0
         mov rsp, rbp
+        pop rbp
+        ret
+
+#
+# One arguments
+#   getramindex(index)
+#
+# Return the int at the given index of RAM
+getramindex:
+        push rbp
+        mov rbp, rsp
+
+        mov rax, [rbp+16]    # get the integer
+        and rax, -4          # remove tag bits
+        mov rax, [rax]       # get the actual value
+
+        mov rdi, offset ram
+        mov al, [rdi + rax]  # get the byte
+        movzx rax, al        # extend
+
+        # save the value
+        push rax
+        call alloc8
+        pop rbx
+        mov [rax], rbx
+        or rax, 0
+        mov rsp, rbp
+        pop rbp
+        ret
+
+#
+# Two arguments
+#   setramindex(index, val)
+#
+# Set the int at the given index of RAM
+setramindex:
+        push rbp
+        mov rbp, rsp
+
+        mov rax, [rbp+16]    # get the integer
+        and rax, -4          # remove tag bits
+        mov rax, [rax]       # get the actual value
+
+        mov rbx, [rbp+24]    # get the integer
+        and rbx, -4          # remove tag bits
+        mov rbx, [rbx]       # get the actual value
+
+        mov rdi, offset ram
+        mov byte ptr [rdi + rax], bl  # set the byte
+
         pop rbp
         ret
 
@@ -53,7 +221,7 @@ printchar:
         mov rax, [rbp+16]    # get the integer
         and rax, -4          # remove tag bits
         mov rax, [rax]       # get the actual value
-
+printchar_internal:
         mov byte ptr [print_char_buffer], al
         mov     eax, 1
         mov     edi, 1
@@ -62,7 +230,6 @@ printchar:
         syscall
         pop rbp
         ret
-
 }
 data {
 .section .bss
@@ -70,4 +237,6 @@ data {
 print_char_buffer:
         .byte 0x00
 
+ram:
+        .skip 3000
 }
