@@ -1,0 +1,73 @@
+let program = "++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.";
+let length = strlen(program);
+let index = 0;
+
+while( index < length ) {
+   let c = getindex( program, index );
+   print("Program opcode ", index, "/", length, ": ", c, " " );
+   printchar(c);
+   newline();
+   let index = index + 1;
+}
+
+return( 0);
+
+inline {
+
+#
+# Two arguments
+#   get_index(str, index)
+#
+# Return the int at the given index
+getindex:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]    # Get the string
+        and rdi, -2          # Remove typing
+
+        mov rax, [rbp+24]    # get the integer
+        and rax, -4          # remove tag bits
+        mov rax, [rax]       # get the actual value
+
+        mov al, [rdi + rax]  # get the byte
+        movzx rax, al        # extend
+
+        # save the value
+        push rax
+        call alloc8
+        pop rbx
+        mov [rax], rbx
+ #       mov byte ptr [rax], 42 # XXX *
+        or rax, 0
+        mov rsp, rbp
+        pop rbp
+        ret
+
+#
+# print the single character in RAX
+#
+printchar:
+        push rbp
+        mov rbp, rsp
+        mov rax, [rbp+16]    # get the integer
+        and rax, -4          # remove tag bits
+        mov rax, [rax]       # get the actual value
+
+        mov byte ptr [print_char_buffer], al
+        mov     eax, 1
+        mov     edi, 1
+        mov     rsi, offset print_char_buffer
+        mov     edx, 1
+        syscall
+        pop rbp
+        ret
+
+}
+data {
+.section .bss
+
+print_char_buffer:
+        .byte 0x00
+
+}
