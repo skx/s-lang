@@ -3,7 +3,7 @@
         # terminating RETURN statement.
         #
         xor rax, rax
-        jmp exit
+        jmp exit_with_rax
 
 
 #####
@@ -25,6 +25,18 @@
 {{.Identifier }}:
         .ascii "{{.Value}}"
         .byte 00
+{{end}}
+{{end}}
+
+{{ if .FloatTable }}
+
+#####
+##### Storage for floats
+#####
+.section .data
+
+{{range .FloatTable }}
+{{.Identifier }}:  .double {{.Value}}
 {{end}}
 {{end}}
 

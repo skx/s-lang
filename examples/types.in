@@ -11,6 +11,15 @@ print( "\t", b, "\n");
 newline();
 
 
+print( "Type of float : \n");
+let tmp = 33.1;
+print("\t", type(tmp), "\n" );
+
+let b = type(tmp);
+print( "\t", b, "\n");
+newline();
+
+
 print( "Type of string : \n");
 let tmp = "Steve";
 print("\t", type(tmp), "\n");
@@ -30,3 +39,5 @@ let a = 43;
 typePrint(a);
 let a = "This is the end";
 typePrint(a);
+let f = 3.75;
+typePrint(f);

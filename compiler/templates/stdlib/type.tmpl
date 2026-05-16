@@ -28,6 +28,7 @@ type:
         je type_is_reserved
 
 type_cleanup:
+        mov rsp, rbp
         pop rbp
         ret
 

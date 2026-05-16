@@ -81,7 +81,9 @@ print_single:
 # Uses the "print_rax_buffer" as temporary storage, and will trash it.
 #
 print_integer:
-        sar rax, 2  # undo typing
+        and rax, -4     # remove tag bits
+        mov rax, [rax]  # dereference boxed payload
+
         mov rbx, 10
         lea rdi, [print_rax_buffer+31]
         mov byte ptr [rdi], 0
@@ -168,12 +170,173 @@ print_string:
 
 
 #
-# Printing of floats is not yet supported.
+# Printing of a float.
 #
 print_float:
-        lea rax, float_stub_msg
-        or rax, 1
-        jmp print_string
+    and rax, -4       # Remove tag
+    movsd xmm0, [rax] # Load payload
+
+print_double:
+
+    lea rsi, [buffer]
+
+    # -------------------------
+    # sign
+    # -------------------------
+
+    xorpd xmm1, xmm1
+    comisd xmm0, xmm1
+    jae .pos
+
+    mov byte ptr [rsi], '-'
+    inc rsi
+
+    mov rax, 0x8000000000000000
+    movq xmm1, rax
+    xorpd xmm0, xmm1
+
+.pos:
+
+    # -------------------------
+    # scale
+    # -------------------------
+
+    mulsd xmm0, [million]
+    cvttsd2si rax, xmm0
+
+    xor rdx, rdx
+    mov rcx, 1000000
+    div rcx
+
+    mov r8, rdx              # fraction
+    push r8                  # save original fraction
+
+    # -------------------------
+    # integer
+    # -------------------------
+
+    call append_uint
+
+    pop r8                   # restore fraction
+
+    test r8, r8
+    je .nl
+
+    mov byte ptr [rsi], '.'
+    inc rsi
+
+    # -------------------------
+    # build digits in temp
+    # -------------------------
+
+    lea rdi, [temp + 16]
+    mov byte ptr [rdi], 0
+
+    mov rcx, 6              # 6 digits always
+
+.build:
+    xor rdx, rdx
+    mov rax, r8
+    mov rbx, 10
+    div rbx
+
+    add dl, '0'
+    dec rdi
+    mov [rdi], dl
+
+    mov r8, rax
+    loop .build
+
+    # -------------------------
+    # trim trailing zeros
+    # -------------------------
+
+.trim:
+    mov al, [rdi + 5]       # last digit position (conceptually)
+    cmp al, '0'
+    jne .print
+
+    mov byte ptr [rdi + 5], 0
+    dec rcx
+    jmp .trim
+
+.print:
+    # print from rdi forward until null
+
+.print_loop2:
+    mov al, [rdi]
+    test al, al
+    jz .nl
+
+    mov [rsi], al
+    inc rsi
+    inc rdi
+    jmp .print_loop2
+
+.nl:
+    mov byte ptr [rsi], 10
+    inc rsi
+
+    # write
+
+    mov rdx, rsi
+    lea rax, [buffer]
+    sub rdx, rax
+
+    mov rax, 1
+    mov rdi, 1
+    lea rsi, [buffer]
+    syscall
+
+    ret
+
+# ------------------------------------------------------------
+# append_uint
+#
+# appends unsigned integer in RAX to buffer at RSI
+#
+# updates RSI
+# ------------------------------------------------------------
+
+append_uint:
+
+    lea rdi, [temp + 31]
+    mov byte ptr [rdi], 0
+
+    cmp rax, 0
+    jne .au_loop
+
+    dec rdi
+    mov byte ptr [rdi], '0'
+    jmp .au_copy
+
+.au_loop:
+
+    xor rdx, rdx
+    mov rcx, 10
+    div rcx
+
+    add dl, '0'
+
+    dec rdi
+    mov [rdi], dl
+
+    test rax, rax
+    jne .au_loop
+
+.au_copy:
+
+    mov al, [rdi]
+    test al, al
+    je .au_done
+
+    mov [rsi], al
+    inc rsi
+    inc rdi
+    jmp .au_copy
+
+.au_done:
+    ret
 
 #
 # This type is not yet used for anything
@@ -187,11 +350,6 @@ print_reserved:
 .section .data.print,"aw",@progbits
 
 .align 4
-float_stub_msg:
-        .ascii "placeholder for FLOAT print\n"
-        .byte 00
-
-.align 4
 reserved_stub_msg:
         .ascii "placeholder for RESERVED print\n"
         .byte 00
@@ -201,3 +359,9 @@ reserved_stub_msg:
 .align 16
 print_rax_buffer:
         .skip 32
+
+million:    .double 1000000.0
+
+.section .bss.print,"aw",@nobits
+        .lcomm buffer, 128
+        .lcomm temp, 32

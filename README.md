@@ -16,7 +16,8 @@ In terms of features:
   * Maths operations: `+`, `-`, `*`, `/`
   * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`,
   * Logical operations: `&&` and `||`.
-* Support for integers and strings.  Strings are interned.
+* Support for integers, floats, and strings.
+  * Float and string literals are interned.
   * So you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
 * The ability to include inline assembly via `inline { .. }`.
   * `inline` statements are generated inline with the current code-position.
@@ -27,8 +28,8 @@ In terms of features:
 Anti-features, or limitations:
 
 * The language is built around integers, and strings.
+  * Float support is rudimentary and mostly limited to setting values, constant expressions and printing their values.
   * There are only a few functions in the standard library.
-* There are no floating-point operations.
 
 That said the code is clean, readable, and it could be updated to work with floating-point reasonably easily.
 
@@ -74,9 +75,6 @@ The following is a tour of our language:
 
     inline {
        # Inline assembly here
-       mov rax, 32
-       shr 2  # type information in the lower two bits
-       call print_number
     }
 
     # Conditional expressions are present
@@ -109,8 +107,6 @@ statement       ::= ";"
                   | "if" "(" expression ")" block [ else block ]
                   | "inline" "{" LITERAL "}"
                   | "while" "(" expression ")" block
-                  | "print" "(" exprList ")"
-                  | "println" "(" exprList ")"
                   | "return" "(" expression ")"
 
 block           ::= "{" statements "}"
@@ -152,8 +148,8 @@ Once built (and optionally installed) the `s-lang` binary may be used to
 generate, compile, or inspect the output of various stages via a number of
 sub-commands.
 
-Here we see the four sub-commands that you might choose to use, though in
-practice only the last two are expected to be used regularly.
+Here we see the available sub-commands that you might choose to use, though in
+practice only the last three are useful for users.
 
 
 ### lex
@@ -181,11 +177,15 @@ You could assemble that output, and link it, like so:
      as -msyntax=intel -mnaked-reg out.s -o out.o
      ld -s -o out out.o
 
-Then run:
+Confirm the assembly is sane:
+
+     objdump -M intel -S out
+
+Then run it:
 
     ./out
 
-Though the `compile` sub-command does that for you.
+The `compile` sub-command automates the process of generating source, compiling it, and linking it to produce a final binary.
 
 
 ### compile
@@ -198,6 +198,15 @@ Typically you'd run something like this to generate and execute in one go:
 
      s-lang compile examples/example.in && ./a.out
 
+(Or use the `execute` sub-command to create a binary and run it in one step.)
+
+
+### execute
+
+This performs the same generation as in the `compile` sub-command, but also runs the resulting binary for you:
+
+     s-lang execute [-output a.out] examples/example.in
+
 
 
 ## STDLIB
@@ -207,7 +216,7 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
 * `exit`
   * Assumes the value in the RAX register is the desired exit-code and terminates execution with that value.
 * `newline`
-  * Prints a newline - Invoked if you call `println`, which terminates output with a newline.  `print` trusts you to add `\n` if you want a newline.
+  * Prints a newline.
 * `print`
   * Determine the type of the given variable, and print it appropriately.
 * `strlen`
@@ -226,12 +235,16 @@ This is because internally a call to `foo( [args] )` is converted into a call to
 
 ## Types
 
-At the moment we have scope for four types, stored within the last two bits of the variable values:
+We used heap-allocated boxed pointers for floats, and ints, and static string pointers for strng values.
+
+To identify what kind of pointer we have we use the lower two bits:
 
 * decimal 00 binary `00` -> integer
 * decimal 01 binary `01` -> pointer/string
-* decimal 02 binary `10` -> float (in the future)
+* decimal 02 binary `10` -> float
 * decimal 03 binary `11` -> reserved
+
+TLDR; We allocate memory for integers and floats, strings are just pointers to static defitions within the `.data` section, the bottom two bits of the pointers identify the type.
 
 
 
@@ -245,10 +258,9 @@ We define a simple ABI for function invocation:
 You can see how this is handled in [our standard-library functions](compiler/templates/stdlib) for reference, but do remember that variables have types.   As an example if you want to print the integer 17  using inline assembly you would run:
 
      inline {
-        mov rax, 17  # The value
-        shl rax, 2   # Shift left by two:
-                     #   Setting the lower bits to 00
-                     #   marking this as "integer"
+        call alloc8              # allocate 8-byte boxed integer
+        mov qword ptr [rax], 17  # store payload
+        or rax, 0                # the pointer in RAX is an integer
 
         push rax     # parameters are passed on the stack
         mov rax, 1   # one argument is being passed
@@ -329,5 +341,5 @@ Possible future improvements and additions, to be added slowly if ever.
 * [x] add types to our variables
   * Implemented in [#31](https://github.com/skx/s-lang/pull/31)
 * [x] string comparison should work
-* [ ] floating point numbers
+* [x] floating point numbers
 * [ ] allow *x to get the address of x, for working with strings

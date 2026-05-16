@@ -1,0 +1,50 @@
+#
+# Our memory allocation
+#
+#
+# NOTE
+#######
+#
+# This routine is almost always going to be called, and can never
+# be eliminated.
+#
+# We need to call the init_heap function on startup, just in case
+# there is some memory allocation happening.
+#
+.section .text.heap,"ax",@progbits
+
+init_heap:
+        mov rax, 12
+        xor rdi, rdi
+        syscall
+
+        mov [heap_ptr], rax
+        ret
+
+
+.section .text.alloc,"ax",@progbits
+
+alloc8:
+        push rbx
+        mov rax, [heap_ptr]   # rax = old ptr (allocation start)
+
+        mov rbx, rax
+        add rbx, 8            # rbx = new heap end
+
+        mov rdi, rbx
+        mov r10, rax          # preserve allocation start
+
+        mov rax, 12
+        syscall
+
+        mov [heap_ptr], rbx
+
+        mov rax, r10          # return allocation start
+        pop rbx
+        ret
+
+
+.section .data.heap,"aw",@progbits
+
+heap_ptr:
+        .quad 0

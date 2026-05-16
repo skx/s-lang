@@ -88,6 +88,16 @@ type Compiler struct {
 	// within the source code we generate a single time.
 	stringTable *StringTable
 
+	// floatTable serves basically the same purpose as
+	// our string table.
+	//
+	// We intern literal floats, and generate a label
+	// to hold them in our generated source.  This is
+	// necessary because you cannot write "mov rax, 3.1",
+	// instead you store the value in a memory location
+	// and then run "mov rax, [float_name]".
+	floatTable *FloatTable
+
 	// functions stores the name of functions we're compiling
 	// We should only be compiling one function at a time,
 	// but this way we could allow nested functions if we
@@ -131,6 +141,7 @@ type Compiler struct {
 func New(options ...Option) (*Compiler, error) {
 	tmp := &Compiler{
 		stringTable:     NewStringTable(),
+		floatTable:      NewFloatTable(),
 		scope:           NewScope(nil),
 		constantFolding: true,
 	}
@@ -212,6 +223,9 @@ func (c *Compiler) Compile() (string, error) {
 		// String data for the template rendering
 		StringTable []StringEntry
 
+		// Float data for the template rendering
+		FloatTable []FloatEntry
+
 		// GlobalVars has global variable storage
 		Globals []*GlobalVariable
 
@@ -221,6 +235,7 @@ func (c *Compiler) Compile() (string, error) {
 
 	vars := &FooterData{
 		StringTable: c.stringTable.GetAll(),
+		FloatTable:  c.floatTable.GetAll(),
 		Globals:     c.globalVariables,
 		Data:        c.rawData,
 	}
@@ -328,46 +343,77 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 	switch v := expr.(type) {
 
 	case *parser.BinaryExpr:
+
 		// First recursively fold children
 		v.Left = c.optimizeExpr(v.Left)
 		v.Right = c.optimizeExpr(v.Right)
 
 		// Check if both sides are now integers
-		l, ok1 := v.Left.(*parser.IntegerExpr)
-		r, ok2 := v.Right.(*parser.IntegerExpr)
+		lI, okI1 := v.Left.(*parser.IntegerLiteral)
+		rI, okI2 := v.Right.(*parser.IntegerLiteral)
 
-		if ok1 && ok2 {
+		if okI1 && okI2 {
 			switch v.Op {
 
 			case lexer.PLUS:
-				return &parser.IntegerExpr{
-					Value: l.Value + r.Value,
+				return &parser.IntegerLiteral{
+					Value: lI.Value + rI.Value,
 				}
 
 			case lexer.MINUS:
-				return &parser.IntegerExpr{
-					Value: l.Value - r.Value,
+				return &parser.IntegerLiteral{
+					Value: lI.Value - rI.Value,
 				}
 
 			case lexer.MULTIPLY:
-				return &parser.IntegerExpr{
-					Value: l.Value * r.Value,
+				return &parser.IntegerLiteral{
+					Value: lI.Value * rI.Value,
 				}
 
 			case lexer.DIVIDE:
-				if r.Value != 0 {
-					return &parser.IntegerExpr{
-						Value: l.Value / r.Value,
+				if rI.Value != 0 {
+					return &parser.IntegerLiteral{
+						Value: lI.Value / rI.Value,
 					}
 				}
 			}
+
+			return v
 		}
 
-		return v
+		// Check if both sides are now floats
+		lF, okF1 := v.Left.(*parser.FloatLiteral)
+		rF, okF2 := v.Right.(*parser.FloatLiteral)
 
-	default:
-		return expr
+		if okF1 && okF2 {
+			switch v.Op {
+
+			case lexer.PLUS:
+				return &parser.FloatLiteral{
+					Value: lF.Value + rF.Value,
+				}
+
+			case lexer.MINUS:
+				return &parser.FloatLiteral{
+					Value: lF.Value - rF.Value,
+				}
+
+			case lexer.MULTIPLY:
+				return &parser.FloatLiteral{
+					Value: lF.Value * rF.Value,
+				}
+
+			case lexer.DIVIDE:
+				if rF.Value != 0 {
+					return &parser.FloatLiteral{
+						Value: lF.Value / rF.Value,
+					}
+				}
+			}
+			return v
+		}
 	}
+	return expr
 }
 
 // compileExpr handles compiling an expression.
@@ -380,10 +426,40 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 
 	switch v := e.(type) {
 
-	case *parser.IntegerExpr:
-		// This is an integer
+	case *parser.IntegerLiteral:
+
 		fmt.Fprintf(&c.buff, `
-	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
+	# Integer literal %d
+
+	# allocate 8-byte boxed integer
+	call alloc8
+
+	# store payload
+	mov qword ptr [rax], %d
+
+	# tag pointer as integer (00)
+	or rax, 0
+`, v.Value, v.Value)
+
+	case *parser.FloatLiteral:
+
+		id := c.floatTable.Add(v.Value)
+
+		fmt.Fprintf(&c.buff, `
+	# Float literal %f
+
+	# allocate 8-byte boxed float
+	call alloc8
+
+	# load float constant
+	movsd xmm0, [%s]
+
+	# store payload
+	movsd [rax], xmm0
+
+	# tag pointer as float (10)
+	or rax, 2
+`, v.Value, id)
 
 	case *parser.FunctionCallExpr:
 
@@ -414,7 +490,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	case *parser.VariableExpr:
 		return c.emitLoadVariable(v.Name)
 
-	case *parser.StringExpr:
+	case *parser.StringLiteral:
 		str := v.Value
 		id := c.stringTable.Add(str)
 
@@ -447,114 +523,194 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 		case lexer.PLUS:
 			fmt.Fprintln(&c.buff, `
 	# +
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	# untag
+	and rax, -4
+	and rbx, -4
+	# load payloads
+	mov rax, [rax]
+	mov rbx, [rbx]
+	# compute
 	add rax, rbx
-	shl rax, 2  # add typing`)
+	# preserve result
+	push rax
+	# allocate boxed result
+	call alloc8
+	# restore payload
+	pop rbx
+	# store payload
+	mov [rax], rbx
+	# tag as int
+	or rax, 0`)
 
 		case lexer.MINUS:
 			fmt.Fprintln(&c.buff, `
 	# -
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	sub rbx, rax
-	mov rax, rbx
-	shl rax, 2  # add typing`)
+	push rbx
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
 	# *
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	imul rax, rbx
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(&c.buff, `
 	# /
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
-	mov rdx, 0
-	mov rcx, rax
-	mov rax, rbx
+	and rax, -4
+	and rbx, -4
+	mov rcx, [rax]
+	mov rax, [rbx]
+	xor rdx, rdx
 	idiv rcx
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# ==
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	sete al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.NOT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# !=
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setne al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.LT:
 			fmt.Fprintln(&c.buff, `
 	# <
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setl al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.LT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# <=
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setle al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.GT:
 			fmt.Fprintln(&c.buff, `
 	# >
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setg al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 
 		case lexer.GT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# >=
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	cmp rbx, rax
 	setge al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 		case lexer.AND:
 			fmt.Fprintln(&c.buff, `
 	# &&
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
-	imul rax, rbx
-	shl rax, 2  # add typing`)
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
+	and rax, rbx
+	cmp rax, 0
+	setne al
+	movzx rax, al
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 		case lexer.OR:
 			fmt.Fprintln(&c.buff, `
 	# ||
-	sar rax, 2  # undo the type-storage
-	sar rbx, 2  # undo the type-storage
+	and rax, -4
+	and rbx, -4
+	mov rax, [rax]
+	mov rbx, [rbx]
 	or rax, rbx
 	cmp rax, 0
 	setne al
 	movzx rax, al
-	shl rax, 2  # add typing`)
+	push rax
+	call alloc8
+	pop rbx
+	mov [rax], rbx
+	or rax, 0`)
 		default:
 			return fmt.Errorf("unhandled token in compileExpr: %v", v)
 		}
@@ -679,7 +835,7 @@ over_function_%s:
 		// Compile the expression, masking off strings.
 		switch s.Expression.(type) {
 
-		case *parser.StringExpr:
+		case *parser.StringLiteral:
 			return fmt.Errorf("'if' only permits a numerical expression")
 		default:
 			err := c.compileExpr(s.Expression)
@@ -688,7 +844,9 @@ over_function_%s:
 			}
 		}
 		txt := fmt.Sprintf(`
-	sar rax, 2  # undo the type-storage
+	# IF condition
+	and rax, -4	# remove type tag
+	mov rax, [rax]  # load boxed integer payload
 	cmp rax, 0
 	jz if_%d_false
 `, n)
@@ -792,7 +950,7 @@ if_%d_end:
 		// Compile the expression, masking off strings.
 		switch s.Expression.(type) {
 
-		case *parser.StringExpr:
+		case *parser.StringLiteral:
 			return fmt.Errorf("'return' only permits a numerical expression")
 		default:
 			err := c.compileExpr(s.Expression)
@@ -835,7 +993,7 @@ while_%d_start:
 		// Compile the expression, masking off strings.
 		switch s.Expression.(type) {
 
-		case *parser.StringExpr:
+		case *parser.StringLiteral:
 			return fmt.Errorf("'while' only permits a numerical expression")
 		default:
 			err := c.compileExpr(s.Expression)
@@ -845,6 +1003,9 @@ while_%d_start:
 		}
 
 		txt = fmt.Sprintf(`
+	# WHILE condition
+	and rax, -4           # remove type tag
+	mov rax, [rax]        # load boxed integer
 	cmp rax, 0
 	jz while_%d_end
 `, n)

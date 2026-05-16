@@ -40,27 +40,38 @@ func (f *FunctionCallExpr) String() string {
 }
 func (FunctionCallExpr) expr() {}
 
-// IntegerExpr holds a literal integer, positive or negative.
-type IntegerExpr struct {
+// IntegerLiteral holds a literal integer, positive or negative.
+type IntegerLiteral struct {
 	Value int64
 }
 
 // String returns the value of the given expression.
-func (n *IntegerExpr) String() string {
+func (n *IntegerLiteral) String() string {
 	return fmt.Sprintf("%d", n.Value)
 }
-func (IntegerExpr) expr() {}
+func (IntegerLiteral) expr() {}
 
-// StringExpr holds a literal String.
-type StringExpr struct {
+// FloatExpr holds a literal float, positive or negative.
+type FloatLiteral struct {
+	Value float64
+}
+
+// String returns the value of the given expression.
+func (n *FloatLiteral) String() string {
+	return fmt.Sprintf("%f", n.Value)
+}
+func (FloatLiteral) expr() {}
+
+// StringLiteral holds a literal String.
+type StringLiteral struct {
 	Value string
 }
 
 // String returns the value of the given expression.
-func (s *StringExpr) String() string {
+func (s *StringLiteral) String() string {
 	return fmt.Sprintf("\"%s\"", s.Value)
 }
-func (StringExpr) expr() {}
+func (StringLiteral) expr() {}
 
 // VariableExpr holds a variable reference.
 type VariableExpr struct {

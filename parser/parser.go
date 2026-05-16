@@ -107,9 +107,14 @@ func (p *Parser) parsePrimary() (Expr, error) {
 
 	switch tok.Type {
 
-	case lexer.NUMBER:
-		return &IntegerExpr{
+	case lexer.INTEGER:
+		return &IntegerLiteral{
 			Value: int64(tok.Value.(float64)),
+		}, nil
+
+	case lexer.FLOAT:
+		return &FloatLiteral{
+			Value: tok.Value.(float64),
 		}, nil
 
 	case lexer.IDENT:
@@ -155,7 +160,7 @@ func (p *Parser) parsePrimary() (Expr, error) {
 			Name: name,
 		}, nil
 	case lexer.STRING:
-		return &StringExpr{
+		return &StringLiteral{
 			Value: tok.Value.(string),
 		}, nil
 
@@ -315,6 +320,8 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 		switch p.curToken.Type {
 
+		case lexer.INTEGER, lexer.FLOAT, lexer.STRING:
+			return res, fmt.Errorf("bare literal is illegal: %s", p.curToken.String())
 		case lexer.BREAK:
 			res = append(res, &Break{})
 
