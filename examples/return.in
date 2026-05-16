@@ -1,0 +1,5 @@
+#
+# The smallest possible example.
+#
+
+return(42);

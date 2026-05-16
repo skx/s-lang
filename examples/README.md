@@ -24,3 +24,9 @@ If you'd like to see the generated assembly for each example as well as produce 
   * Demonstration of our types
 * [while.in](while.in)
   * Demonstrate using (nested) while-loops.
+
+Trivial ones:
+
+* [empty.in](empty.in) - Literally an empty source file.
+* [return.in](return.in) - Return a given status-code.
+
