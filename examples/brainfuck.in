@@ -9,7 +9,7 @@ function getClose(i) {
    while( count ) {
 
        # get the next opcode
-       let c = getindex( program, i );
+       let c = program[i];
 
        if ( c == 93 ) {  # close
           let count = count - 1;
@@ -30,7 +30,7 @@ function getOpen(i) {
    while( count ) {
 
        # get the next opcode
-       let c = getindex( program, i );
+       let c = program[i];
 
        if ( c == 93 ) {  # close
           let count = count + 1;
@@ -51,7 +51,7 @@ function getOpen(i) {
 while( index < length ) {
 
    # get the next opcode
-   let c = getindex( program, index );
+   let c = program[index];
 
    # show it
    #print("Program opcode ", index, "/", length, ": ", c, " " );
@@ -81,7 +81,7 @@ while( index < length ) {
    # 46 .: print contents of cellptr
    if (c == 46) {
       let n = getramindex(cellptr);
-      printchar(n);
+      printc(n);
    }
 
    # 60 < : decrement cellptr
@@ -134,35 +134,6 @@ return( 0);
 inline {
 
 #
-# Two arguments
-#   get_index(str, index)
-#
-# Return the int at the given index
-getindex:
-        push rbp
-        mov rbp, rsp
-
-        mov rdi, [rbp+16]    # Get the string
-        and rdi, -2          # Remove typing
-
-        mov rax, [rbp+24]    # get the integer
-        and rax, -4          # remove tag bits
-        mov rax, [rax]       # get the actual value
-
-        mov al, [rdi + rax]  # get the byte
-        movzx rax, al        # extend
-
-        # save the value
-        push rax
-        call alloc8
-        pop rbx
-        mov [rax], rbx
-        or rax, 0
-        mov rsp, rbp
-        pop rbp
-        ret
-
-#
 # One arguments
 #   getramindex(index)
 #
@@ -212,30 +183,10 @@ setramindex:
         pop rbp
         ret
 
-#
-# print the single character in RAX
-#
-printchar:
-        push rbp
-        mov rbp, rsp
-        mov rax, [rbp+16]    # get the integer
-        and rax, -4          # remove tag bits
-        mov rax, [rax]       # get the actual value
-printchar_internal:
-        mov byte ptr [print_char_buffer], al
-        mov     eax, 1
-        mov     edi, 1
-        mov     rsi, offset print_char_buffer
-        mov     edx, 1
-        syscall
-        pop rbp
-        ret
 }
 data {
 .section .bss
 
-print_char_buffer:
-        .byte 0x00
 
 ram:
         .skip 3000
