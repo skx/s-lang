@@ -41,6 +41,8 @@ const (
 	RPAREN = ")"
 	LBRACE = "{"
 	RBRACE = "}"
+	LINDEX = "["
+	RINDEX = "]"
 
 	// Operations
 	PLUS     = "+"
@@ -128,6 +130,8 @@ func NewLexer(input string) *Lexer {
 	l.known[")"] = RPAREN
 	l.known["{"] = LBRACE
 	l.known["}"] = RBRACE
+	l.known["["] = LINDEX
+	l.known["]"] = RINDEX
 	l.known[";"] = SEMICOLON
 	l.known[","] = COMMA
 

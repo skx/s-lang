@@ -275,3 +275,34 @@ func TestPeek(t *testing.T) {
 		i++
 	}
 }
+
+// TestIndex tests a simple string index
+func TestIndex(t *testing.T) {
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{LET, "let"},
+		{IDENT, "b"},
+		{ASSIGN, "="},
+		{STRING, "steve"},
+		{LINDEX, "["},
+		{INTEGER, "3"},
+		{RINDEX, "]"},
+		{SEMICOLON, ";"},
+
+		{EOF, ""},
+	}
+
+	l := NewLexer("LeT b = \"steve\"[3];")
+
+	for i, tt := range tests {
+		tok := l.Next()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - tokentype wrong, expected=%q, got=%q", i, tt.expectedType, tok.Type)
+		}
+		if fmt.Sprintf("%v", tok.Value) != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - Literal wrong, expected=%q, got=%q", i, tt.expectedLiteral, tok.Value)
+		}
+	}
+}
