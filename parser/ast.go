@@ -34,6 +34,20 @@ type FunctionCallExpr struct {
 	Arguments []Expr
 }
 
+// IndexExpr holds an indexing operation: expr[index]
+type IndexExpr struct {
+	Left  Expr
+	Index Expr
+}
+
+func (i *IndexExpr) String() string {
+	return fmt.Sprintf("%s[%s]",
+		i.Left.String(),
+		i.Index.String())
+}
+
+func (IndexExpr) expr() {}
+
 // String returns the value of the given expression.
 func (f *FunctionCallExpr) String() string {
 	return fmt.Sprintf("%s(%s)", f.Name, fmt.Sprintf("%v", f.Arguments))
