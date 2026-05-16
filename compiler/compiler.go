@@ -294,6 +294,59 @@ func (c *Compiler) emitLoadVariable(name string) error {
 	return nil
 }
 
+func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
+
+	// Compile base expression
+	err := c.compileExpr(expr.Left)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(&c.buff, `
+	# save base object
+	push rax
+`)
+
+	// Compile index expression
+	err = c.compileExpr(expr.Index)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(&c.buff, `
+	# index object -> integer
+	and rax, -4
+	mov rax, [rax]
+
+	# restore base
+	pop rbx
+`)
+
+	//
+	// rbx = tagged string
+	// rax = integer index
+	//
+
+	fmt.Fprint(&c.buff, `
+	# untag string pointer
+	and rbx, -4
+
+	# compute address of character
+	add rbx, rax
+
+	# load byte
+	movzx rcx, byte ptr [rbx]
+
+	# allocate boxed integer result
+	push rcx
+	call alloc8
+	pop rcx
+
+	mov [rax], rcx
+`)
+
+	return nil
+}
 func (c *Compiler) emitStoreVariable(name string) error {
 
 	sym, ok := c.scope.Lookup(name)
@@ -425,6 +478,9 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	}
 
 	switch v := e.(type) {
+
+	case *parser.IndexExpr:
+		return c.emitLoadIndex(v)
 
 	case *parser.IntegerLiteral:
 

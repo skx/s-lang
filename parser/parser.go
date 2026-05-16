@@ -72,7 +72,7 @@ func (p *Parser) parseAddSub() (Expr, error) {
 }
 
 func (p *Parser) parseMulDiv() (Expr, error) {
-	left, err := p.parsePrimary()
+	left, err := p.parsePostfix()
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (p *Parser) parseMulDiv() (Expr, error) {
 
 		p.l.Next()
 
-		right, err := p.parsePrimary()
+		right, err := p.parsePostfix()
 		if err != nil {
 			return nil, err
 		}
@@ -102,31 +102,20 @@ func (p *Parser) parseMulDiv() (Expr, error) {
 	return left, nil
 }
 
-func (p *Parser) parsePrimary() (Expr, error) {
-	tok := p.l.Next()
+func (p *Parser) parsePostfix() (Expr, error) {
+	left, err := p.parseAtom()
+	if err != nil {
+		return nil, err
+	}
 
-	switch tok.Type {
+	for {
+		switch p.l.Peek().Type {
 
-	case lexer.INTEGER:
-		return &IntegerLiteral{
-			Value: int64(tok.Value.(float64)),
-		}, nil
+		// function call
+		case lexer.LPAREN:
+			p.l.Next() // consume '('
 
-	case lexer.FLOAT:
-		return &FloatLiteral{
-			Value: tok.Value.(float64),
-		}, nil
-
-	case lexer.IDENT:
-		name := tok.Value.(string)
-
-		// function call?
-		if p.l.Peek().Type == lexer.LPAREN {
-
-			// consume '('
-			p.l.Next()
-
-			var params []Expr
+			var args []Expr
 
 			for {
 				t := p.l.Peek()
@@ -146,19 +135,64 @@ func (p *Parser) parsePrimary() (Expr, error) {
 					return nil, err
 				}
 
-				params = append(params, expr)
+				args = append(args, expr)
 			}
 
-			return &FunctionCallExpr{
-				Name:      name,
-				Arguments: params,
-			}, nil
-		}
+			// only identifiers are callable right now
+			v, ok := left.(*VariableExpr)
+			if !ok {
+				return nil, fmt.Errorf("cannot call non-function")
+			}
 
-		// plain variable
-		return &VariableExpr{
-			Name: name,
+			left = &FunctionCallExpr{
+				Name:      v.Name,
+				Arguments: args,
+			}
+
+		// index operation
+		case lexer.LINDEX:
+			p.l.Next() // consume '['
+
+			index, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
+
+			if p.l.Next().Type != lexer.RINDEX {
+				return nil, fmt.Errorf("missing ]")
+			}
+
+			left = &IndexExpr{
+				Left:  left,
+				Index: index,
+			}
+
+		default:
+			return left, nil
+		}
+	}
+}
+
+func (p *Parser) parseAtom() (Expr, error) {
+	tok := p.l.Next()
+
+	switch tok.Type {
+
+	case lexer.INTEGER:
+		return &IntegerLiteral{
+			Value: int64(tok.Value.(float64)),
 		}, nil
+
+	case lexer.FLOAT:
+		return &FloatLiteral{
+			Value: tok.Value.(float64),
+		}, nil
+
+	case lexer.IDENT:
+		return &VariableExpr{
+			Name: tok.Value.(string),
+		}, nil
+
 	case lexer.STRING:
 		return &StringLiteral{
 			Value: tok.Value.(string),

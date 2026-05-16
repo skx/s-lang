@@ -221,6 +221,9 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
   * Prints a newline.
 * `print`
   * Determine the type of the given variable, and print it appropriately.
+* `printc`
+  * Print the ASCII character corresponding to the given number.
+  * i.e. "printc(42)" will print `*`.
 * `strlen`
   * Return the length of the given string.
 
