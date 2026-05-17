@@ -296,7 +296,6 @@ func (l *Lexer) Next() *Token {
 						str += string(next)
 					}
 
-					fmt.Printf("GOT ESCAPE**************\n")
 					continue
 				}
 
