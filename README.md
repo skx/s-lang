@@ -243,16 +243,18 @@ This is because internally a call to `foo( [args] )` is converted into a call to
 
 ## Types
 
-We used heap-allocated boxed pointers for floats, and ints, and static string pointers for strng values.
-
-To identify what kind of pointer we have we use the lower two bits:
+We use the lower two bits of values to store their types:
 
 * decimal 00 binary `00` -> integer
+  * Nothing special, when storing shift left twice.
+  * When retrieving the value shift right twice.
 * decimal 01 binary `01` -> pointer/string
 * decimal 02 binary `10` -> float
+  * Boxed.  Shift the pointer to the right, then dereference to get the value.
+  * To store make a call to alloc8 and run `or rax, 2`.
 * decimal 03 binary `11` -> reserved
 
-TLDR; We allocate memory for integers and floats, strings are just pointers to static defitions within the `.data` section, the bottom two bits of the pointers identify the type.
+TLDR; We allocate memory for floats, and integers/strings are just pointers to static defitions within the `.data` section, the bottom two bits of the pointers identify the type.
 
 
 
@@ -266,9 +268,8 @@ We define a simple ABI for function invocation:
 You can see how this is handled in [our standard-library functions](compiler/templates/stdlib) for reference, but do remember that variables have types.   As an example if you want to print the integer 17  using inline assembly you would run:
 
      inline {
-        call alloc8              # allocate 8-byte boxed integer
-        mov qword ptr [rax], 17  # store payload
-        or rax, 0                # the pointer in RAX is an integer
+        mov rax, 17  # store payload
+        sal rax, 2   # Bottom two bits should be "00".
 
         push rax     # parameters are passed on the stack
         mov rax, 1   # one argument is being passed
