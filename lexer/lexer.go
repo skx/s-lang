@@ -261,25 +261,52 @@ func (l *Lexer) Next() *Token {
 			continue
 
 		case "\"":
-			// skip the comment
+			// skip the opening quote
 			l.position++
 
 			str := ""
 
 			for l.position < len(l.input) {
-				// get the character
 				c := l.input[l.position]
 				l.position++
 
-				// end of the string?  We're done
-				// and we've already bumped ot the next
-				// character so all is okay.
+				// Handle escapes
+				if c == '\\' {
+					// Unterminated escape
+					if l.position >= len(l.input) {
+						return &Token{Value: "unterminated escape", Type: ERROR}
+					}
+
+					next := l.input[l.position]
+					l.position++
+
+					switch next {
+					case '"':
+						str += `"`
+					case '\\':
+						str += `\`
+					case 'n':
+						str += "\n"
+					case 'r':
+						str += "\r"
+					case 't':
+						str += "\t"
+					default:
+						// Unknown escape: keep literally
+						str += string(next)
+					}
+
+					continue
+				}
+
+				// End of string
 				if c == '"' {
 					return &Token{Value: str, Type: STRING}
-
 				}
+
 				str += string(c)
 			}
+
 			return &Token{Value: "unterminated string", Type: ERROR}
 
 			// Is it a potential number?

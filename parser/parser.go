@@ -552,6 +552,18 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					Name:      name,
 					Arguments: params,
 				})
+			} else if p.l.Peek().Type == lexer.ASSIGN {
+
+				// consume '='
+				p.l.Next()
+
+				vals, err := p.parseExpr()
+				if err != nil {
+					return nil, err
+				}
+				res = append(res,
+					&Let{Name: name, Expression: vals})
+
 			} else {
 
 				// plain variable

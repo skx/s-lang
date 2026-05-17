@@ -15,8 +15,11 @@ type StringEntry struct {
 	// Identifier is the ID we calculate for the given string
 	Identifier string
 
-	// Value is the value of the string
+	// Value is the literal value of the string.
 	Value string
+
+	// Encoded is the hex-encoded variant of the string.
+	Encoded string
 }
 
 // StringTable holds our state
@@ -55,13 +58,22 @@ func (st *StringTable) GetAll() []StringEntry {
 
 	for k, v := range st.values {
 
-		v = strings.ReplaceAll(v, "\n", "\\n")
-		v = strings.ReplaceAll(v, "\t", "\\t")
-		v = strings.ReplaceAll(v, "\r", "\\r")
+		// Convert "Steve" into "s, t, e, v, e" (hex encoded)
+		var b strings.Builder
+		comma := false
+		for _, c := range []byte(v) {
+			if !comma {
+				fmt.Fprintf(&b, "0x%02x", c)
+				comma = true
+			} else {
+				fmt.Fprintf(&b, ", 0x%02x", c)
+			}
+		}
 
 		res = append(res, StringEntry{
 			Identifier: k,
 			Value:      v,
+			Encoded:    b.String(),
 		})
 	}
 

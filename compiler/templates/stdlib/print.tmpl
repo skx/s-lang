@@ -81,8 +81,7 @@ print_single:
 # Uses the "print_rax_buffer" as temporary storage, and will trash it.
 #
 print_integer:
-        and rax, -4     # remove tag bits
-        mov rax, [rax]  # dereference boxed payload
+        sar rax, 2     # remove tag bits
 
         mov rbx, 10
         lea rdi, [print_rax_buffer+31]
