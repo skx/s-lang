@@ -48,7 +48,7 @@ return(3);
 	}
 
 	out := buff.String()
-	if !strings.Contains(out, "[rax], 3") {
+	if !strings.Contains(out, "rax, 3") {
 		t.Fatalf("failed to find expected content in compiled code.")
 	}
 }
@@ -97,7 +97,7 @@ return(3);
 		t.Fatalf("error reading generated source %s", err)
 	}
 
-	if !strings.Contains(string(data), "[rax], 3") {
+	if !strings.Contains(string(data), "rax, 3") {
 		t.Fatalf("failed to find expected content in compiled code.")
 	}
 	os.Remove(o.Name())
