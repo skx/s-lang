@@ -23,8 +23,7 @@
 {{range .StringTable }}
         .align 4
 {{.Identifier }}:
-        .ascii "{{.Value}}"
-        .byte 00
+        .byte {{.Encoded}}, 0x00
 {{end}}
 {{end}}
 
