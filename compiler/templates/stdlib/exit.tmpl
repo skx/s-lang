@@ -18,7 +18,7 @@
 .section .text.exit,"ax",@progbits
 
 exit:
-        mov rax, [rax]  # get the boxed int
+        sar rax, 2
 exit_with_rax:
         mov rdi, rax
         mov rax, 60     # sys_exit

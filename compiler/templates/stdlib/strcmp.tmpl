@@ -31,11 +31,7 @@ strcmp:
         sub al, dl
 .strcmp_done:
         movsx rax, al       # Truncate, but keep the sign
-        push rax            # save the result
-        call alloc8         # allocate room for the result
-        pop rbx             # get the result
-        mov [rax], rbx      # store it
-        or rax, 0           # mark it as an integer-pointer
+        sal rax, 2          # set type
         mov rsp, rbp
         pop rbp
         ret

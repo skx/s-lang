@@ -20,11 +20,7 @@ getc:
 
         mov al, [getc_buffer]
         movsx rax, al
-        push rax            # save the result
-        call alloc8         # allocate room for the result
-        pop rbx             # get the result
-        mov [rax], rbx      # store it
-        or rax, 0           # mark it as an integer-pointer
+        sal rax, 2
         jmp getc_cleanup
 
 getc_failed:
@@ -32,11 +28,7 @@ getc_failed:
         #  0 == EOF
         # <0 == Error code
         #
-        push rax            # save the result
-        call alloc8         # allocate room for the result
-        pop rbx             # get the result
-        mov [rax], rbx      # store it
-        or rax, 0           # mark it as an integer-pointer
+        sal rax, 2
 
 getc_cleanup:
         pop rbp
