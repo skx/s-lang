@@ -244,7 +244,7 @@ while( index < length ) {
      # is the byte at the data pointer zero?
      let n = getramindex(cellptr);
      if ( n == 0 ) {
-       let index = getClose(index+1);
+       let index = getClose(index);
        continue;
      }
    }
@@ -254,7 +254,7 @@ while( index < length ) {
      # is the byte at the data pointer zero?
      let n = getramindex(cellptr);
      if ( n != 0 ) {
-       let index = getOpen(index -1);
+       let index = getOpen(index);
        continue;
      }
    }
