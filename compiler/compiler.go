@@ -485,17 +485,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	case *parser.IntegerLiteral:
 
 		fmt.Fprintf(&c.buff, `
-	# Integer literal %d
-
-	# allocate 8-byte boxed integer
-	call alloc8
-
-	# store payload
-	mov qword ptr [rax], %d
-
-	# tag pointer as integer (00)
-	or rax, 0
-`, v.Value, v.Value)
+	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
 
 	case *parser.FloatLiteral:
 
@@ -514,6 +504,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	movsd [rax], xmm0
 
 	# tag pointer as float (10)
+	sal rax, 2
 	or rax, 2
 `, v.Value, id)
 
