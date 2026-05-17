@@ -315,8 +315,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	fmt.Fprint(&c.buff, `
 	# index object -> integer
-	and rax, -4
-	mov rax, [rax]
+	sar rax, 2
 
 	# restore base
 	pop rbx
@@ -335,14 +334,11 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	add rbx, rax
 
 	# load byte
-	movzx rcx, byte ptr [rbx]
+	movzx rax, byte ptr [rbx]
 
 	# allocate boxed integer result
-	push rcx
-	call alloc8
-	pop rcx
-
-	mov [rax], rcx
+	and rax, 255
+	sal rax, 2
 `)
 
 	return nil
@@ -485,17 +481,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	case *parser.IntegerLiteral:
 
 		fmt.Fprintf(&c.buff, `
-	# Integer literal %d
-
-	# allocate 8-byte boxed integer
-	call alloc8
-
-	# store payload
-	mov qword ptr [rax], %d
-
-	# tag pointer as integer (00)
-	or rax, 0
-`, v.Value, v.Value)
+	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
 
 	case *parser.FloatLiteral:
 
@@ -514,6 +500,7 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	movsd [rax], xmm0
 
 	# tag pointer as float (10)
+	sal rax, 2
 	or rax, 2
 `, v.Value, id)
 
@@ -579,194 +566,123 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 		case lexer.PLUS:
 			fmt.Fprintln(&c.buff, `
 	# +
-	# untag
-	and rax, -4
-	and rbx, -4
-	# load payloads
-	mov rax, [rax]
-	mov rbx, [rbx]
-	# compute
-	add rax, rbx
-	# preserve result
-	push rax
-	# allocate boxed result
-	call alloc8
-	# restore payload
-	pop rbx
-	# store payload
-	mov [rax], rbx
-	# tag as int
-	or rax, 0`)
+	sar rax, 2   # untag type
+	sar rbx, 2   # untag type
+
+	add rax, rbx # compute
+
+	sal rax, 2   # add typing`)
 
 		case lexer.MINUS:
 			fmt.Fprintln(&c.buff, `
 	# -
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
-	sub rbx, rax
-	push rbx
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sar rax, 2   # untag type
+	sar rbx, 2   # untag type
+
+	sub rbx, rax # compute
+	mov rax, rbx
+	sal rax, 2   # add typing`)
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
 	# *
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
-	imul rax, rbx
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sar rax, 2     # untag type
+	sar rbx, 2     # untag type
+	imul rax, rbx  # compute
+	sal rax, 2     # add typing`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(&c.buff, `
 	# /
-	and rax, -4
-	and rbx, -4
-	mov rcx, [rax]
-	mov rax, [rbx]
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
+
+	mov rcx, rax  # compute
+	mov rax, rbx
 	xor rdx, rdx
 	idiv rcx
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+
+	sal rax, 2    # add typing`)
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# ==
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
-	cmp rbx, rax
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
+	cmp rbx, rax  # compute
 	sete al
 	movzx rax, al
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sal rax, 2    # add type`)
 
 		case lexer.NOT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# !=
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
-	cmp rbx, rax
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
+	cmp rbx, rax  # compute
 	setne al
 	movzx rax, al
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sal rax, 2    # add type`)
 
 		case lexer.LT:
 			fmt.Fprintln(&c.buff, `
 	# <
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
 	cmp rbx, rax
 	setl al
 	movzx rax, al
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sal rax, 2    # add type`)
 
 		case lexer.LT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# <=
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
 	cmp rbx, rax
 	setle al
 	movzx rax, al
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sal rax, 2    # add type`)
 
 		case lexer.GT:
 			fmt.Fprintln(&c.buff, `
 	# >
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
 	cmp rbx, rax
 	setg al
 	movzx rax, al
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sal rax, 2    # add type`)
 
 		case lexer.GT_EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# >=
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
 	cmp rbx, rax
 	setge al
 	movzx rax, al
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sal rax, 2    # add type`)
+
 		case lexer.AND:
 			fmt.Fprintln(&c.buff, `
 	# &&
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
 	and rax, rbx
 	cmp rax, 0
 	setne al
 	movzx rax, al
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sal rax, 2    # add type`)
 		case lexer.OR:
 			fmt.Fprintln(&c.buff, `
 	# ||
-	and rax, -4
-	and rbx, -4
-	mov rax, [rax]
-	mov rbx, [rbx]
+	sar rax, 2    # untag type
+	sar rbx, 2    # untag type
 	or rax, rbx
 	cmp rax, 0
 	setne al
 	movzx rax, al
-	push rax
-	call alloc8
-	pop rbx
-	mov [rax], rbx
-	or rax, 0`)
+	sal rax, 2    # add type`)
 		default:
 			return fmt.Errorf("unhandled token in compileExpr: %v", v)
 		}
@@ -901,8 +817,7 @@ over_function_%s:
 		}
 		txt := fmt.Sprintf(`
 	# IF condition
-	and rax, -4	# remove type tag
-	mov rax, [rax]  # load boxed integer payload
+	sar rax, 2      # untag
 	cmp rax, 0
 	jz if_%d_false
 `, n)
@@ -1060,8 +975,7 @@ while_%d_start:
 
 		txt = fmt.Sprintf(`
 	# WHILE condition
-	and rax, -4           # remove type tag
-	mov rax, [rax]        # load boxed integer
+	sar rax, 2            # remove type
 	cmp rax, 0
 	jz while_%d_end
 `, n)

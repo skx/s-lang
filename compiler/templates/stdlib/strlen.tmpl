@@ -18,12 +18,7 @@ strlen:
         inc rax
         jmp .strlen_next_char
 .strlen_done:
-        push rax            # save the result
-        call alloc8         # allocate room for the result
-        pop rbx             # get the result
-        mov [rax], rbx      # store it
-        or rax, 0           # mark it as an integer-pointer
-
+        sal rax, 2          # Add typing
         mov rsp, rbp
         pop rbp
         ret

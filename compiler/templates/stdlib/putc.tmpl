@@ -13,8 +13,7 @@ putc:
         push rbp
         mov rbp, rsp
         mov rax, [rbp+16]    # get the integer
-        and rax, -4          # remove tag bits
-        mov rax, [rax]       # get the actual value
+        sar rax, 2           # remove type bits
 printchar_internal:
         mov byte ptr [printc_buffer], al
         mov     eax, 1
