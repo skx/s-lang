@@ -17,3 +17,5 @@ function dump(s) {
 
 let a = "Hello, world!";
 dump(a);
+
+dump("I said \"Hello, world!\".\n");
