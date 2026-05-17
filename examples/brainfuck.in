@@ -279,19 +279,13 @@ getramindex:
         mov rbp, rsp
 
         mov rax, [rbp+16]    # get the integer
-        and rax, -4          # remove tag bits
-        mov rax, [rax]       # get the actual value
+        sar rax, 2           # remove tag bits
 
         mov rdi, offset ram
         mov al, [rdi + rax]  # get the byte
         movzx rax, al        # extend
 
-        # save the value
-        push rax
-        call alloc8
-        pop rbx
-        mov [rax], rbx
-        or rax, 0
+        sal rax, 2           # add type-bits
         mov rsp, rbp
         pop rbp
         ret
@@ -305,17 +299,14 @@ setramindex:
         push rbp
         mov rbp, rsp
         mov rax, [rbp+16]    # get the integer
-        and rax, -4          # remove tag bits
-        mov rax, [rax]       # get the actual value
-
+        sar rax, 2           # remove tag bits
         mov rbx, [rbp+24]    # get the integer
-        and rbx, -4          # remove tag bits
-        mov rbx, [rbx]       # get the actual value
+        sar rbx, 2           # remove tag bits
 
         mov rdi, offset ram
         mov byte ptr [rdi + rax], bl  # set the byte
         mov rsp, rbp
-       pop rbp
+        pop rbp
         ret
 
 }
