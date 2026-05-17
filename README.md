@@ -213,17 +213,20 @@ This performs the same generation as in the `compile` sub-command, but also runs
 
 ## STDLIB
 
-_Standard library_ is a grandiose term for the simple library routines we embed, but we have a couple of reusable functions within the generated assembly:
+_Standard library_ is a grandiose term for the simple library routines we embed, but we have implemented several functions:
 
 * `exit`
   * Assumes the value in the RAX register is the desired exit-code and terminates execution with that value.
+* `getc`
+  * Get a single byte from STDIN, `let in = getc();`.
 * `newline`
   * Prints a newline.
 * `print`
   * Determine the type of the given variable, and print it appropriately.
-* `printc`
-  * Print the ASCII character corresponding to the given number.
-  * i.e. "printc(42)" will print `*`.
+* `putc`
+  * Print the ASCII character corresponding to the given integer, i.e `putc(42);` will print `*`.
+* `strcmp`
+  * Compare two strings for equality, return `0` if equal.
 * `strlen`
   * Return the length of the given string.
 

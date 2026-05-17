@@ -11,6 +11,7 @@ If you'd like to see the generated assembly for each example as well as produce 
 * [brainfuck.in](brainfuck.in) - Brainfuck interpreter.
   * Runs the classic "Hello World" example program.
   * Fails to run the mandelbrot example, but I've not looked into why yet.
+* [cat.in](cat.in) - Simple `cat` which echos input.
 * [example.in](example.in)
   * Misc. examples.
 * [factorial.in](factorial.in)
