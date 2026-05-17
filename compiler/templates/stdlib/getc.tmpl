@@ -1,0 +1,47 @@
+#
+# getc - Read a single character from STDIN, and return it.
+#
+
+
+.section .text.getc,"ax",@progbits
+
+getc:
+        push rbp
+        mov rbp, rsp
+
+        mov     rax, 0                   # SYS_read
+        mov     rdi, 0                   # STDIN_FILENO
+        mov     rsi, offset getc_buffer  # buffer
+        mov     rdx, 1                   # read exactly 1 byte
+        syscall
+
+        cmp rax, 1  # success?
+        jne getc_failed
+
+        mov al, [getc_buffer]
+        movsx rax, al
+        push rax            # save the result
+        call alloc8         # allocate room for the result
+        pop rbx             # get the result
+        mov [rax], rbx      # store it
+        or rax, 0           # mark it as an integer-pointer
+        jmp getc_cleanup
+
+getc_failed:
+        # RAX contains the failure code
+        #  0 == EOF
+        # <0 == Error code
+        #
+        push rax            # save the result
+        call alloc8         # allocate room for the result
+        pop rbx             # get the result
+        mov [rax], rbx      # store it
+        or rax, 0           # mark it as an integer-pointer
+
+getc_cleanup:
+        pop rbp
+        ret
+
+.section .bss.getc,"aw",@nobits
+
+getc_buffer: .byte 0x00

@@ -1,17 +1,15 @@
 #
-# printc - Print the ASCII character specified
+# putc - Print the ASCII character specified
 # by the given number.
 #
-# printc(42) -> "*" written to STDOUT
-#
-#
-# print the single character in RAX
+#     putc(42);
+#     "*" written to STDOUT
 #
 
 
-.section .text.printc,"ax",@progbits
+.section .text.putc,"ax",@progbits
 
-printc:
+putc:
         push rbp
         mov rbp, rsp
         mov rax, [rbp+16]    # get the integer
@@ -27,6 +25,6 @@ printchar_internal:
         pop rbp
         ret
 
-.section .data.printc,"aw",@progbits
+.section .data.putc,"aw",@progbits
 
 printc_buffer: .byte 0x00
