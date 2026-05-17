@@ -306,3 +306,40 @@ func TestIndex(t *testing.T) {
 		}
 	}
 }
+
+// test \" becomes " inside strings
+func TestQuotesInStrings(t *testing.T) {
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{LET, "let"},
+		{IDENT, "b"},
+		{ASSIGN, "="},
+		{STRING, "steve \"name\" kemp"},
+		{SEMICOLON, ";"},
+
+		{EOF, ""},
+	}
+
+	l := NewLexer(`LeT b = "steve \"name\" kemp";`)
+
+	for i, tt := range tests {
+		tok := l.Next()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - tokentype wrong, expected=%q, got=%q", i, tt.expectedType, tok.Type)
+		}
+		if fmt.Sprintf("%v", tok.Value) != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - Literal wrong, expected=%q, got=%q", i, tt.expectedLiteral, tok.Value)
+		}
+	}
+
+	// last character is \ then it's unterminated
+
+	l = NewLexer(`"\r\n\t\\\"\x\`)
+
+	tok := l.Next()
+	if tok.Type != ERROR {
+		t.Fatalf("expected error, got %s", tok)
+	}
+}
