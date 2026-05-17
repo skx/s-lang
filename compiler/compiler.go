@@ -315,8 +315,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	fmt.Fprint(&c.buff, `
 	# index object -> integer
-	and rax, -4
-	mov rax, [rax]
+	sar rax, 2
 
 	# restore base
 	pop rbx
@@ -335,14 +334,11 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	add rbx, rax
 
 	# load byte
-	movzx rcx, byte ptr [rbx]
+	movzx rax, byte ptr [rbx]
 
 	# allocate boxed integer result
-	push rcx
-	call alloc8
-	pop rcx
-
-	mov [rax], rcx
+	and rax, 255
+	sal rax, 2
 `)
 
 	return nil
