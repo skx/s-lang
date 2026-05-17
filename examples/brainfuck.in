@@ -151,6 +151,8 @@ let length = strlen(program);
 let index = 0;
 let cellptr = 0;
 
+# Allocate the memory for the cells
+let ram = malloc(3000);
 
 function getClose(i) {
 
@@ -199,33 +201,33 @@ while( index < length ) {
 
    # 43 +: increment the value at the cellptr
    if (c == 43) {
-      let n = getramindex(cellptr);
+      let n = getat(ram,cellptr);
       let n = n + 1 ;
       if( n > 255 ) {
         let n = 0;
       }
-      setramindex(cellptr, n);
+      setat(ram,cellptr, n);
    }
 
    # 45 -: decrement the value at the cellptr
    if (c == 45) {
-      let n = getramindex(cellptr);
+      let n = getat(ram,cellptr);
       let n = n - 1 ;
       if( n < 0 ) {
          let n = 255;
       }
-      setramindex(cellptr, n);
+      setat(ram,cellptr, n);
    }
 
    # 44 ,: read from STDIN
    if (c == 44) {
       let x = getc();
-      setramindex(cellptr,x);
+      setat(ram,cellptr,x);
    }
 
    # 46 .: print contents of cellptr
    if (c == 46) {
-      let n = getramindex(cellptr);
+      let n = getat(ram,cellptr);
       putc(n);
    }
 
@@ -242,7 +244,7 @@ while( index < length ) {
    # 91 [: loop open
    if (c == 91) {
      # is the byte at the data pointer zero?
-     let n = getramindex(cellptr);
+     let n = getat(ram,cellptr);
      if ( n == 0 ) {
        let index = getClose(index);
        continue;
@@ -252,7 +254,7 @@ while( index < length ) {
    # 93 ] : loop close
    if (c == 93) {
      # is the byte at the data pointer zero?
-     let n = getramindex(cellptr);
+     let n = getat(ram,cellptr);
      if ( n != 0 ) {
        let index = getOpen(index);
        continue;
@@ -266,54 +268,3 @@ while( index < length ) {
 
 
 return( 0);
-
-inline {
-
-#
-# One arguments
-#   getramindex(index)
-#
-# Return the int at the given index of RAM
-getramindex:
-        push rbp
-        mov rbp, rsp
-
-        mov rax, [rbp+16]    # get the integer
-        sar rax, 2           # remove tag bits
-
-        mov rdi, offset ram
-        mov al, [rdi + rax]  # get the byte
-        movzx rax, al        # extend
-
-        sal rax, 2           # add type-bits
-        mov rsp, rbp
-        pop rbp
-        ret
-
-#
-# Two arguments
-#   setramindex(index, val)
-#
-# Set the int at the given index of RAM
-setramindex:
-        push rbp
-        mov rbp, rsp
-        mov rax, [rbp+16]    # get the integer
-        sar rax, 2           # remove tag bits
-        mov rbx, [rbp+24]    # get the integer
-        sar rbx, 2           # remove tag bits
-
-        mov rdi, offset ram
-        mov byte ptr [rdi + rax], bl  # set the byte
-        mov rsp, rbp
-        pop rbp
-        ret
-
-}
-data {
-.section .bss
-
-
-ram:
-        .skip 3000
-}

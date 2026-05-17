@@ -72,6 +72,37 @@ alloc8:
         ret
 
 
+.section .text.malloc,"ax",@progbits
+
+malloc:
+        push rbp
+        mov  rbp, rsp
+        push rbx
+
+        mov  rbx, [rbp+16]      # tagged size
+        sar  rbx, 2             # untag -> actual byte count
+
+        mov  rax, [heap_ptr]    # old heap ptr = allocation start
+
+        mov  rcx, rax
+        add  rcx, rbx           # rcx = new heap end
+
+        mov  rdi, rcx           # brk(new_end)
+        mov  r10, rax           # preserve allocation start
+
+        mov  rax, 12            # syscall: brk
+        syscall
+
+        mov  [heap_ptr], rcx    # commit new heap ptr
+
+        mov  rax, r10           # return allocation start
+        or rax, 1
+
+        pop  rbx
+        mov  rsp, rbp
+        pop  rbp
+        ret
+
 .section .data.heap,"aw",@progbits
 
 heap_ptr:

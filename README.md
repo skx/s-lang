@@ -217,14 +217,20 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
 
 * `exit`
   * Assumes the value in the RAX register is the desired exit-code and terminates execution with that value.
+* `getat(addr, index);`
+  * Get the byte at the given address.  Be it a string, or a `malloc()`'d area.
 * `getc`
   * Get a single byte from STDIN, `let in = getc();`.
+* `malloc(N)`
+  * Allocate N bytes on the heap.
 * `newline`
   * Prints a newline.
 * `print`
   * Determine the type of the given variable, and print it appropriately.
 * `putc`
   * Print the ASCII character corresponding to the given integer, i.e `putc(42);` will print `*`.
+* `setat(addr, index, value);`
+  * Set the byte at the given address.  Be it a string, or a `malloc()`'d area.
 * `strcmp`
   * Compare two strings for equality, return `0` if equal.
 * `strlen`
