@@ -383,7 +383,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 	pop rbx     # offset (already untagged)
 	pop rcx     # base
 	and rcx, -4 # untag base
-	shr rax, 2  # untag value
+	sar rax, 2  # untag value
 
 	# compute address of character
 	add rbx, rcx

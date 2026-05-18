@@ -33,7 +33,7 @@ init_heap:
         xor rdi, rdi
         syscall
 
-        mov [heap_ptr], rax
+        mov [rip + heap_ptr], rax
         ret
 
 
@@ -54,7 +54,7 @@ alloc8:
         pop rax
 .endif
         push rbx
-        mov rax, [heap_ptr]   # rax = old ptr (allocation start)
+        mov rax, [rip + heap_ptr]   # rax = old ptr (allocation start)
 
         mov rbx, rax
         add rbx, 8            # rbx = new heap end
@@ -65,7 +65,7 @@ alloc8:
         mov rax, 12
         syscall
 
-        mov [heap_ptr], rbx
+        mov [rip + heap_ptr], rbx
 
         mov rax, r10          # return allocation start
         pop rbx
@@ -75,33 +75,49 @@ alloc8:
 .section .text.malloc,"ax",@progbits
 
 malloc:
-        push rbp
-        mov  rbp, rsp
-        push rbx
+    push rbp
+    mov rbp, rsp
+    push rbx
+    push r12
 
-        mov  rbx, [rbp+16]      # tagged size
-        sar  rbx, 2             # untag -> actual byte count
+    mov rbx, [rbp+16]
+    sar rbx, 2
 
-        mov  rax, [heap_ptr]    # old heap ptr = allocation start
+    # align to 8 bytes
+    add rbx, 7
+    and rbx, -8
 
-        mov  rcx, rax
-        add  rcx, rbx           # rcx = new heap end
+    mov r12, [rip + heap_ptr]    # allocation start
 
-        mov  rdi, rcx           # brk(new_end)
-        mov  r10, rax           # preserve allocation start
+    mov rcx, r12
+    add rcx, rbx           # desired new brk
 
-        mov  rax, 12            # syscall: brk
-        syscall
+    mov rdi, rcx
+    mov rax, 12
+    syscall
 
-        mov  [heap_ptr], rcx    # commit new heap ptr
+    # verify brk success
+    cmp rax, rcx
+    jb .malloc_fail
 
-        mov  rax, r10           # return allocation start
-        or rax, 1
+    mov [rip + heap_ptr], rax
 
-        pop  rbx
-        mov  rsp, rbp
-        pop  rbp
-        ret
+    mov rax, r12
+    or rax, 1
+
+    jmp .malloc_done
+
+.malloc_fail:
+        mov rax, offset malloc_fail_msg
+        call print_string_raw
+    xor rax, rax
+
+.malloc_done:
+    pop r12
+    pop rbx
+    mov rsp, rbp
+    pop rbp
+    ret
 
 .section .data.heap,"aw",@progbits
 
@@ -110,10 +126,18 @@ heap_ptr:
 
 .ifdef TRACE_ALLOCATIONS
 
+.align 8
 init_heap_msg:
         .ascii "init heap\n"
         .byte 00
+
+.align 8
 alloc8_msg:
         .ascii "allocated memory\n"
         .byte 00
 .endif
+
+.align 8
+malloc_fail_msg:
+        .ascii "brk failed\n"
+        .byte 00
