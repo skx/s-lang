@@ -494,7 +494,22 @@ func (l *Lexer) Next() *Token {
 // valid for use in an identifier.
 func (l *Lexer) isIdentifierCharacter(d byte) bool {
 
-	return (unicode.IsLetter(rune(d)))
+	// letters
+	if unicode.IsLetter(rune(d)) {
+		return true
+	}
+
+	// digits
+	if unicode.IsDigit(rune(d)) {
+		return true
+	}
+
+	// underscore is useful
+	if d == '_' {
+		return true
+	}
+
+	return false
 }
 
 // isNumberComponent looks for characters that can make up integers/floats
