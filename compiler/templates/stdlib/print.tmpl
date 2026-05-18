@@ -82,7 +82,7 @@ print_single:
 #
 print_integer:
         sar rax, 2     # remove tag bits
-
+print_integer_raw:
         mov rbx, 10
         lea rdi, [print_rax_buffer+31]
         mov byte ptr [rdi], 0
@@ -148,6 +148,7 @@ print_integer:
 #
 print_string:
         and rax, -4  # Undo typing
+print_string_raw:
         mov rbx, rax
 
 .loop:

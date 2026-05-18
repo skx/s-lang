@@ -57,22 +57,22 @@ type_is_reserved:
 
 .section .data.type,"aw",@progbits
 
-.align 4
+.align 8
 type_is_int_str:
         .ascii "INTEGER"
         .byte 00
 
-.align 4
+.align 8
 type_is_float_str:
         .ascii "FLOAT"
         .byte 00
 
-.align 4
+.align 8
 type_is_string_str:
         .ascii "STRING"
         .byte 00
 
-.align 4
+.align 8
 type_is_reserved_str:
         .ascii "RESERVED"
         .byte 00
