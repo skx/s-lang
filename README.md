@@ -240,6 +240,8 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
   * Compare two strings for equality, return `0` if equal.
 * `strlen`
   * Return the length of the given string.
+* `str2int`
+  * Convert a string into an integer.
 
 You can see our standard library routines beneath the [compiler/templates/stdlib](compiler/templates/stdlib) directory.
 

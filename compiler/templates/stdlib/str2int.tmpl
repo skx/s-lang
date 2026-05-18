@@ -1,0 +1,56 @@
+#
+# Convert a string to an integer.
+#
+# Supports optional leading '-', but no error checking.
+#
+
+.section .text.str2int,"ax",@progbits
+
+str2int:
+        push rbp
+        mov rbp, rsp
+
+        mov rsi, [rbp+16]    # Get the tagged string
+        and rsi, -4          # Remove typing
+
+        xor rax, rax         # Result accumulator
+        xor r8, r8           # Sign flag: 0 = positive, 1 = negative
+        mov rcx, 10
+
+        #
+        # Check for leading '-'
+        #
+        cmp byte ptr [rsi], '-'
+        jne str2int_loop
+
+        mov r8, 1            # Mark negative
+        inc rsi              # Skip '-'
+
+str2int_loop:
+        cmp byte ptr [rsi], 0
+        je str2int_done
+
+        movzx rbx, byte ptr [rsi]
+        sub rbx, '0'
+
+        mul rcx              # RAX *= 10
+        add rax, rbx
+
+        inc rsi
+        jmp str2int_loop
+
+str2int_done:
+        #
+        # Apply sign if negative
+        #
+        test r8, r8
+        je str2int_return
+
+        neg rax
+
+str2int_return:
+        sal rax, 2           # Re-apply tagging
+
+        mov rsp, rbp
+        pop rbp
+        ret

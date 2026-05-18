@@ -67,3 +67,10 @@ a[2] = 'l';
 a[3] = 'l';
 a[4] = 'o';
 print(a, ", world!\n");
+
+#
+# Convert a string to an int
+#
+if ( str2int("201") != 201  ) {
+   print("Failed to convert string to integer\n");
+}
