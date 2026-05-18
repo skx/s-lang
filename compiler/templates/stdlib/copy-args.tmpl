@@ -1,0 +1,138 @@
+#
+# Global storage
+#
+
+.section .text
+
+#
+# Allocate a buffer to store command-line arguments.
+#
+# Store the address of that buffer in the "command_line_arguments"
+# area, where it can be retrieved by the args function.
+#
+copy_arguments:
+
+        push rbp
+        mov  rbp, rsp
+
+        push rbx
+        push r12
+        push r13
+        push r14
+        push r15
+
+        #
+        # [rbp+16] = argc
+        # [rbp+24] = argv[0]
+        #
+        mov  r12, [rbp+16]      # argc
+        lea  r13, [rbp+24]      # argv
+
+        #
+        # PASS 1: compute raw length
+        #
+        xor  r14, r14           # total bytes
+        xor  r15, r15           # i = 0
+
+.len_loop:
+        cmp  r15, r12
+        jge  .len_done
+
+        mov  rbx, [r13 + r15*8]
+
+.char_len:
+        mov  al, [rbx]
+        test al, al
+        jz   .arg_done
+
+        inc  r14
+        inc  rbx
+        jmp  .char_len
+
+.arg_done:
+
+        # add space except last arg
+        mov  rax, r12
+        dec  rax
+        cmp  r15, rax
+        jge  .next
+
+        inc  r14
+
+.next:
+        inc  r15
+        jmp  .len_loop
+
+.len_done:
+
+        #
+        # add null terminator
+        #
+        inc  r14
+
+        #
+        # PASS 2: allocate (tagged size!)
+        #
+        mov  rax, r14
+        shl  rax, 2
+        push rax
+
+        mov  rax, 1
+        call malloc
+
+        add  rsp, 8
+        mov  [command_line_arguments], rax
+
+        #
+        # destination pointer (untagged for writes)
+        #
+        mov  r10, rax
+        and  r10, -4 # strip tag
+
+        #
+        # PASS 3: copy
+        #
+        xor  r15, r15
+
+.copy_loop:
+        cmp  r15, r12
+        jge  .ca_done
+
+        mov  rbx, [r13 + r15*8]
+
+.copy_chars:
+        mov  al, [rbx]
+        test al, al
+        jz   .arg_end
+
+        mov  [r10], al
+        inc  r10
+        inc  rbx
+        jmp  .copy_chars
+
+.arg_end:
+
+        mov  rax, r12
+        dec  rax
+        cmp  r15, rax
+        jge  .no_space
+
+        mov  byte ptr [r10], ' '
+        inc  r10
+
+.no_space:
+        inc  r15
+        jmp  .copy_loop
+
+.ca_done:
+        mov  byte ptr [r10], 0
+
+        pop  r15
+        pop  r14
+        pop  r13
+        pop  r12
+        pop  rbx
+
+        mov  rsp, rbp
+        pop  rbp
+        ret

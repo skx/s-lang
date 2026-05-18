@@ -1,0 +1,16 @@
+#
+# Return a string consisting of the command-line arguments
+# the program received at startup time.
+#
+#
+
+.section .text.args,"ax",@progbits
+
+args:
+        push rbp
+        mov rbp, rsp
+        mov rax, [command_line_arguments]
+        or rax,1
+        mov rsp, rbp
+        pop rbp
+        ret

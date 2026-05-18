@@ -11,3 +11,11 @@ _start:
         # Setup our initial heap allocator
         #
         call init_heap
+
+
+        #
+        # Allocate a string to copy command line arguments into
+        # and then do that.  The result will be "command_line_arguments"
+        # contains a pointer to a copy of them.
+        #
+        call copy_arguments

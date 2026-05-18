@@ -146,7 +146,64 @@ let mandel = "+++++++++++++[->++>>>+++++>++>+<<<<<<]>>>>>++++++>--->>>>>>>>>>+++
 <<<<<]]>>>]
 "
 
-let program = mandel;
+
+#
+# Process command-line arguments.
+#
+# We look at the first character after the space, on the assumption our
+# CLI args will be something like "./brainfuck mandel".
+#
+#
+function arg () {
+   let a = args();     # args
+   let i = 0           # index
+   let l = strlen(a);  # length
+   let f = 0 ;         # found space?
+   while( i < l ) {
+      let c = a[i];
+      if (f) {
+         return( c );
+      }
+      if (c == ' ' ) {
+         let f = 1;
+      }
+      let i = i + 1;
+   }
+}
+
+
+#
+# No program by default
+#
+let program = " ";
+
+#
+# Find the first character
+#
+let p = arg();
+
+# c == "cat"
+if ( p == 'c' || p == 'C' ) {
+  let program = cat;
+}
+
+# h == "hello"
+if ( p == 'h' || p == 'H' ) {
+  let program = hello;
+}
+
+# m == "mandel[brot]"
+if ( p == 'm' || p == 'M' ) {
+  let program = mandel;
+}
+
+# nothing sane?
+if ( strlen(program) < 2) {
+   print("Usage: brainfuck cat|hello|mandelbrot\n");
+   return(1);
+}
+
+
 let length = strlen(program);
 let index = 0;
 let cellptr = 0;

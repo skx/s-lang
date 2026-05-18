@@ -224,6 +224,9 @@ This performs the same generation as in the `compile` sub-command, but also runs
 
 _Standard library_ is a grandiose term for the simple library routines we embed, but we have implemented several functions:
 
+* `args`
+  * Return the supplied program name, and command-line arguments.
+  * See [examples/brainfuck.in](examples/brainfuck.in) for an example where I use that to parse arguments.
 * `exit`
   * Assumes the value in the RAX register is the desired exit-code and terminates execution with that value.
 * `getc`

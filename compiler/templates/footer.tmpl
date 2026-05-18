@@ -13,6 +13,14 @@
 {{template "stdlib" .}}
 
 
+#####
+#####  Copied version of command-line arguments
+#####
+
+.section .bss
+command_line_arguments:
+        .quad 0
+
 {{ if .StringTable }}
 
 #####
