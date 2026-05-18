@@ -65,7 +65,11 @@ alloc8:
         mov rax, 12
         syscall
 
-        mov [rip + heap_ptr], rbx
+        # verify brk success
+        cmp rax, rcx
+        jb .malloc_fail
+
+        mov [rip + heap_ptr], rax
 
         mov rax, r10          # return allocation start
         pop rbx
