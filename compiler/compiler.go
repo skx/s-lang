@@ -343,6 +343,61 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	return nil
 }
+
+func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
+
+	// Compile base expression
+	err := c.compileExpr(expr.Left)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(&c.buff, `
+	# save base object
+	push rax
+`)
+
+	// Compile index expression
+	err = c.compileExpr(expr.Index)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprint(&c.buff, `
+	# index object -> integer
+	sar rax, 2
+	push rax
+`)
+
+	// compile value to set
+	err = c.compileExpr(expr.Expression)
+	if err != nil {
+		return err
+	}
+
+	// rax == value
+	// rbx == offset
+	// rcx == base
+
+	fmt.Fprint(&c.buff, `
+	pop rbx     # offset (already untagged)
+	pop rcx     # base
+	and rcx, -4 # untag base
+	shr rax, 2  # untag value
+
+	# compute address of character
+	add rbx, rcx
+
+	# load byte
+	mov byte ptr [rbx], al
+
+	# return the value
+	sal rax, 2
+`)
+
+	return nil
+}
+
 func (c *Compiler) emitStoreVariable(name string) error {
 
 	sym, ok := c.scope.Lookup(name)
@@ -475,8 +530,13 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 
 	switch v := e.(type) {
 
+	// get str[index]
 	case *parser.IndexExpr:
 		return c.emitLoadIndex(v)
+
+	// str[index] = value
+	case *parser.IndexAssign:
+		return c.emitStoreIndex(v)
 
 	case *parser.IntegerLiteral:
 
@@ -865,6 +925,9 @@ if_%d_end:
 	case *parser.Inline:
 		fmt.Fprint(&c.buff, "\n"+s.Text+"\n")
 
+	case *parser.IndexAssign:
+		c.emitStoreIndex(s)
+
 	case *parser.Data:
 		c.rawData = append(c.rawData, s.Text)
 
@@ -876,15 +939,22 @@ if_%d_end:
 		if err != nil {
 			return err
 		}
+		nm := ""
+		switch s.Left.(type) {
+		case *parser.VariableExpr:
+			nm = s.Left.(*parser.VariableExpr).Name
+		default:
+			return fmt.Errorf("cannot assign to %T", s.Left)
+		}
 
-		_, exists := c.scope.Lookup(s.Name)
+		_, exists := c.scope.Lookup(nm)
 
 		// Create a lable for the value, if necessary
 		if len(c.functions) > 0 {
 
 			// define local only if it doesn't exist already
 			if !exists {
-				_, err = c.scope.DefineLocal(s.Name)
+				_, err = c.scope.DefineLocal(nm)
 				if err != nil {
 					return err
 				}
@@ -894,10 +964,10 @@ if_%d_end:
 
 			if !exists {
 
-				label := c.newGlobalLabel(s.Name)
+				label := c.newGlobalLabel(nm)
 
 				g := &GlobalVariable{
-					Name:  s.Name,
+					Name:  nm,
 					Label: label,
 				}
 
@@ -912,7 +982,7 @@ if_%d_end:
 		}
 
 		// Actually store RAX into the value
-		err = c.emitStoreVariable(s.Name)
+		err = c.emitStoreVariable(nm)
 		if err != nil {
 			return err
 		}

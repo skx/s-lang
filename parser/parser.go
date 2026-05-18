@@ -459,7 +459,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res, &Inline{Text: p.curToken.Value.(string)})
 
 		case lexer.LET:
-			name := p.l.Next()
+			left, err := p.parsePostfix()
+			if err != nil {
+				return res, err
+			}
 			eq := p.l.Next()
 
 			if eq.Type != lexer.ASSIGN {
@@ -470,7 +473,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return nil, err
 			}
 			res = append(res,
-				&Let{Name: name.Value.(string), Expression: vals})
+				&Let{Left: left, Expression: vals})
 
 		case lexer.WHILE:
 			start := p.l.Next()
@@ -519,8 +522,36 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			name := p.curToken.Value.(string)
 
-			// function call?
-			if p.l.Peek().Type == lexer.LPAREN {
+			// index
+			if p.l.Peek().Type == lexer.LINDEX {
+
+				// consume '('
+				p.l.Next()
+
+				index, err := p.parseExpr()
+				if err != nil {
+					return nil, err
+				}
+
+				if p.l.Next().Type != lexer.RINDEX {
+					return nil, fmt.Errorf("missing ]")
+				}
+
+				// consume '='
+				p.l.Next()
+
+				vals, err := p.parseExpr()
+				if err != nil {
+					return nil, err
+				}
+				res = append(res,
+					&IndexAssign{
+						Left:       &VariableExpr{Name: name},
+						Index:      index,
+						Expression: vals,
+					})
+
+			} else if p.l.Peek().Type == lexer.LPAREN {
 
 				// consume '('
 				p.l.Next()
@@ -562,7 +593,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					return nil, err
 				}
 				res = append(res,
-					&Let{Name: name, Expression: vals})
+					&Let{Left: &VariableExpr{Name: name}, Expression: vals})
 
 			} else {
 
