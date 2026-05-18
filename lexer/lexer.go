@@ -197,6 +197,16 @@ func (l *Lexer) Next() *Token {
 		switch char {
 
 		// Look for the more annoying cases
+		case "'":
+			l.position++
+			c := l.input[l.position]
+			l.position++
+			if l.peekChar() != "'" {
+				return &Token{Type: ERROR, Value: fmt.Sprintf("expected character literal, got %s", l.peekChar())}
+			}
+			l.position++
+			return &Token{Value: float64(c), Type: INTEGER}
+
 		case "<":
 			l.position++
 			if l.peekChar() == "=" {

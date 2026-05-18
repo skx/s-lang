@@ -343,3 +343,43 @@ func TestQuotesInStrings(t *testing.T) {
 		t.Fatalf("expected error, got %s", tok)
 	}
 }
+
+// TestCharacterLiterals
+func TestCharacterLiterals(t *testing.T) {
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{LET, "let"},
+		{IDENT, "b"},
+		{ASSIGN, "="},
+		{INTEGER, "42"},
+		{SEMICOLON, ";"},
+
+		{EOF, ""},
+	}
+
+	l := NewLexer(`LeT b = '*';`)
+
+	for i, tt := range tests {
+		tok := l.Next()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - tokentype wrong, expected=%q, got=%q", i, tt.expectedType, tok.Type)
+		}
+		if fmt.Sprintf("%v", tok.Value) != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - Literal wrong, expected=%q, got=%q", i, tt.expectedLiteral, tok.Value)
+		}
+	}
+
+	// error if unclosed.
+
+	l = NewLexer(`'ss`)
+
+	tok := l.Next()
+	if tok.Type != ERROR {
+		t.Fatalf("expected error, got %s", tok)
+	}
+	if !strings.Contains(tok.Value.(string), "expected character litera") {
+		t.Fatalf("got error, but wrong one: %s", tok.Value.(string))
+	}
+}
