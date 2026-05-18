@@ -13,5 +13,4 @@ examples/while
 examples/*.s
 examples/types
 examples/cat
-examples/string-dump
 

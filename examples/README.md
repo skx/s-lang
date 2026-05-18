@@ -24,8 +24,6 @@ If you'd like to see the generated assembly for each example as well as produce 
   * Demonstrate user-defined functions, and inline-assembly.
 * [string.in](string.in)
   * Demonstrate iterating over strings, setting their contents, etc.
-* [string-dump.in](string-dump.in)
-  * Processing each character of a string, using the index-operator.
 * [types.in](types.in)
   * Demonstration of our types
 * [while.in](while.in)
