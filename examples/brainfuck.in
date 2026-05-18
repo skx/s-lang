@@ -152,7 +152,7 @@ let index = 0;
 let cellptr = 0;
 
 # Allocate the memory for the cells
-let ram = malloc(3000);
+let ram = malloc(4096);
 
 function getClose(i) {
 
@@ -201,7 +201,7 @@ while( index < length ) {
 
    # 43 +: increment the value at the cellptr
    if (c == 43) {
-      let n = getat(ram,cellptr);
+      let n = ram[cellptr];
       let n = n + 1 ;
       if( n > 255 ) {
         let n = 0;
@@ -211,7 +211,7 @@ while( index < length ) {
 
    # 45 -: decrement the value at the cellptr
    if (c == 45) {
-      let n = getat(ram,cellptr);
+      let n = ram[cellptr];
       let n = n - 1 ;
       if( n < 0 ) {
          let n = 255;
@@ -227,7 +227,7 @@ while( index < length ) {
 
    # 46 .: print contents of cellptr
    if (c == 46) {
-      let n = getat(ram,cellptr);
+      let n = ram[cellptr];
       putc(n);
    }
 
@@ -244,7 +244,7 @@ while( index < length ) {
    # 91 [: loop open
    if (c == 91) {
      # is the byte at the data pointer zero?
-     let n = getat(ram,cellptr);
+     let n = ram[cellptr];
      if ( n == 0 ) {
        let index = getClose(index);
        continue;
@@ -254,7 +254,7 @@ while( index < length ) {
    # 93 ] : loop close
    if (c == 93) {
      # is the byte at the data pointer zero?
-     let n = getat(ram,cellptr);
+     let n = ram[cellptr];
      if ( n != 0 ) {
        let index = getOpen(index);
        continue;
