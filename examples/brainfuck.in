@@ -206,7 +206,7 @@ while( index < length ) {
       if( n > 255 ) {
         let n = 0;
       }
-      setat(ram,cellptr, n);
+      ram[cellptr] = n;
    }
 
    # 45 -: decrement the value at the cellptr
@@ -216,13 +216,13 @@ while( index < length ) {
       if( n < 0 ) {
          let n = 255;
       }
-      setat(ram,cellptr, n);
+      ram[cellptr] = n;
    }
 
    # 44 ,: read from STDIN
    if (c == 44) {
       let x = getc();
-      setat(ram,cellptr,x);
+      ram[cellptr] = x;
    }
 
    # 46 .: print contents of cellptr
