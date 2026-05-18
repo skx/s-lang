@@ -55,7 +55,7 @@ func (IndexExpr) expr() {}
 // IndexExpr holds an indexing operation: expr[index] = val
 type IndexAssign struct {
 	// Name is the name of the thing we're indexing.
-	Name string
+	Left Expr
 
 	// Index is the index we're going to update.
 	Index Expr
@@ -67,7 +67,7 @@ type IndexAssign struct {
 // String converts this structure to a string.
 func (i *IndexAssign) String() string {
 	return fmt.Sprintf("%s[%s] = %s",
-		i.Name,
+		i.Left.String(),
 		i.Index.String(),
 		i.Expression.String())
 }
@@ -194,8 +194,8 @@ type Inline struct {
 
 // Let holds a let-statemnt.  Shocking.
 type Let struct {
-	// Name is the name of the variable to which we're assigning
-	Name string
+	// Left is the thing we'll assign to
+	Left Expr
 
 	// Expression is the thing to set the name to.
 	Expression Expr

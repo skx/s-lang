@@ -50,11 +50,11 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 	case *parser.IntegerLiteral:
 		fmt.Fprintf(output, "Integer Literal %d;\n", stmt.Value)
 	case *parser.IndexAssign:
-		fmt.Fprintf(output, "%s[%s] = %s\n", stmt.Name, stmt.Index, stmt.Expression)
+		fmt.Fprintf(output, "%s[%s] = %s\n", stmt.Left, stmt.Index, stmt.Expression)
 	case *parser.FloatLiteral:
 		fmt.Fprintf(output, "Float Literal %f;\n", stmt.Value)
 	case *parser.Let:
-		fmt.Fprintf(output, "LET %s = %v;\n", stmt.Name, stmt.Expression)
+		fmt.Fprintf(output, "LET %s = %v;\n", stmt.Left.String(), stmt.Expression)
 	case *parser.Inline:
 		fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
 	case *parser.Return:

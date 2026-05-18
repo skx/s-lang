@@ -459,7 +459,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res, &Inline{Text: p.curToken.Value.(string)})
 
 		case lexer.LET:
-			name := p.l.Next()
+			left, err := p.parsePostfix()
+			if err != nil {
+				return res, err
+			}
 			eq := p.l.Next()
 
 			if eq.Type != lexer.ASSIGN {
@@ -470,7 +473,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return nil, err
 			}
 			res = append(res,
-				&Let{Name: name.Value.(string), Expression: vals})
+				&Let{Left: left, Expression: vals})
 
 		case lexer.WHILE:
 			start := p.l.Next()
@@ -542,7 +545,8 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					return nil, err
 				}
 				res = append(res,
-					&IndexAssign{Name: name,
+					&IndexAssign{
+						Left:       &VariableExpr{Name: name},
 						Index:      index,
 						Expression: vals,
 					})
@@ -589,7 +593,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					return nil, err
 				}
 				res = append(res,
-					&Let{Name: name, Expression: vals})
+					&Let{Left: &VariableExpr{Name: name}, Expression: vals})
 
 			} else {
 
