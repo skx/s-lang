@@ -23,7 +23,7 @@ If you'd like to see the generated assembly for each example as well as produce 
 * [functions.in](functions.in)
   * Demonstrate user-defined functions, and inline-assembly.
 * [string.in](string.in)
-  * Some string support.
+  * Demonstrate iterating over strings, setting their contents, etc.
 * [string-dump.in](string-dump.in)
   * Processing each character of a string, using the index-operator.
 * [types.in](types.in)

@@ -5,11 +5,33 @@ function show( a ) {
    print("The string '", a, "' is ", strlen(a), " bytes long\n");
 }
 
+
 #
 # Use that function
 #
 let x = "steve";
 show(x);
+
+
+#
+# Print a string in upper-sace
+#
+function upper(str) {
+  let l = strlen(str);
+  let i = 0;
+
+  while( i < l ) {
+     let c = str[i];
+     if ( c >= 'a' && c <= 'z' ) {
+         putc( c - 32 );
+     } else {
+         putc(c);
+     }
+     let i = i + 1;
+  }
+}
+
+upper("hello, I am a string in upper-case\n");
 
 
 #
@@ -34,3 +56,14 @@ print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
 let a = "Steve";
 let b = "Steve*";
 print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
+
+#
+# Show we can mutate a string
+#
+let a = "Steve";
+a[0] = 'H';
+a[1] = 'e';
+a[2] = 'l';
+a[3] = 'l';
+a[4] = 'o';
+print(a, ", world!\n");

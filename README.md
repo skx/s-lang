@@ -45,6 +45,7 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
 * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
 * [examples/functions.in](examples/functions.in) - Demonstrates user-defined functions.
+* [examples/string.in](examples/string.in) - Demonstrates various string facilities.
 * [examples/types.in](examples/types.in) - Demonstrates getting variable types.
 
 Syntax is covered pretty well in our "misc example" file:
