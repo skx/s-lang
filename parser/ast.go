@@ -36,10 +36,14 @@ type FunctionCallExpr struct {
 
 // IndexExpr holds an indexing operation: expr[index]
 type IndexExpr struct {
-	Left  Expr
+	// Left is a reference to the thing we're indexing
+	Left Expr
+
+	// Index is the index we're going to retrieve.
 	Index Expr
 }
 
+// String converts this structure to a string.
 func (i *IndexExpr) String() string {
 	return fmt.Sprintf("%s[%s]",
 		i.Left.String(),
@@ -47,6 +51,28 @@ func (i *IndexExpr) String() string {
 }
 
 func (IndexExpr) expr() {}
+
+// IndexExpr holds an indexing operation: expr[index] = val
+type IndexAssign struct {
+	// Name is the name of the thing we're indexing.
+	Name string
+
+	// Index is the index we're going to update.
+	Index Expr
+
+	// Expression is evaluated to set the value.
+	Expression Expr
+}
+
+// String converts this structure to a string.
+func (i *IndexAssign) String() string {
+	return fmt.Sprintf("%s[%s] = %s",
+		i.Name,
+		i.Index.String(),
+		i.Expression.String())
+}
+
+func (IndexAssign) expr() {}
 
 // String returns the value of the given expression.
 func (f *FunctionCallExpr) String() string {
