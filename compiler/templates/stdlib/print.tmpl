@@ -173,8 +173,9 @@ print_string_raw:
 # Printing of a float.
 #
 print_float:
-    and rax, -4       # Remove tag
-    movsd xmm0, [rax] # Load payload
+    and rax, -4      # Remove tag
+    mov rax, [rax]   # get value
+    movq xmm0, rax   # Load the value
 
 print_double:
 
