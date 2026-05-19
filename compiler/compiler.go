@@ -14,6 +14,7 @@ import (
 	"strings"
 	"text/template"
 
+	"s-lang/check"
 	"s-lang/lexer"
 	"s-lang/parser"
 )
@@ -134,6 +135,9 @@ type Compiler struct {
 	// optimize our AST, folding constants, before we
 	// generate code
 	constantFolding bool
+
+	// typeCheck holds our type checker
+	typeCheck *check.Types
 }
 
 // New creates a new compiler instance, to compile the
@@ -144,6 +148,7 @@ func New(options ...Option) (*Compiler, error) {
 		floatTable:      NewFloatTable(),
 		scope:           NewScope(nil),
 		constantFolding: true,
+		typeCheck:       check.New(),
 	}
 
 	// Allow options to override our defaults
@@ -297,7 +302,7 @@ func (c *Compiler) emitLoadVariable(name string) error {
 func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	// Compile base expression
-	err := c.compileExpr(expr.Left)
+	_, err := c.compileExpr(expr.Left)
 	if err != nil {
 		return err
 	}
@@ -308,7 +313,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 `)
 
 	// Compile index expression
-	err = c.compileExpr(expr.Index)
+	_, err = c.compileExpr(expr.Index)
 	if err != nil {
 		return err
 	}
@@ -347,7 +352,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 
 	// Compile base expression
-	err := c.compileExpr(expr.Left)
+	_, err := c.compileExpr(expr.Left)
 	if err != nil {
 		return err
 	}
@@ -358,7 +363,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 `)
 
 	// Compile index expression
-	err = c.compileExpr(expr.Index)
+	_, err = c.compileExpr(expr.Index)
 	if err != nil {
 		return err
 	}
@@ -370,7 +375,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 `)
 
 	// compile value to set
-	err = c.compileExpr(expr.Expression)
+	_, err = c.compileExpr(expr.Expression)
 	if err != nil {
 		return err
 	}
@@ -521,7 +526,12 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 }
 
 // compileExpr handles compiling an expression.
-func (c *Compiler) compileExpr(e parser.Expr) error {
+//
+// Where the type of the expression can be known, statically, it is returned.
+// For example compiling "3" will always return an INTEGER, and compiling
+// a string literal will return STRING.   These return types are used for
+// performing as much type and argument checking as is possible at compile-time.
+func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 	// Convert simple expressions to their results
 	if c.constantFolding {
@@ -532,16 +542,20 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 
 	// get str[index]
 	case *parser.IndexExpr:
-		return c.emitLoadIndex(v)
+		err := c.emitLoadIndex(v)
+		return check.UNKNOWN, err
 
 	// str[index] = value
 	case *parser.IndexAssign:
-		return c.emitStoreIndex(v)
+		err := c.emitStoreIndex(v)
+		return check.UNKNOWN, err
 
 	case *parser.IntegerLiteral:
 
 		fmt.Fprintf(&c.buff, `
 	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
+
+		return check.INTEGER, nil
 
 	case *parser.FloatLiteral:
 
@@ -562,21 +576,33 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	# tag pointer as float (10)
 	or rax, 2
 `, v.Value, id)
+		return check.FLOAT, nil
 
 	case *parser.FunctionCallExpr:
+		// Store the types of the functions here
+		callTypes := []check.Type{}
 
 		// We have to loop over the arguments in reverse
 		for i := len(v.Arguments) - 1; i >= 0; i-- {
+
 			// push each argument to the stack
-			err := c.compileExpr(v.Arguments[i])
+			retType, err := c.compileExpr(v.Arguments[i])
 			if err != nil {
-				return err
+				return check.UNKNOWN, err
 			}
+			callTypes = append(callTypes, retType)
 			fmt.Fprintf(&c.buff, `
 	push rax
 `)
 
 		}
+
+		// Type checking
+		err := c.typeCheck.Check(v.Name, callTypes)
+		if err != nil {
+			return check.UNKNOWN, err
+		}
+
 		fmt.Fprintf(&c.buff, `
 	mov rax, %d   # ABI: RAX contains argument count
 	call %s
@@ -589,8 +615,11 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 				8*len(v.Arguments))
 		}
 
+		return check.UNKNOWN, nil
+
 	case *parser.VariableExpr:
-		return c.emitLoadVariable(v.Name)
+		err := c.emitLoadVariable(v.Name)
+		return check.UNKNOWN, err
 
 	case *parser.StringLiteral:
 		str := v.Value
@@ -602,19 +631,21 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 `, id)
 		fmt.Fprint(&c.buff, txt)
 
+		return check.STRING, nil
+
 	case *parser.BinaryExpr:
 
-		err := c.compileExpr(v.Left)
+		_, err := c.compileExpr(v.Left)
 		if err != nil {
-			return err
+			return check.UNKNOWN, err
 		}
 
 		fmt.Fprintln(&c.buff, `
 	push rax`)
 
-		err = c.compileExpr(v.Right)
+		_, err = c.compileExpr(v.Right)
 		if err != nil {
-			return err
+			return check.UNKNOWN, err
 		}
 
 		fmt.Fprintln(&c.buff, `
@@ -743,11 +774,13 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	movzx rax, al
 	sal rax, 2    # add type`)
 		default:
-			return fmt.Errorf("unhandled token in compileExpr: %v", v)
+			return check.UNKNOWN, fmt.Errorf("unhandled token in compileExpr: %v", v)
 		}
+		return check.INTEGER, err
 
 	}
-	return nil
+	return check.UNKNOWN, nil
+
 }
 
 // generateStmt generates the assembly for a single statement, it is moved into
@@ -783,18 +816,29 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 	case *parser.FunctionCallExpr:
 
+		// Store the types of the functions here
+		callTypes := []check.Type{}
+
 		// We have to loop over the arguments in reverse
 		for i := len(s.Arguments) - 1; i >= 0; i-- {
+
 			// push each argument to the stack
-			err := c.compileExpr(s.Arguments[i])
+			retType, err := c.compileExpr(s.Arguments[i])
 			if err != nil {
 				return err
 			}
+			callTypes = append(callTypes, retType)
 			fmt.Fprintf(&c.buff, `
 	push rax
 `)
-
 		}
+
+		// Type checking
+		err := c.typeCheck.Check(s.Name, callTypes)
+		if err != nil {
+			return err
+		}
+
 		fmt.Fprintf(&c.buff, `
 	mov rax, %d   # ABI: RAX contains argument count
 	call %s
@@ -828,6 +872,10 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 				return err
 			}
 		}
+
+		// We can record the count of function arguments
+		// here, to allow later checking.
+		c.typeCheck.AddUserFunction(s.Name, len(s.Parameters))
 
 		// crude stack reservation for now
 		fmt.Fprint(&c.buff, `
@@ -869,7 +917,7 @@ over_function_%s:
 		case *parser.StringLiteral:
 			return fmt.Errorf("'if' only permits a numerical expression")
 		default:
-			err := c.compileExpr(s.Expression)
+			_, err := c.compileExpr(s.Expression)
 			if err != nil {
 				return err
 			}
@@ -934,7 +982,7 @@ if_%d_end:
 
 		// Compile the expression, leaving
 		// the result in RAX
-		err := c.compileExpr(s.Expression)
+		_, err := c.compileExpr(s.Expression)
 		if err != nil {
 			return err
 		}
@@ -993,7 +1041,7 @@ if_%d_end:
 		case *parser.StringLiteral:
 			return fmt.Errorf("'return' only permits a numerical expression")
 		default:
-			err := c.compileExpr(s.Expression)
+			_, err := c.compileExpr(s.Expression)
 			if err != nil {
 				return err
 			}
@@ -1036,7 +1084,7 @@ while_%d_start:
 		case *parser.StringLiteral:
 			return fmt.Errorf("'while' only permits a numerical expression")
 		default:
-			err := c.compileExpr(s.Expression)
+			_, err := c.compileExpr(s.Expression)
 			if err != nil {
 				return err
 			}
