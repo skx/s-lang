@@ -13,5 +13,8 @@ jobs:
        with:
          go-version: '1.26.x'
 
-     - name: Actually run the tests
+     - name: Run the golang tests
        run: go test ./...
+
+     - name: Run the functional tests
+       run: cd test && make
