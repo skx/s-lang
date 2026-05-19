@@ -1,0 +1,5 @@
+#
+# Convert a string to an int
+#
+print(str2int("201"), "\n");
+print(str2int("-55"), "\n");
