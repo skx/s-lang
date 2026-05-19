@@ -1,0 +1,133 @@
+#
+# Convert a string to a double-precision float.
+#
+# Accepts:
+#   "123"
+#   "-123"
+#   "123.456"
+#   "-123.456"
+#
+# No error checking.
+#
+# Result returned in xmm0.
+#
+
+.section .rodata
+str2float_negate:
+        .quad 0x8000000000000000
+
+.section .text.str2float,"ax",@progbits
+
+str2float:
+        push rbp
+        mov  rbp, rsp
+
+        mov  rsi, [rbp+16]      # Get string
+        and  rsi, -4            # Remove typing bits
+
+        xor  rax, rax           # Integer accumulator
+        xor  r8,  r8            # Sign flag
+
+#
+# Check for leading '-'
+#
+
+        movzx rdx, byte ptr [rsi]
+        cmp  dl, '-'
+        jne  str2float_int_loop
+
+        mov  r8, 1
+        inc  rsi
+
+#
+# Parse integer part
+#
+
+str2float_int_loop:
+        movzx rdx, byte ptr [rsi]
+
+        cmp  dl, 0
+        je   str2float_int_done
+
+        cmp  dl, '.'
+        je   str2float_frac_start
+
+        sub  rdx, '0'
+
+        imul rax, rax, 10
+        add  rax, rdx
+
+        inc  rsi
+        jmp  str2float_int_loop
+
+#
+# No fractional part
+#
+
+str2float_int_done:
+        cvtsi2sd xmm0, rax
+        jmp  str2float_apply_sign
+
+#
+# Fractional part
+#
+
+str2float_frac_start:
+        cvtsi2sd xmm0, rax
+
+        inc  rsi                # Skip '.'
+
+        xor  rax, rax           # Fraction accumulator
+        mov  rcx, 1             # Divisor scale
+
+str2float_frac_loop:
+        movzx rdx, byte ptr [rsi]
+
+        cmp  dl, 0
+        je   str2float_frac_done
+
+        sub  rdx, '0'
+
+        imul rax, rax, 10
+        add  rax, rdx
+
+        imul rcx, rcx, 10
+
+        inc  rsi
+        jmp  str2float_frac_loop
+
+#
+# Convert fraction to double
+#
+
+str2float_frac_done:
+        cvtsi2sd xmm1, rax
+        cvtsi2sd xmm2, rcx
+
+        divsd xmm1, xmm2
+        addsd xmm0, xmm1
+
+#
+# Apply sign
+#
+
+str2float_apply_sign:
+        cmp  r8, 0
+        je   str2float_return
+
+        xorpd xmm0, [rip + str2float_negate]
+
+str2float_return:
+
+        # allocate 8-byte boxed float
+        call alloc8
+
+        # store payload
+        movsd [rax], xmm0
+
+        # tag pointer as float (10)
+        or rax, 2
+
+        mov  rsp, rbp
+        pop  rbp
+        ret
