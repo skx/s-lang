@@ -1,0 +1,19 @@
+let a = "steve";
+let b = "rteve";
+print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
+
+let a = "Steve";
+let b = "rteve";
+print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
+
+let a = "Steve";
+let b = "Tteve";
+print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
+
+let a = "Steve";
+let b = "Steve";
+print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
+
+let a = "Steve";
+let b = "Steve*";
+print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");

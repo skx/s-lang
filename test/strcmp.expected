@@ -1,0 +1,5 @@
+strcmp(steve,rteve) is 1
+strcmp(Steve,rteve) is -31
+strcmp(Steve,Tteve) is -1
+strcmp(Steve,Steve) is 0
+strcmp(Steve,Steve*) is -42

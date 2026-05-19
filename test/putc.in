@@ -1,0 +1,15 @@
+# hello\n
+putc('h');
+putc('e');
+putc('l');
+putc('l');
+putc('o');
+putc(10);
+
+# a-z
+let i = 'a';
+while( i <= 'z' ) {
+  putc(i);
+  let i = i + 1;
+}
+newline();

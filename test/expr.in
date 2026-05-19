@@ -1,0 +1,11 @@
+#
+# Simple integer expression
+#
+let a = 1 + 2 * 3;
+print(a, "\n");
+
+#
+# Negative number
+#
+print(8 - 12, "\n");
+

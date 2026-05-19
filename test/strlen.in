@@ -1,0 +1,8 @@
+# literal
+print(strlen("steve"));
+newline();
+
+# variable
+let a = "Meow!";
+print(strlen(a));
+newline();
