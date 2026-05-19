@@ -1,0 +1,17 @@
+# positive
+print(3.5);
+newline();
+
+# negative
+print(-3.5);
+newline();
+
+# stored
+let a = 7.0;
+print(a);
+newline();
+
+# stored
+let a = 7.25;
+print(a);
+newline();

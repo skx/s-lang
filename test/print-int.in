@@ -1,0 +1,8 @@
+print(3);
+newline();
+print(-3);
+newline();
+
+let a = 190;
+print(a);
+newline();

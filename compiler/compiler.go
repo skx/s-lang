@@ -560,7 +560,6 @@ func (c *Compiler) compileExpr(e parser.Expr) error {
 	movsd [rax], xmm0
 
 	# tag pointer as float (10)
-	sal rax, 2
 	or rax, 2
 `, v.Value, id)
 
