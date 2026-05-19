@@ -245,6 +245,8 @@ _Standard library_ is a grandiose term for the simple library routines we embed,
   * Return the length of the given string.
 * `str2int`
   * Convert a string into an integer.
+* `str2float`
+  * Convert a string into a floating-point number.
 
 You can see our standard library routines beneath the [compiler/templates/stdlib](compiler/templates/stdlib) directory.
 

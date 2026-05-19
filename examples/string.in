@@ -74,3 +74,12 @@ print(a, ", world!\n");
 if ( str2int("201") != 201  ) {
    print("Failed to convert string to integer\n");
 }
+
+#
+# Convert a string to a float
+#
+let a = "3.98";
+let b = str2float(a);
+print(b);
+print( "string '", a, "' -> ", b, "\n");
+print( type(a), " -> ", type(b), "\n" );

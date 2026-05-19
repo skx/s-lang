@@ -220,7 +220,7 @@ print_double:
     pop r8                   # restore fraction
 
     test r8, r8
-    je .nl
+    je .write
 
     mov byte ptr [rsi], '.'
     inc rsi
@@ -266,16 +266,14 @@ print_double:
 .print_loop2:
     mov al, [rdi]
     test al, al
-    jz .nl
+    jz .write
 
     mov [rsi], al
     inc rsi
     inc rdi
     jmp .print_loop2
 
-.nl:
-    mov byte ptr [rsi], 10
-    inc rsi
+.write:
 
     # write
 
