@@ -1,0 +1,4 @@
+print("OK\n");
+
+let a = "Hello, world!\n";
+print(a);
