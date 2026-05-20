@@ -1,0 +1,13 @@
+#
+# Convert a string to an float
+#
+print(str2float("2.25"), "\n");
+print(str2float("-5.5"), "\n");
+
+#
+# Type errors
+#
+print(str2float(3));
+newline();
+print(str2float(3.5));
+newline();
