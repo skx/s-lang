@@ -1,0 +1,39 @@
+#
+# Simple `if` tests.
+#
+
+if ( 1 == 1 ) {
+   print("OK\n");
+} else {
+   print("FAIL: 1 == 1\n");
+}
+
+if ( 1 <= 1 ) {
+   print("OK\n");
+} else {
+   print("FAIL: 1 <= 1\n");
+}
+
+if ( 1 < 2 ) {
+   print("OK\n");
+}  else {
+   print("FAIL: 1 < 2\n");
+}
+
+if ( 2 != 1 ) {
+   print("OK\n");
+} else {
+   print("FAIL: 2 != 1\n");
+}
+
+if ( 2 >= 1 ) {
+   print("OK\n");
+} else {
+   print("FAIL: 2 >= 1\n");
+}
+
+if ( 22 > 2 ) {
+   print("OK\n");
+}  else {
+   print("FAIL: 22 > 2\n");
+}
