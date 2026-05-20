@@ -12,8 +12,21 @@ strcmp:
         mov rbp, rsp
 
         mov rdi, [rbp+16]    # Get the string
+
+        mov rcx, rdi         # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne strcmp_type_fail
+
         and rdi, -4          # Remove typing
+
         mov rsi, [rbp+24]    # Get the string
+
+        mov rcx, rsi         # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne strcmp_type_fail
+
         and rsi, -4          # Remove typing
 
         xor rax, rax
@@ -32,6 +45,21 @@ strcmp:
 .strcmp_done:
         movsx rax, al       # Truncate, but keep the sign
         sal rax, 2          # set type
+.strcmp_cleanup:
         mov rsp, rbp
         pop rbp
         ret
+
+strcmp_type_fail:
+        mov rax, offset strcmp_type_fail_msg
+        or rax, 1
+        jmp .strcmp_cleanup
+
+
+
+.section .data.strcmp,"aw",@progbits
+
+.align 4
+strcmp_type_fail_msg:
+        .ascii "strcmp: expected STRING"
+        .byte 00

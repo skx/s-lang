@@ -17,3 +17,13 @@ print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
 let a = "Steve";
 let b = "Steve*";
 print( "strcmp(", a, ",", b, ") is ", strcmp( a, b ) , "\n");
+
+
+#
+# Type failures
+#
+print( strcmp( "Steve", 3), "\n" );
+print( strcmp( "Steve", 3.5), "\n" );
+
+print( strcmp( 350, "Steve"), "\n" );
+print( strcmp( 3.5, "Steve"), "\n" );
