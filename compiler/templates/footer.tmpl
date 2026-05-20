@@ -20,6 +20,11 @@
 .section .bss
 command_line_arguments:
         .quad 0
+initial_esp:
+        .quad 0
+envp_ptr:
+        .quad 0
+
 
 {{ if .StringTable }}
 
