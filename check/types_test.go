@@ -7,6 +7,7 @@ import (
 // TestTrivial tests trivially that we can check known functions
 func TestTrivial(t *testing.T) {
 	x := New()
+	x.RegisterStdLib()
 
 	// malloc should be known
 	found, ok := x.known["malloc"]

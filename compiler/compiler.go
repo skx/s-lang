@@ -48,6 +48,15 @@ func WithSource(source string) Option {
 	}
 }
 
+// WithCompileChecking allows compile-time type-checking to
+// be disabled.
+func WithCompileChecking(enable bool) Option {
+	return func(c *Compiler) error {
+		c.checkTypes = enable
+		return nil
+	}
+}
+
 // Compiler holds our internal compiler state.
 type Compiler struct {
 
@@ -136,6 +145,10 @@ type Compiler struct {
 	// generate code
 	constantFolding bool
 
+	// checkTypes determines if we do compile-time type
+	// checking for our standard library
+	checkTypes bool
+
 	// typeCheck holds our type checker
 	typeCheck *check.Types
 }
@@ -166,6 +179,15 @@ func New(options ...Option) (*Compiler, error) {
 // implementation of the program which was passed to
 // our constructor.
 func (c *Compiler) Compile() (string, error) {
+
+	//
+	// checking of standard library types has
+	// to be optional, so we can test the run-time
+	// type-checking.
+	//
+	if c.checkTypes {
+		c.typeCheck.RegisterStdLib()
+	}
 
 	//
 	// Create a buffer which will be used to include

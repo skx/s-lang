@@ -10,6 +10,11 @@ import (
 
 // Structure for our options and state.
 type generateCommand struct {
+	// stdlibCheck specifies whether we should do
+	// compile-time type checking of the standard
+	// library calls.
+	stdlibCheck bool
+
 	// output will be the file to generate
 	output string
 }
@@ -17,6 +22,7 @@ type generateCommand struct {
 // Arguments adds per-command args to the object.
 func (g *generateCommand) Arguments(f *flag.FlagSet) {
 	f.StringVar(&g.output, "output", "", "File to write our generated assembly to, STDOUT if not specified.")
+	f.BoolVar(&g.stdlibCheck, "check-stdlib", true, "Should we run compile-time type checking on the standard library.")
 }
 
 // Info returns the name of this subcommand.
@@ -60,7 +66,10 @@ func (g *generateCommand) processFile(path string) error {
 	}
 
 	// Create a compiler object
-	c, err2 := compiler.New(compiler.WithSource(string(data)))
+	c, err2 := compiler.New(
+		compiler.WithSource(string(data)),
+		compiler.WithCompileChecking(g.stdlibCheck),
+	)
 	if err2 != nil {
 		return err2
 	}

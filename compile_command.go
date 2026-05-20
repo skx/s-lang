@@ -9,6 +9,10 @@ import (
 
 // Structure for our options and state.
 type compileCommand struct {
+	// stdlibCheck specifies whether we should do
+	// compile-time type checking of the standard
+	// library calls.
+	stdlibCheck bool
 
 	// output will be the file to generate
 	output string
@@ -21,6 +25,7 @@ type compileCommand struct {
 func (c *compileCommand) Arguments(f *flag.FlagSet) {
 	f.StringVar(&c.output, "output", "a.out", "Where to write the generated binary")
 	f.BoolVar(&c.verbose, "verbose", false, "Show more detail")
+	f.BoolVar(&c.stdlibCheck, "check-stdlib", true, "Should we run compile-time type checking on the standard library.")
 }
 
 // Info returns the name of this subcommand.
@@ -54,7 +59,8 @@ func (c *compileCommand) processFile(path string) error {
 	defer os.Remove(f.Name())
 
 	// Use our generate Command as a helper
-	g := &generateCommand{output: f.Name()}
+	g := &generateCommand{output: f.Name(),
+		stdlibCheck: c.stdlibCheck}
 	err = g.processFile(path)
 	if err != nil {
 		return err
