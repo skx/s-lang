@@ -10,8 +10,8 @@ The generated code contains no external dependencies, so when compiled they are 
 
 In terms of features:
 
-* Single-pass compiler, which generates an assembly output for programs.
-* Parsing using recursive descent with precedence layers:
+* Single-pass compiler which generates an assembly output for programs.
+* Parsing uses recursive descent with precedence layers:
   * Maths operations: `+`, `-`, `*`, `/`
   * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`,
   * Logical operations: `&&` and `||`.
@@ -19,18 +19,18 @@ In terms of features:
   * Float and string literals are interned.
   * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
 * The ability to include inline assembly via `inline { .. }`.
-  * `inline` statements are generated inline with the current code-position.
-  * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the file.  So you can add "`.section blah .. ..`" without fear of breaking things.
-* Looping is available with the `while` statement, and there is support for `break` and `continue`.
+  * `inline` statements are generated inline as they are encountered.
+  * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the assembly-generation.  So you can add "`.section blah .. ..`" without fear of breaking things.
+* Looping is available with the `while` statement, including standard support for `break` and `continue`.
 * Conditional support with `if` with `else` branch too.
 
 Anti-features, or limitations:
 
 * The language is built around integers, and strings.
-  * Float support is rudimentary and mostly limited to setting values, constant expressions and printing their values.
-  * There are only a few functions in the standard library.
+  * Float support is rudimentary.
+* There are only a few functions in the standard library.
 
-That said the code is clean, readable, and it could be updated to work with floating-point reasonably easily.
+That said the code is clean, and hopefully readable, and we've got good test-case coverage of both the  golang packages, and the functional operation).
 
 
 
@@ -43,9 +43,6 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
 * [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20.
 * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
-* [examples/functions.in](examples/functions.in) - Demonstrates user-defined functions.
-* [examples/string.in](examples/string.in) - Demonstrates various string facilities.
-* [examples/types.in](examples/types.in) - Demonstrates getting variable types.
 
 Syntax is covered pretty well in our "misc example" file:
 
@@ -101,54 +98,6 @@ The following is a tour of our language:
     return(1 + 2 * 3);
 
 Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
-
-
-
-## Grammar
-
-```
-program         ::= statements
-
-statements      ::= { statement }
-
-statement       ::= ";"
-                  | "function" IDENT block
-                  | "let" IDENT "=" expression
-                  | "if" "(" expression ")" block [ else block ]
-                  | "inline" "{" LITERAL "}"
-                  | "while" "(" expression ")" block
-                  | "return" "(" expression ")"
-
-block           ::= "{" statements "}"
-
-exprList        ::= expression { "," expression }
-
-expression      ::= logicalOr
-
-logicalOr       ::= logicalAnd
-                    { "||" logicalAnd }
-
-logicalAnd      ::= equality
-                    { "&&" equality }
-
-equality        ::= comparison
-                    { ( "==" | "!=" ) comparison }
-
-comparison      ::= addSub
-                    { ( "<" | "<=" | ">" | ">=" ) addSub }
-
-addSub          ::= mulDiv
-                    { ( "+" | "-" ) mulDiv }
-
-mulDiv          ::= primary
-                    { ( "*" | "/" ) primary }
-
-primary         ::= NUMBER
-                  | STRING
-                  | IDENT
-                  | FUNCTION( exprList )
-                  | "(" expression ")"
-```
 
 
 
@@ -228,8 +177,14 @@ We embed a small number of functions within the generated programs, our so-calle
   * See [examples/brainfuck.in](examples/brainfuck.in) for an example where I use that to parse arguments.
 * `exit(N)`
   * Terminate execution with the given exit-code.
+* `float2int(F)`
+  * Convert the given floating-point number to an integer.
 * `getc()`
-  * Read a single character from STDIN.
+  * Read a single character from STDIN, returns 0 on EOF.
+* `getenv(STR)`
+  * Return the contents of the environmental variable with the given name.
+* `int2float(N)`
+  * Convert the given integer to a floating point.
 * `malloc(N)`
   * Allocate N bytes on the heap.
 * `newline`
@@ -248,7 +203,7 @@ We embed a small number of functions within the generated programs, our so-calle
 * `str2float(STR)`
   * Convert a string into a floating-point number.
 
-You can see our standard library routines beneath the [compiler/templates/stdlib](compiler/templates/stdlib) directory.
+You can find the implementation of our standard library routines beneath the [compiler/templates/stdlib](compiler/templates/stdlib) directory.
 
 
 ### Adding to the standard library
@@ -292,7 +247,7 @@ However this is permitted:
      let a = 3;
      print(strlen(a))  # Type information didn't survive the assignment
 
-**NOTE**: Type checking of standard-library functions requires an explicit definition within our [check/](check) package.  If you add a new function please do add a check, if possible.
+**NOTE**: Compile-time type checking of standard-library functions requires an explicit definition within our [check/](check) package.  If you add a new function please do add an entry there.
 
 Run-time checking of types is deferred to our standard library routines, and they _should_ all check their argument types are valid before they execute their jobs.  They will report an error and terminate execution.
 
