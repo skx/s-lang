@@ -1,0 +1,17 @@
+let sum = 0;
+
+let a = 0;
+while( a < 10 ) {
+
+   let a = a + 1;
+
+   let b = 0;
+   while( b < 10 ) {
+
+      let b = b + 1;
+      let sum = sum + 1;
+   }
+}
+
+print("SUM:", sum, "\n");
+
