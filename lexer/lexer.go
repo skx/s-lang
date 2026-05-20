@@ -51,14 +51,14 @@ const (
 	DIVIDE   = "/"
 
 	// Comparisons
-	AND        = "&&"
-	OR         = "||"
-	LT         = "<"
-	LT_EQUALS  = "<="
-	GT         = ">"
-	GT_EQUALS  = ">="
-	EQUALS     = "=="
-	NOT_EQUALS = "!="
+	AND       = "&&"
+	OR        = "||"
+	LT        = "<"
+	LTEQUALS  = "<="
+	GT        = ">"
+	GTEQUALS  = ">="
+	EQUALS    = "=="
+	NOTEQUALS = "!="
 )
 
 // TokenType is the type of our tokens.
@@ -211,21 +211,21 @@ func (l *Lexer) Next() *Token {
 			l.position++
 			if l.peekChar() == "=" {
 				l.position++
-				return &Token{Type: LT_EQUALS, Value: "<="}
+				return &Token{Type: LTEQUALS, Value: "<="}
 			}
 			return &Token{Type: LT, Value: "<"}
 		case ">":
 			l.position++
 			if l.peekChar() == "=" {
 				l.position++
-				return &Token{Type: GT_EQUALS, Value: ">="}
+				return &Token{Type: GTEQUALS, Value: ">="}
 			}
 			return &Token{Type: GT, Value: ">"}
 		case "!":
 			l.position++
 			if l.peekChar() == "=" {
 				l.position++
-				return &Token{Type: NOT_EQUALS, Value: "!="}
+				return &Token{Type: NOTEQUALS, Value: "!="}
 			}
 			return &Token{Type: ERROR, Value: "invalid character '!'"}
 		case "&":

@@ -78,7 +78,7 @@ func (tc *Types) AddUserFunction(name string, argCount int) {
 	tc.known[name] = t
 }
 
-// CheckType is called to see if the given argument types and counts
+// Check is called to see if the given argument types and counts
 // are valid for the known standard library function.
 func (tc *Types) Check(name string, supplied []Type) error {
 
@@ -90,7 +90,7 @@ func (tc *Types) Check(name string, supplied []Type) error {
 	}
 
 	if len(supplied) != len(known) {
-		return fmt.Errorf("argument lengths differ for function %s: expected %d, got %d\n",
+		return fmt.Errorf("argument lengths differ for function %s: expected %d, got %d",
 			name, len(known), len(supplied))
 	}
 
@@ -99,7 +99,7 @@ func (tc *Types) Check(name string, supplied []Type) error {
 
 		// if the types differ
 		if s != known[i] && !(known[i] == UNKNOWN || supplied[i] == UNKNOWN) {
-			return fmt.Errorf("type mismatch for %s: %s != %s\n", name, tc.Type2String(known[i]), tc.Type2String(supplied[i]))
+			return fmt.Errorf("type mismatch for %s: %s != %s", name, tc.Type2String(known[i]), tc.Type2String(supplied[i]))
 		}
 	}
 

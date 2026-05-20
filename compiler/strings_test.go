@@ -9,7 +9,7 @@ func TestStringTable(t *testing.T) {
 
 	tbl := NewStringTable()
 
-	if len(tbl.values) != 0 {
+	if len(tbl.values) > 0 {
 		t.Errorf("new table is not empty")
 	}
 

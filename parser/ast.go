@@ -52,7 +52,7 @@ func (i *IndexExpr) String() string {
 
 func (IndexExpr) expr() {}
 
-// IndexExpr holds an indexing operation: expr[index] = val
+// IndexAssign holds an indexing operation: expr[index] = val
 type IndexAssign struct {
 	// Name is the name of the thing we're indexing.
 	Left Expr
@@ -91,7 +91,7 @@ func (n *IntegerLiteral) String() string {
 }
 func (IntegerLiteral) expr() {}
 
-// FloatExpr holds a literal float, positive or negative.
+// FloatLiteral holds a literal float, positive or negative.
 type FloatLiteral struct {
 	Value float64
 }

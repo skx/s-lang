@@ -265,6 +265,9 @@ func (c *Compiler) popScope() {
 	c.scope = c.scope.Parent
 }
 
+// emitLoadVariable emits the code for getting the value from a variable.
+//
+// The complexity here comes from determining if a variable is local or global.
 func (c *Compiler) emitLoadVariable(name string) error {
 
 	sym, ok := c.scope.Lookup(name)
@@ -299,6 +302,7 @@ func (c *Compiler) emitLoadVariable(name string) error {
 	return nil
 }
 
+// emitLoadIndex emits the code for "xx[N]".
 func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	// Compile base expression
@@ -349,6 +353,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	return nil
 }
 
+// emitStoreIndex generates the code for "x[N] = y"
 func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 
 	// Compile base expression
@@ -403,6 +408,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 	return nil
 }
 
+// emitStoreVariable emits the code for "let name = ..:"
 func (c *Compiler) emitStoreVariable(name string) error {
 
 	sym, ok := c.scope.Lookup(name)
@@ -703,7 +709,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	movzx rax, al
 	sal rax, 2    # add type`)
 
-		case lexer.NOT_EQUALS:
+		case lexer.NOTEQUALS:
 			fmt.Fprintln(&c.buff, `
 	# !=
 	sar rax, 2    # untag type
@@ -723,7 +729,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	movzx rax, al
 	sal rax, 2    # add type`)
 
-		case lexer.LT_EQUALS:
+		case lexer.LTEQUALS:
 			fmt.Fprintln(&c.buff, `
 	# <=
 	sar rax, 2    # untag type
@@ -743,7 +749,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	movzx rax, al
 	sal rax, 2    # add type`)
 
-		case lexer.GT_EQUALS:
+		case lexer.GTEQUALS:
 			fmt.Fprintln(&c.buff, `
 	# >=
 	sar rax, 2    # untag type
@@ -973,7 +979,10 @@ if_%d_end:
 		fmt.Fprint(&c.buff, "\n"+s.Text+"\n")
 
 	case *parser.IndexAssign:
-		c.emitStoreIndex(s)
+		err := c.emitStoreIndex(s)
+		if err != nil {
+			return err
+		}
 
 	case *parser.Data:
 		c.rawData = append(c.rawData, s.Text)
