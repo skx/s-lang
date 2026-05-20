@@ -1,0 +1,37 @@
+#
+# float2int - convert the given flat into an integer.
+#
+
+
+.section .text.float2int,"ax",@progbits
+
+float2int:
+        push rbp
+        mov rbp, rsp
+        mov rax, [rbp+16]   # get the float
+
+        mov rcx, rax         # type checking
+        and rcx, 3
+        cmp rcx, 2
+        jne float2int_type_fail
+
+        and rax, -4         # Remove tag
+        mov rax, [rax]
+
+        cvttsd2si rax, xmm0 # convert
+        sal rax, 2          # Add typing
+float2int_cleanup:
+        pop rbp
+        ret
+
+float2int_type_fail:
+        mov rax, offset float2int_type_fail_msg
+        or rax, 1
+        jmp float2int_cleanup
+
+.section .data.float2int,"aw",@progbits
+
+float2int_type_fail_msg:
+.align 4
+        .ascii "float2int: expected FLOAT"
+        .byte 00
