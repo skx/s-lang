@@ -9,7 +9,7 @@ func TestFloatTable(t *testing.T) {
 
 	tbl := NewFloatTable()
 
-	if len(tbl.values) != 0 {
+	if len(tbl.values) > 0 {
 		t.Errorf("new table is not empty")
 	}
 

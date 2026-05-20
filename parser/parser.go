@@ -226,9 +226,9 @@ func (p *Parser) parseComparison() (Expr, error) {
 		switch tok.Type {
 
 		case lexer.LT,
-			lexer.LT_EQUALS,
+			lexer.LTEQUALS,
 			lexer.GT,
-			lexer.GT_EQUALS:
+			lexer.GTEQUALS:
 
 			p.l.Next()
 
@@ -261,7 +261,7 @@ func (p *Parser) parseEquality() (Expr, error) {
 		switch tok.Type {
 
 		case lexer.EQUALS,
-			lexer.NOT_EQUALS:
+			lexer.NOTEQUALS:
 
 			p.l.Next()
 

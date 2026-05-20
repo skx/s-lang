@@ -1,6 +1,8 @@
 package compiler
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Symbol is an interface to a symbol.
 type Symbol interface {

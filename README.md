@@ -5,8 +5,7 @@ This repository contains a compiler for a minimal programming language, targetin
 The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 4k.
 
 * Written in Golang for portability, although the generated code is obviously Linux/AMD64-specific.
-* We have a real lexer, and parser, and internally generate an AST.
-  * The AST is then walked to generate the assembly language representation of the program.
+* We have a real lexer, and parser, and internally generate an AST which is then walked to generate the assembly language representation of the program.
 * We can automatically invoke the external `as` and `ld` binaries to compile and link if desired.
 
 In terms of features:
@@ -18,11 +17,11 @@ In terms of features:
   * Logical operations: `&&` and `||`.
 * Support for integers, floats, and strings.
   * Float and string literals are interned.
-  * So you can call "print("Steve")" 100 times and still see the text "Steve" in the binary only once.
+  * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
 * The ability to include inline assembly via `inline { .. }`.
   * `inline` statements are generated inline with the current code-position.
   * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the file.  So you can add "`.section blah .. ..`" without fear of breaking things.
-* Loops via `while` (with support for `break` and `continue`).
+* Looping is available with the `while` statement, and there is support for `break` and `continue`.
 * Conditional support with `if` with `else` branch too.
 
 Anti-features, or limitations:
@@ -58,7 +57,7 @@ Syntax is covered pretty well in our "misc example" file:
 
 The following is a tour of our language:
 
-    # Comments are prefixed with "#".
+    # Comments are prefixed with "#" and last until the end of the line.
 
     # Set a variable and print it.
     let a = 3;
@@ -222,57 +221,95 @@ This performs the same generation as in the `compile` sub-command, but also runs
 
 ## STDLIB
 
-_Standard library_ is a grandiose term for the simple library routines we embed, but we have implemented several functions:
+We embed a small number of functions within the generated programs, our so-called "standard library".  These are functions which seemed to be useful enough to include globally.
 
-* `args`
+* `args()`
   * Return the supplied program name, and command-line arguments.
   * See [examples/brainfuck.in](examples/brainfuck.in) for an example where I use that to parse arguments.
-* `exit`
-  * Assumes the value in the RAX register is the desired exit-code and terminates execution with that value.
-* `getc`
-  * Get a single byte from STDIN, `let in = getc();`.
+* `exit(N)`
+  * Terminate execution with the given exit-code.
+* `getc()`
+  * Read a single character from STDIN.
 * `malloc(N)`
   * Allocate N bytes on the heap.
 * `newline`
-  * Prints a newline.
-* `print`
-  * Determine the type of the given variable, and print it appropriately.
-* `putc`
-  * Print the ASCII character corresponding to the given integer, i.e `putc(42);` will print `*`.
-* `strcmp`
+  * Print a newline to STDOUT.
+* `print(...,...,...)`
+  * This function is variadic; it will accept any number of arguments of any type.
+  * Print each argument in turn.
+* `putc(N)`
+  * Print the ASCII character corresponding to the given integer to STDOUT, i.e `putc(42);` will print `*`.
+* `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
-* `strlen`
+* `strlen(STR)`
   * Return the length of the given string.
-* `str2int`
+* `str2int(STR)`
   * Convert a string into an integer.
-* `str2float`
+* `str2float(STR)`
   * Convert a string into a floating-point number.
 
 You can see our standard library routines beneath the [compiler/templates/stdlib](compiler/templates/stdlib) directory.
 
-You don't need to do anything special to add new standard library functions, if you were to add a new standard-library function beneath `compiler/templates/stdlib` it would become immediately available for calling:
 
-* Define a new template function "`foo: .. ret;`", within `compiler/templates/stdlib/foo.tmpl`.
-* Your code can immediately call it `let a = foo(17);`
+### Adding to the standard library
 
-This is because internally a call to `foo( [args] )` is converted into a call to the assembly-language function named `foo`.  (i.e. Defined with the label `foo:`).  You can use `inline` to define/call such a function manually if you wish, providing you follow our ABI.
+If you wish to add a new function which will be available to all compiled programs you need to add it to a new file beneath `compiler/templates/stdlib`, then rebuild the compiler.
+
+For example if you want to define the new function `foo`:
+
+* Create `compiler/templates/stdlib/foo.tmpl`
+* Inside there define a new function, with the label `foo:`.
+* Rebuild the compiler (with "`go build .`")
+
+Once that is done your prgrams can immmediately call it:
+
+    let a = foo();
+
+This works because internally a call to `foo( [args] )` is converted into a call to the assembly-language function named `foo`.  (i.e. Defined with the label `foo:`).  You can use `inline` to define/call such a function manually if you wish, providing you follow our function ABI.
+
+It is assumed your function will check the types of any arguments it receives, but you can add an entry to the type-checking package, described later, if you wish to add some additional compile-time type checking.
+
+
+
+## Type Checking
+
+There are two forms of possible type-checking:
+
+* Type checking at compilation time.
+* Type checking at run time.
+
+At compilation time we can detect invalid argument counts for standard library functions _and_ user-defined functions.  For example this is caught:
+
+     function foo( x ) {  print( "I got: ", x , "\n" );
+     foo();  # ERROR - Expected one argument, received zero.
+
+For checking actual types at compile time we're limited, we can detect this error:
+
+     strlen(3);  # Wrong type, expected string but got int
+
+However this is permitted:
+
+     let a = 3;
+     print(strlen(a))  # Type information didn't survive the assignment
+
+**NOTE**: Type checking of standard-library functions requires an explicit definition within our [check/](check) package.  If you add a new function please do add a check, if possible.
+
+Run-time checking of types is deferred to our standard library routines, and they _should_ all check their argument types are valid before they execute their jobs.  They will report an error and terminate execution.
 
 
 
 ## Types
 
-We use the lower two bits of values to store their types:
+As noted we support three different variable types (integer, float, and string/pointer).  We use the lower two bits of values to store their types:
 
-* decimal 00 binary `00` -> integer
-  * Nothing special, when storing shift left twice.
-  * When retrieving the value shift right twice.
-* decimal 01 binary `01` -> pointer/string
-* decimal 02 binary `10` -> float
-  * Boxed.  Shift the pointer to the right, then dereference to get the value.
-  * To store make a call to alloc8 and run `or rax, 2`.
-* decimal 03 binary `11` -> reserved
+* integers have their lower two bits set to `00`
+* pointers have their lower two bits set to `01`.
+* floats are allocated on the heap, and the pointer has the lower two bits set to `10`.
 
-TLDR; We allocate memory for floats, and integers/strings are just pointers to static defitions within the `.data` section, the bottom two bits of the pointers identify the type.
+
+### Type Examples
+
+* TODO
 
 
 
@@ -288,28 +325,21 @@ You can see how this is handled in [our standard-library functions](compiler/tem
      inline {
         mov rax, 17  # store payload
         sal rax, 2   # Bottom two bits should be "00".
-
         push rax     # parameters are passed on the stack
-        mov rax, 1   # one argument is being passed
 
+        mov rax, 1   # one argument is being passed
         call print   # call the stdlib function
      }
 
 
 
-## Testing / Development
+## Development & Testing
 
-Testing is largely done interactively, but there are golang tests for all the internal packages and code, with pretty high/good coverage:
+Development is reaching completion now.  There are a few small and obvious things to add, but at the same time the scripting language itself is pretty complete, the standard library is complex enough to write real programs, and I suspect my urge to add new things will diminish over time.
 
-```
-$ cover ./...
-ok      s-lang	0.004s	coverage: 75.2% of statements
-ok      s-lang/compiler	(cached)	coverage: 75.5% of statements
-ok      s-lang/lexer	(cached)	coverage: 93.9% of statements
-ok      s-lang/parser	(cached)	coverage: 93.0% of statements
-```
+Updates _should_ be contributed by pull-requests which address open issues, but sometimes I'm less strict with myself than I should be.
 
-Run the tests as you usually would:
+I've written test-cases covering most of the implementation, which you can run in the standard manner:
 
 ```
 $ go test ./...
@@ -319,54 +349,16 @@ ok      s-lang/lexer	0.006s
 ok      s-lang/parser	0.003s
 ```
 
-For _real_ testing compile all the examples and run them:
+In addition to the golang tests we have some functional test-cases beneath `test/`, there is a trivial driver which executes each of the sample programs, and compares the output produced to known-good results:
 
 ```
-$ cd examples && make
-$ ./factorial
-$ ./fibonacci
-$ ./functions
-$ ./while
-..
+$ cd test && make
+expr.in
+ compiling expr.in to expr
+ executing expr > expr.out
+ comparing expr.out to expr.expected
+ cleanup
+...
 ```
 
-
-
-## History
-
-There is a simple perl-based prototype, beneath [prototype/](prototype/), which I hacked up to see if this would be a project that was within my means.
-
-It parses via regexp which is terrible, but also good enough to show that things could work in a predictable fashion.
-
-
-
-## Future Additions
-
-Possible future improvements and additions, to be added slowly if ever.
-
-* [x] negative numbers may be parsed and print'd
-  * Implemented in [#14](https://github.com/skx/s-lang/pull/14)
-* [x] allow assignment of strings to variables.
-  * Implemented in [#16](https://github.com/skx/s-lang/pull/16)
-* [x] user-defined functions (e.g. min/max/abs/etc.)
-  * Implemented in [#18](https://github.com/skx/s-lang/pull/18)
-* [x] user-defined functions can `return` values.
-  * Implemented in [#19](https://github.com/skx/s-lang/pull/19)
-* [x] user-defined functions can access (local) variables.
-  * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
-* [x] arguments to user-defined functions.
-  * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
-* [x] Implement `else` support for our `if` statements.
-  * Implemented in [#20](https://github.com/skx/s-lang/pull/20)
-* [x] Implement `break` and `continue` within a `while` statement.
-  * Implemented in [#30](https://github.com/skx/s-lang/pull/30)
-* [x] Constant folding - probably in a new pass after the parser.
-  * Implemented in [#28](https://github.com/skx/s-lang/pull/28)
-* [x] Read [the `as` manual](https://www.gnu.org/software/binutils/) to see if there is support for dead-code elimination.
-  * There is support for removing unused sections inside the `ld` linker.
-  * See [#39](https://github.com/skx/s-lang/issues/39) for details.
-* [x] add types to our variables
-  * Implemented in [#31](https://github.com/skx/s-lang/pull/31)
-* [x] string comparison should work
-* [x] floating point numbers
-* [ ] allow *x to get the address of x, for working with strings
+Running `make test` should run both of those things.
