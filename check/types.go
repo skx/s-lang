@@ -31,22 +31,33 @@ type Types struct {
 // New is our constructor.
 func New() *Types {
 	m := make(map[string][]Type)
+	return &Types{
+		known: m,
+	}
+}
 
-	m["malloc"] = []Type{INTEGER}
-	m["putc"] = []Type{INTEGER}
-	m["str2float"] = []Type{STRING}
-	m["str2int"] = []Type{STRING}
-	m["strcmp"] = []Type{STRING, STRING}
-	m["strlen"] = []Type{STRING}
+// RegisterStdLib adds the calling types for known standard
+// library functions.
+//
+// This is not enabled by default, because we need to be able
+// to disable this checking to test our run-time type checking.
+func (tc *Types) RegisterStdLib() {
+
+	tc.known["getenv"] = []Type{STRING}
+	tc.known["int2float"] = []Type{INTEGER}
+	tc.known["float2int"] = []Type{FLOAT}
+	tc.known["malloc"] = []Type{INTEGER}
+	tc.known["putc"] = []Type{INTEGER}
+	tc.known["str2float"] = []Type{STRING}
+	tc.known["str2int"] = []Type{STRING}
+	tc.known["strcmp"] = []Type{STRING, STRING}
+	tc.known["strlen"] = []Type{STRING}
 
 	// ignored standard library functons:
 	//
 	//   exit: that's too late
 	//   type: Any type is valid.
 	//  print: variadic arguments of any type.
-	return &Types{
-		known: m,
-	}
 
 }
 

@@ -1,0 +1,16 @@
+let a = 3;
+let b = int2float(a);
+
+# show the type changed
+print( type(a), " -> ", type(b) , "\n");
+
+# print the result
+print(b);
+newline();
+
+# Type failures
+print( int2float(3.12) );
+newline();
+
+print( int2float("Steve") );
+newline();

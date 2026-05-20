@@ -1,0 +1,16 @@
+let a = 17.25;
+let b = float2int(a);
+
+# show the type changed
+print( type(a), " -> ", type(b) , "\n");
+
+# print the result
+print(b);
+newline();
+
+# Type failures
+print( float2int( 3 ) );
+newline();
+
+print( float2int( "Help" ) );
+newline();
