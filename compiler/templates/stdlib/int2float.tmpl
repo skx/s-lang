@@ -1,0 +1,37 @@
+#
+# int2float - convert the given integer into a float.
+#
+
+
+.section .text.int2float,"ax",@progbits
+
+int2float:
+        push rbp
+        mov rbp, rsp
+        mov rax, [rbp+16]    # get the integer
+
+        mov rcx, rax         # type checking
+        and rcx, 3
+        cmp rcx, 0
+        jne int2float_type_fail
+
+        sar rax, 2           # remove type bits
+        cvtsi2sd xmm0, rax   # convert
+        call alloc8          # allocate result
+        movsd [rax], xmm0    # store result
+        or rax, 2            # tag as float
+int2float_cleanup:
+        pop rbp
+        ret
+
+int2float_type_fail:
+        mov rax, offset int2float_type_fail_msg
+        or rax, 1
+        jmp int2float_cleanup
+
+.section .data.int2float,"aw",@progbits
+
+int2float_type_fail_msg:
+.align 4
+        .ascii "int2float: expected INT"
+        .byte 00
