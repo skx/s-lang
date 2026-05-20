@@ -2,7 +2,7 @@
 
 This repository contains a compiler for a minimal programming language, targeting linux/amd64 systems.
 
-The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 4k.
+The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 8k.
 
 * Written in Golang for portability, although the generated code is obviously Linux/AMD64-specific.
 * We have a real lexer, and parser, and internally generate an AST which is then walked to generate the assembly language representation of the program.
@@ -39,7 +39,10 @@ That said the code is clean, and hopefully readable, and we've got good test-cas
 See [examples/](examples/) for "real" programs.  A couple of highlights:
 
 * [examples/brainfuck.in](examples/brainfuck.in) - Brainfuck interpreter.
-  * Runs the classic "Hello World" example program.
+  * Runs several obvious programs:
+    * The classic "Hello World" program.
+    * A simple "cat", which copies STDIN to STDOUT.
+    * Them mandelbrot generation program (takes 8 minutes to complete)!
 * [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20.
 * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
@@ -170,11 +173,11 @@ This performs the same generation as in the `compile` sub-command, but also runs
 
 ## STDLIB
 
-We embed a small number of functions within the generated programs, our so-called "standard library".  These are functions which seemed to be useful enough to include globally.
+We embed a small number of functions within the generated programs, our so-called "standard library".  These are functions which seemed to be useful enough to include globally, and each function that accepts arguments has type-checking, both at compile-time and run-time.
 
 * `args()`
   * Return the supplied program name, and command-line arguments.
-  * See [examples/brainfuck.in](examples/brainfuck.in) for an example where I use that to parse arguments.
+  * See [examples/brainfuck.in](examples/brainfuck.in) where this is used to determine which brainfuck program to execute.
 * `exit(N)`
   * Terminate execution with the given exit-code.
 * `float2int(F)`
@@ -249,7 +252,7 @@ However this is permitted:
 
 **NOTE**: Compile-time type checking of standard-library functions requires an explicit definition within our [check/](check) package.  If you add a new function please do add an entry there.
 
-Run-time checking of types is deferred to our standard library routines, and they _should_ all check their argument types are valid before they execute their jobs.  They will report an error and terminate execution.
+Run-time checking of types is deferred to our standard library routines, and they _should_ all check their argument types are valid before they execute their jobs.  They will return an error string "strlen: expected STRING", or similar, instead of their normal result.
 
 
 
@@ -260,6 +263,8 @@ As noted we support three different variable types (integer, float, and string/p
 * integers have their lower two bits set to `00`
 * pointers have their lower two bits set to `01`.
 * floats are allocated on the heap, and the pointer has the lower two bits set to `10`.
+
+There is space left for one more type, if the lower two bits are `11`, in the future.
 
 
 ### Type Examples
@@ -290,7 +295,7 @@ You can see how this is handled in [our standard-library functions](compiler/tem
 
 ## Development & Testing
 
-Development is reaching completion now.  There are a few small and obvious things to add, but at the same time the scripting language itself is pretty complete, the standard library is complex enough to write real programs, and I suspect my urge to add new things will diminish over time.
+Development is nearing completion now.  There are a few small and obvious things to add, but at the same time the scripting language itself is pretty complete, the standard library is complex enough to write real programs, and I suspect my urge to add new things will diminish over time.
 
 Updates _should_ be contributed by pull-requests which address open issues, but sometimes I'm less strict with myself than I should be.
 
