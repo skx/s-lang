@@ -1,0 +1,7 @@
+#
+# Test the type function works
+#
+
+print( type( 3 ), "\n");
+print( type( 3.13 ), "\n");
+print( type( "Hello" ), "\n");
