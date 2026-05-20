@@ -1,0 +1,17 @@
+print( getenv("FOO"), "\n" );
+
+let a = getenv("NAME");
+
+# Test for known-good result
+if (strcmp(a,"Steve") == 0) {
+   print("OK: getenv(\"NAME\")\n" );
+} else {
+   print("FAIL: getenv(\"NAME\")\n" );
+}
+
+# Type failures
+print( getenv(3) );
+newline();
+print( getenv(3.1) );
+newline();
+

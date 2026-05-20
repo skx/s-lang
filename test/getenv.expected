@@ -1,0 +1,4 @@
+BAR
+OK: getenv("NAME")
+getenv: expected STRING
+getenv: expected STRING

@@ -1,0 +1,168 @@
+.section .text.getenv,"ax",@progbits
+
+# getenv - return the contents of an environmental
+#          variable.
+#
+# Input: string name.
+#
+# Output: malloc'd string with result, or zero.
+#
+
+.section .text.getenv,"ax",@progbits
+
+#
+# getenv
+#
+# Input:
+#   tagged string pointer
+#
+# Output:
+#   tagged malloc'd string
+#   or zero if not found
+#
+.section .text.getenv,"ax",@progbits
+
+#
+# getenv
+#
+# Input:
+#   tagged string pointer
+#
+# Output:
+#   tagged malloc'd string
+#   or zero if not found
+#
+
+getenv:
+        push rbp
+        mov rbp, rsp
+
+        mov rbx, [envp_ptr]        # base address
+        mov rdx, [rbp+16]          # tagged input string
+
+        mov rcx, rdx               # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne getenv_type_fail
+
+        and rdx, -4                # untag
+
+.env_loop:
+        mov rsi, [rbx]             # RSI -> "NAME=VALUE"
+
+        test rsi, rsi
+        jz .not_found
+
+        mov r9, rdx               # R9 -> target NAME
+
+.compare_loop:
+        mov al, [rsi]
+        mov cl, [r9]
+
+        cmp cl, 0
+        je .check_equal
+
+        test al, al
+        jz .next_env
+
+        cmp al, cl
+        jne .next_env
+
+        inc rsi
+        inc r9
+        jmp .compare_loop
+
+.check_equal:
+        cmp byte ptr [rsi], '='
+        jne .next_env
+
+        inc rsi                    # RSI -> VALUE
+
+#
+# Determine VALUE length
+#
+
+        mov r8, rsi                # save VALUE start
+        xor rcx, rcx
+
+.getenv_len_loop:
+        cmp byte ptr [rsi], 0
+        je .getenv_len_done
+
+        inc rsi
+        inc rcx
+        jmp .getenv_len_loop
+
+.getenv_len_done:
+        inc rcx                    # include terminator
+
+#
+# malloc(size)
+#
+
+        push rcx
+        call malloc
+        add rsp, 8
+
+        test rax, rax
+        jz .not_found
+
+#
+# malloc returns tagged pointer
+#
+
+        and rax, -4
+
+        mov r10, rax               # preserve allocation base
+
+#
+# Copy VALUE
+#
+
+        mov rdi, rax
+        mov rsi, r8
+
+.getenv_copy_loop:
+        mov cl, [rsi]
+        mov [rdi], cl
+
+        inc rsi
+        inc rdi
+
+        test cl, cl
+        jne .getenv_copy_loop
+
+#
+# Return tagged pointer
+#
+
+        mov rax, r10
+        or  rax, 1
+
+        jmp .getenv_cleanup
+
+.next_env:
+        add rbx, 8
+        jmp .env_loop
+
+.not_found:
+        xor rax, rax
+
+.getenv_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+
+getenv_type_fail:
+        mov rax, offset getenv_type_fail_msg
+        or rax, 1
+        jmp .getenv_cleanup
+
+
+.section .data.getenv,"aw",@progbits
+
+getenv_type_fail_msg:
+.align 4
+        .ascii "getenv: expected STRING"
+        .byte 00
