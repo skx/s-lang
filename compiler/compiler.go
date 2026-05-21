@@ -617,6 +617,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 		err := c.emitStoreIndex(v)
 		return check.UNKNOWN, err
 
+	// N
 	case *parser.IntegerLiteral:
 
 		fmt.Fprintf(&c.buff, `
@@ -624,6 +625,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 		return check.INTEGER, nil
 
+	// F
 	case *parser.FloatLiteral:
 
 		id := c.floatTable.Add(v.Value)
@@ -645,14 +647,17 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 `, v.Value, id)
 		return check.FLOAT, nil
 
+	// foo(..)
 	case *parser.FunctionCallExpr:
 		err := c.emitFunctionCall(v)
 		return check.UNKNOWN, err
 
+	// id
 	case *parser.VariableExpr:
 		err := c.emitLoadVariable(v.Name)
 		return check.UNKNOWN, err
 
+	// "str"
 	case *parser.StringLiteral:
 		str := v.Value
 		id := c.stringTable.Add(str)
@@ -665,6 +670,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 		return check.STRING, nil
 
+	// left OP right
 	case *parser.BinaryExpr:
 
 		_, err := c.compileExpr(v.Left)
@@ -703,63 +709,27 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
-	# ==
-	sar rax, 2    # untag type
-	sar rbx, 2    # untag type
-	cmp rbx, rax  # compute
-	sete al
-	movzx rax, al
-	sal rax, 2    # add type`)
+	call equals`)
 
 		case lexer.NOTEQUALS:
 			fmt.Fprintln(&c.buff, `
-	# !=
-	sar rax, 2    # untag type
-	sar rbx, 2    # untag type
-	cmp rbx, rax  # compute
-	setne al
-	movzx rax, al
-	sal rax, 2    # add type`)
+	call not_equals`)
 
 		case lexer.LT:
 			fmt.Fprintln(&c.buff, `
-	# <
-	sar rax, 2    # untag type
-	sar rbx, 2    # untag type
-	cmp rbx, rax
-	setl al
-	movzx rax, al
-	sal rax, 2    # add type`)
+	call less_than`)
 
 		case lexer.LTEQUALS:
 			fmt.Fprintln(&c.buff, `
-	# <=
-	sar rax, 2    # untag type
-	sar rbx, 2    # untag type
-	cmp rbx, rax
-	setle al
-	movzx rax, al
-	sal rax, 2    # add type`)
+	call less_equals`)
 
 		case lexer.GT:
 			fmt.Fprintln(&c.buff, `
-	# >
-	sar rax, 2    # untag type
-	sar rbx, 2    # untag type
-	cmp rbx, rax
-	setg al
-	movzx rax, al
-	sal rax, 2    # add type`)
+	call greater_than`)
 
 		case lexer.GTEQUALS:
 			fmt.Fprintln(&c.buff, `
-	# >=
-	sar rax, 2    # untag type
-	sar rbx, 2    # untag type
-	cmp rbx, rax
-	setge al
-	movzx rax, al
-	sal rax, 2    # add type`)
+	call greater_equals`)
 
 		case lexer.AND:
 			fmt.Fprintln(&c.buff, `
@@ -782,13 +752,16 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	movzx rax, al
 	sal rax, 2    # add type`)
 		default:
-			return check.UNKNOWN, fmt.Errorf("unhandled token in compileExpr: %v", v)
+			return check.UNKNOWN, fmt.Errorf("unhandled BinaryExpr in compileExpr: %v", v)
 		}
-		return check.INTEGER, err
 
+		// Binary operations will either return an integer, or a float.
+		//
+		// Since we don't know which it is effectively "unknown".
+		return check.UNKNOWN, err
+	default:
+		return check.UNKNOWN, fmt.Errorf("unhandled token in compileExpr: %v", v)
 	}
-	return check.UNKNOWN, nil
-
 }
 
 // generateStmt generates the assembly for a single statement, it is moved into

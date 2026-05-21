@@ -1,0 +1,365 @@
+#
+# Implementation of our mathematical comparison operations
+#
+# These have to cope with different operand types,
+#
+#    INT   op INT
+#    INT   op FLOAT
+#    FLOAT op INT
+#    FLOAT op FLOAT
+#
+# In all cases the arguments will be stored in RAX and RBX
+#
+
+
+.section .text.comparison,"ax",@progbits
+
+## ==
+equals:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .equals_float
+
+        # integer fast path
+        sar rax, 2
+        sar rbx, 2
+
+        cmp rbx, rax  # compute
+        sete al
+        movzx rax, al
+        sal rax, 2
+        jmp .equals_done
+
+.equals_float:
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .equals_rax_int
+
+        and rax, -4
+        movsd xmm0, [rax]
+        jmp .equals_rax_done
+
+.equals_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm0, rax
+
+.equals_rax_done:
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .equals_rbx_int
+
+        and rbx, -4
+        movsd xmm1, [rbx]
+        jmp .equals_rbx_done
+
+.equals_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm1, rbx
+
+.equals_rbx_done:
+        ucomisd xmm0, xmm1
+        sete al
+        movzx rax, al
+        sal rax, 2
+
+.equals_done:
+        ret
+
+
+## !=
+not_equals:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .not_equals_float
+
+        # integer fast path
+        sar rax, 2
+        sar rbx, 2
+
+        cmp rbx, rax  # compute
+        setne al
+        movzx rax, al
+        sal rax, 2
+        jmp .not_equals_done
+
+.not_equals_float:
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .not_equals_rax_int
+
+        and rax, -4
+        movsd xmm0, [rax]
+        jmp .not_equals_rax_done
+
+.not_equals_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm0, rax
+
+.not_equals_rax_done:
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .not_equals_rbx_int
+
+        and rbx, -4
+        movsd xmm1, [rbx]
+        jmp .not_equals_rbx_done
+
+.not_equals_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm1, rbx
+
+.not_equals_rbx_done:
+        ucomisd xmm0, xmm1
+        setne al
+        movzx rax, al
+        sal rax, 2
+
+.not_equals_done:
+        ret
+
+
+
+## <
+less_than:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .less_than_float
+
+        # integer fast path
+        sar rax, 2
+        sar rbx, 2
+
+        cmp rbx, rax  # compute
+        setl al
+        movzx rax, al
+        sal rax, 2
+        jmp .less_than_done
+
+.less_than_float:
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .less_than_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .less_than_rbx_done
+
+.less_than_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm0, rbx
+
+.less_than_rbx_done:
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .less_than_rax_int
+
+        and rax, -4
+        movsd xmm1, [rax]
+        jmp .less_than_rax_done
+
+.less_than_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm1, rax
+
+.less_than_rax_done:
+        ucomisd xmm0, xmm1
+        setb al
+
+        movzx rax, al
+        sal rax, 2
+
+.less_than_done:
+        ret
+
+
+
+## >
+greater_than:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .greater_than_float
+
+        # integer fast path
+        sar rax, 2
+        sar rbx, 2
+
+        cmp rbx, rax  # compute
+        setg al
+        movzx rax, al
+        sal rax, 2
+        jmp .greater_than_done
+
+.greater_than_float:
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .greater_than_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .greater_than_rbx_done
+
+.greater_than_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm0, rbx
+
+.greater_than_rbx_done:
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .greater_than_rax_int
+
+        and rax, -4
+        movsd xmm1, [rax]
+        jmp .greater_than_rax_done
+
+.greater_than_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm1, rax
+
+.greater_than_rax_done:
+        # left > right
+        ucomisd xmm0, xmm1
+        seta al
+
+        movzx rax, al
+        sal rax, 2
+
+.greater_than_done:
+        ret
+
+
+
+## <=
+less_equals:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .less_equals_float
+
+        # integer fast path
+        sar rax, 2
+        sar rbx, 2
+
+        cmp rbx, rax  # compute
+        setle al
+        movzx rax, al
+        sal rax, 2
+        jmp .less_equals_done
+
+.less_equals_float:
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .less_equals_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .less_equals_rbx_done
+
+.less_equals_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm0, rbx
+
+.less_equals_rbx_done:
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .less_equals_rax_int
+
+        and rax, -4
+        movsd xmm1, [rax]
+        jmp .less_equals_rax_done
+
+.less_equals_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm1, rax
+
+.less_equals_rax_done:
+
+        ucomisd xmm0, xmm1
+        setbe al
+
+        movzx rax, al
+        sal rax, 2
+
+.less_equals_done:
+        ret
+
+
+
+## >=
+greater_equals:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .greater_equals_float
+
+        # integer fast path
+        sar rax, 2
+        sar rbx, 2
+
+        cmp rbx, rax  # compute
+        setge al
+        movzx rax, al
+        sal rax, 2
+        jmp .greater_equals_done
+
+.greater_equals_float:
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .greater_equals_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .greater_equals_rbx_done
+
+.greater_equals_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm0, rbx
+
+.greater_equals_rbx_done:
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .greater_equals_rax_int
+
+        and rax, -4
+        movsd xmm1, [rax]
+        jmp .greater_equals_rax_done
+
+.greater_equals_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm1, rax
+
+.greater_equals_rax_done:
+        ucomisd xmm0, xmm1
+        setnb al
+        movzx rax, al
+        sal rax, 2
+
+.greater_equals_done:
+        ret
