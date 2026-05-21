@@ -465,10 +465,48 @@ func (c *Compiler) emitStoreVariable(name string) error {
 	return nil
 }
 
+// emitFunctionCall expression handles generating a call to a function.
+func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
+
+	// Store the types of the functions here
+	callTypes := []check.Type{}
+
+	// We have to loop over the arguments in reverse
+	for i := len(v.Arguments) - 1; i >= 0; i-- {
+
+		// push each argument to the stack
+		retType, err := c.compileExpr(v.Arguments[i])
+		if err != nil {
+			return err
+		}
+		callTypes = append(callTypes, retType)
+		fmt.Fprintf(&c.buff, `
+	push rax`)
+
+	}
+
+	// Type checking
+	err := c.typeCheck.Check(v.Name, callTypes)
+	if err != nil {
+		return err
+	}
+
+	fmt.Fprintf(&c.buff, `
+	mov rax, %d   # ABI: RAX contains argument count
+	call %s
+`, len(v.Arguments), v.Name)
+
+	if len(v.Arguments) > 0 {
+		fmt.Fprintf(&c.buff, `
+	add rsp, %d
+`,
+			8*len(v.Arguments))
+	}
+	return nil
+}
+
 // newGlobalLabel returns a suitable label for the global
 // variable named "name".
-//
-// TODO: The numeric suffix is probably not necessary.
 func (c *Compiler) newGlobalLabel(name string) string {
 	lbl := fmt.Sprintf("global_%s_%d", name, c.globalCount)
 	c.globalCount++
@@ -508,9 +546,10 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 
 			case lexer.DIVIDE:
+				// Divisions always return a floating-point number
 				if rI.Value != 0 {
-					return &parser.IntegerLiteral{
-						Value: lI.Value / rI.Value,
+					return &parser.FloatLiteral{
+						Value: float64(lI.Value) / float64(rI.Value),
 					}
 				}
 			}
@@ -607,43 +646,8 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 		return check.FLOAT, nil
 
 	case *parser.FunctionCallExpr:
-		// Store the types of the functions here
-		callTypes := []check.Type{}
-
-		// We have to loop over the arguments in reverse
-		for i := len(v.Arguments) - 1; i >= 0; i-- {
-
-			// push each argument to the stack
-			retType, err := c.compileExpr(v.Arguments[i])
-			if err != nil {
-				return check.UNKNOWN, err
-			}
-			callTypes = append(callTypes, retType)
-			fmt.Fprintf(&c.buff, `
-	push rax
-`)
-
-		}
-
-		// Type checking
-		err := c.typeCheck.Check(v.Name, callTypes)
-		if err != nil {
-			return check.UNKNOWN, err
-		}
-
-		fmt.Fprintf(&c.buff, `
-	mov rax, %d   # ABI: RAX contains argument count
-	call %s
-`, len(v.Arguments), v.Name)
-
-		if len(v.Arguments) > 0 {
-			fmt.Fprintf(&c.buff, `
-	add rsp, %d
-`,
-				8*len(v.Arguments))
-		}
-
-		return check.UNKNOWN, nil
+		err := c.emitFunctionCall(v)
+		return check.UNKNOWN, err
 
 	case *parser.VariableExpr:
 		err := c.emitLoadVariable(v.Name)
@@ -820,40 +824,8 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 	case *parser.FunctionCallExpr:
 
-		// Store the types of the functions here
-		callTypes := []check.Type{}
-
-		// We have to loop over the arguments in reverse
-		for i := len(s.Arguments) - 1; i >= 0; i-- {
-
-			// push each argument to the stack
-			retType, err := c.compileExpr(s.Arguments[i])
-			if err != nil {
-				return err
-			}
-			callTypes = append(callTypes, retType)
-			fmt.Fprintf(&c.buff, `
-	push rax
-`)
-		}
-
-		// Type checking
-		err := c.typeCheck.Check(s.Name, callTypes)
-		if err != nil {
-			return err
-		}
-
-		fmt.Fprintf(&c.buff, `
-	mov rax, %d   # ABI: RAX contains argument count
-	call %s
-`, len(s.Arguments), s.Name)
-
-		if len(s.Arguments) > 0 {
-			fmt.Fprintf(&c.buff, `
-	add rsp, %d
-`,
-				8*len(s.Arguments))
-		}
+		err := c.emitFunctionCall(s)
+		return err
 
 	case *parser.Function:
 
