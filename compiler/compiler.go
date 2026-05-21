@@ -687,13 +687,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 		case lexer.MINUS:
 			fmt.Fprintln(&c.buff, `
-	# -
-	sar rax, 2   # untag type
-	sar rbx, 2   # untag type
-
-	sub rbx, rax # compute
-	mov rax, rbx
-	sal rax, 2   # add typing`)
+	call minus`)
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
