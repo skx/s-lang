@@ -927,11 +927,31 @@ over_function_%s:
 			}
 		}
 		txt := fmt.Sprintf(`
-	# IF condition
-	sar rax, 2      # untag
+	# IF condition - value in RAX
+	mov rcx, rax    # get type-bits
+	and rcx, 3
+
+	cmp rcx, 0        # is it an integer?
+	jnz not_int_if_%d
+
+	sar rax, 2        # int; strip type
 	cmp rax, 0
-	jz if_%d_false
-`, n)
+	jz  if_%d_false  # non-zero jump to the else
+	jmp if_%d_true   # now we've tested we jump to the true block
+
+not_int_if_%d:
+	cmp rcx, 2        # not a float then we assume true
+	jnz if_%d_true    #
+
+	and rax, -4          # get the float value
+	movsd xmm0, [rax]
+	xorpd xmm1, xmm1     # xmm1 = 0.0
+	ucomisd xmm0, xmm1   # compare xmm0 with 0.0
+	jz if_%d_false       # zero?  Then we skip the true-part
+
+if_%d_true:
+`, n, n, n, n, n, n, n)
+
 		fmt.Fprint(&c.buff, txt)
 
 		c.pushScope()
@@ -1098,11 +1118,30 @@ while_%d_start:
 		}
 
 		txt = fmt.Sprintf(`
-	# WHILE condition
-	sar rax, 2            # remove type
+	# WHILE condition - value in RAX
+	mov rcx, rax    # get type-bits
+	and rcx, 3
+
+	cmp rcx, 0        # is it an integer?
+	jnz not_int_while_%d
+
+	sar rax, 2        # int; strip type
 	cmp rax, 0
-	jz while_%d_end
-`, n)
+	jz while_%d_end   # non-zero jump over the body
+	jmp while_%d_body # now we've tested we jump to the start of body
+
+not_int_while_%d:
+	cmp rcx, 2        # not a float then we skip the body
+	jnz while_%d_end  # while on a string makes no sense.
+
+	and rax, -4          # get the float value
+	movsd xmm0, [rax]
+	xorpd xmm1, xmm1     # xmm1 = 0.0
+	ucomisd xmm0, xmm1   # compare xmm0 with 0.0
+	jz while_%d_end      # zero?  Then we skip the body
+
+while_%d_body:
+`, n, n, n, n, n, n, n)
 		fmt.Fprint(&c.buff, txt)
 
 		c.pushScope()
