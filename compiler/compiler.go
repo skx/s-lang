@@ -546,9 +546,10 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 
 			case lexer.DIVIDE:
+				// Divisions always return a floating-point number
 				if rI.Value != 0 {
-					return &parser.IntegerLiteral{
-						Value: lI.Value / rI.Value,
+					return &parser.FloatLiteral{
+						Value: float64(lI.Value) / float64(rI.Value),
 					}
 				}
 			}
