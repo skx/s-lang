@@ -32,7 +32,7 @@ var templateFS embed.FS
 type Option func(*Compiler) error
 
 // WithConstantFolding allows specifying whether constant folding
-// is applied
+// is applied.
 func WithConstantFolding(enable bool) Option {
 	return func(c *Compiler) error {
 		c.constantFolding = enable
@@ -40,7 +40,7 @@ func WithConstantFolding(enable bool) Option {
 	}
 }
 
-// WithSource allows specifying the source code to compile
+// WithSource allows specifying the source code to compile.
 func WithSource(source string) Option {
 	return func(c *Compiler) error {
 		c.Source = source
@@ -683,44 +683,20 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 		case lexer.PLUS:
 			fmt.Fprintln(&c.buff, `
-	# +
-	sar rax, 2   # untag type
-	sar rbx, 2   # untag type
-
-	add rax, rbx # compute
-
-	sal rax, 2   # add typing`)
+	call plus`)
 
 		case lexer.MINUS:
 			fmt.Fprintln(&c.buff, `
-	# -
-	sar rax, 2   # untag type
-	sar rbx, 2   # untag type
-
-	sub rbx, rax # compute
-	mov rax, rbx
-	sal rax, 2   # add typing`)
+	call minus`)
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
-	# *
-	sar rax, 2     # untag type
-	sar rbx, 2     # untag type
-	imul rax, rbx  # compute
-	sal rax, 2     # add typing`)
+	call multiply`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(&c.buff, `
-	# /
-	sar rax, 2    # untag type
-	sar rbx, 2    # untag type
+	call divide`)
 
-	mov rcx, rax  # compute
-	mov rax, rbx
-	xor rdx, rdx
-	idiv rcx
-
-	sal rax, 2    # add typing`)
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# ==
