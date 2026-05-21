@@ -22,7 +22,13 @@ str2float:
         push rbp
         mov  rbp, rsp
 
-        mov  rsi, [rbp+16]      # Get string
+        mov rsi, [rbp+16]       # Get string
+
+        mov rcx, rsi            # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne str2float_type_fail
+
         and  rsi, -4            # Remove typing bits
 
         xor  rax, rax           # Integer accumulator
@@ -127,7 +133,21 @@ str2float_return:
 
         # tag pointer as float (10)
         or rax, 2
-
+.str2float_cleanup:
         mov  rsp, rbp
         pop  rbp
         ret
+
+
+str2float_type_fail:
+        mov rax, offset str2float_type_fail_msg
+        or rax, 1
+        jmp .str2float_cleanup
+
+
+.section .data.str2float,"aw",@progbits
+
+.align 4
+str2float_type_fail_msg:
+        .ascii "str2float: expected STRING"
+        .byte 00

@@ -9,6 +9,12 @@ strlen:
         mov rbp, rsp
 
         mov rdi, [rbp+16]    # Get the string
+
+        mov rcx, rdi         # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne strlen_type_fail
+
         and rdi, -4          # Remove typing
 
         xor rax, rax
@@ -19,6 +25,20 @@ strlen:
         jmp .strlen_next_char
 .strlen_done:
         sal rax, 2          # Add typing
+.strlen_cleanup:
         mov rsp, rbp
         pop rbp
         ret
+
+strlen_type_fail:
+        mov rax, offset strlen_type_fail_msg
+        or rax, 1
+        jmp .strlen_cleanup
+
+
+.section .data.strlen,"aw",@progbits
+
+.align 4
+strlen_type_fail_msg:
+        .ascii "strlen: expected STRING"
+        .byte 00

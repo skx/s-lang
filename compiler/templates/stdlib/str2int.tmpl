@@ -11,6 +11,12 @@ str2int:
         mov rbp, rsp
 
         mov rsi, [rbp+16]    # Get the tagged string
+
+        mov rcx, rsi         # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne str2int_type_fail
+
         and rsi, -4          # Remove typing
 
         xor rax, rax         # Result accumulator
@@ -50,7 +56,22 @@ str2int_done:
 
 str2int_return:
         sal rax, 2           # Re-apply tagging
-
+.str2int_cleanup:
         mov rsp, rbp
         pop rbp
         ret
+
+
+
+str2int_type_fail:
+        mov rax, offset str2int_type_fail_msg
+        or rax, 1
+        jmp .str2int_cleanup
+
+
+.section .data.str2int,"aw",@progbits
+
+.align 4
+str2int_type_fail_msg:
+        .ascii "str2int: expected STRING"
+        .byte 00

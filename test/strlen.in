@@ -6,3 +6,10 @@ newline();
 let a = "Meow!";
 print(strlen(a));
 newline();
+
+# Type failures
+print(strlen(4));
+newline();
+
+print(strlen(5.5));
+newline();

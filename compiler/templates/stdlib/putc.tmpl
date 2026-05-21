@@ -12,18 +12,44 @@
 putc:
         push rbp
         mov rbp, rsp
+
         mov rax, [rbp+16]    # get the integer
+
+        mov rcx, rax         # type checking
+        and rcx, 3
+        cmp rcx, 0
+        jne putc_type_fail
+
         sar rax, 2           # remove type bits
-printchar_internal:
+
         mov byte ptr [printc_buffer], al
         mov     eax, 1
         mov     edi, 1
         mov     rsi, offset printc_buffer
         mov     edx, 1
         syscall
+
+        mov rax, 23
+        sal rax, 2
+
+.putc_cleanup:
+        mov rsp, rbp
         pop rbp
         ret
+
+
+
+putc_type_fail:
+        mov rax, offset putc_type_fail_msg
+        or rax, 1
+        jmp .putc_cleanup
+
 
 .section .data.putc,"aw",@progbits
 
 printc_buffer: .byte 0x00
+
+.align 4
+putc_type_fail_msg:
+        .ascii "putc: expected INTEGER"
+        .byte 00
