@@ -13,7 +13,7 @@ In terms of features:
 * Single-pass compiler which generates an assembly output for programs.
 * Parsing uses recursive descent with precedence layers:
   * Maths operations: `+`, `-`, `*`, `/`
-  * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`,
+  * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`, for integers, floats, and mixtures of the two.
   * Logical operations: `&&` and `||`.
 * Support for integers, floats, and strings.
   * Float and string literals are interned.
@@ -26,8 +26,8 @@ In terms of features:
 
 Anti-features, or limitations:
 
-* The language is built around integers, and strings.
-  * Float support is rudimentary.
+* The language is built around numbers (integers&floats), and strings.
+  * We have no support for arrays, hashes, or structures.
 * There are only a few functions in the standard library.
 
 That said the code is clean, and hopefully readable, and we've got good test-case coverage of both the  golang packages, and the functional operation).
