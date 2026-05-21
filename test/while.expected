@@ -1,1 +1,21 @@
 SUM:100
+float loop 10 type: FLOAT
+float loop 9 type: FLOAT
+float loop 8 type: FLOAT
+float loop 7 type: FLOAT
+float loop 6 type: FLOAT
+float loop 5 type: FLOAT
+float loop 4 type: FLOAT
+float loop 3 type: FLOAT
+float loop 2 type: FLOAT
+float loop 1 type: FLOAT
+int loop 10 type: INTEGER
+int loop 9 type: INTEGER
+int loop 8 type: INTEGER
+int loop 7 type: INTEGER
+int loop 6 type: INTEGER
+int loop 5 type: INTEGER
+int loop 4 type: INTEGER
+int loop 3 type: INTEGER
+int loop 2 type: INTEGER
+int loop 1 type: INTEGER

@@ -15,3 +15,19 @@ while( a < 10 ) {
 
 print("SUM:", sum, "\n");
 
+
+#
+# Test that we have working loops for integer and float conditions.
+#
+
+let c = int2float(10);
+while( c ) {
+  print("float loop ", c, " type: ", type(c), "\n");
+  let c = c - 1;
+}
+
+let a = 10;
+while( a > 0 ) {
+  print("int loop ", a, " type: ", type(a), "\n");
+  let a = a - 1;
+}

@@ -10,6 +10,8 @@ $(BINARY): $(GOFILES)
 .PHONY: clean
 clean:
 	rm -f $(BINARY)
+	cd test && make clean
+	cd examples && make clean
 
 
 .PHONY: test
