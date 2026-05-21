@@ -691,24 +691,12 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 		case lexer.MULTIPLY:
 			fmt.Fprintln(&c.buff, `
-	# *
-	sar rax, 2     # untag type
-	sar rbx, 2     # untag type
-	imul rax, rbx  # compute
-	sal rax, 2     # add typing`)
+	call multiply`)
 
 		case lexer.DIVIDE:
 			fmt.Fprintln(&c.buff, `
-	# /
-	sar rax, 2    # untag type
-	sar rbx, 2    # untag type
+	call divide`)
 
-	mov rcx, rax  # compute
-	mov rax, rbx
-	xor rdx, rdx
-	idiv rcx
-
-	sal rax, 2    # add typing`)
 		case lexer.EQUALS:
 			fmt.Fprintln(&c.buff, `
 	# ==

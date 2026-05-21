@@ -136,3 +136,136 @@ minus:
 
 .minus_done:
        ret
+
+
+
+multiply:
+        # Fast int path
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .multiply_float
+
+        # fast path, two ints
+        sar rax, 2
+        sar rbx, 2
+
+        imul rbx, rax
+        mov rax, rbx
+
+        sal rax, 2
+        jmp .multiply_done
+
+.multiply_float:
+
+        # Convert operands
+        # xmm0 = rbx
+        # xmm1 = rax
+
+        # RBX -> xmm0
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .multiply_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .multiply_rbx_done
+
+.multiply_rbx_int:
+       sar rbx, 2
+       cvtsi2sd xmm0, rbx
+
+.multiply_rbx_done:
+
+       # RAX -> xmm1
+       mov rcx, rax
+       and rcx, 3
+       cmp rcx, 0
+       je .multiply_rax_int
+
+       and rax, -4
+       movsd xmm1, [rax]
+       jmp .multiply_rax_done
+
+.multiply_rax_int:
+       sar rax, 2
+       cvtsi2sd xmm1, rax
+
+.multiply_rax_done:
+       mulsd xmm0, xmm1
+
+       call alloc8
+       movsd [rax], xmm0
+       or rax, 2
+
+.multiply_done:
+       ret
+
+
+divide:
+        # Fast int path
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .divide_float
+
+        # fast path, two ints
+        sar rax, 2
+        sar rbx, 2
+
+        mov rcx, rax
+        mov rax, rbx
+        xor rdx, rdx
+        idiv rcx
+
+        sal rax, 2
+        jmp .divide_done
+
+.divide_float:
+
+        # Convert operands
+        # xmm0 = rbx
+        # xmm1 = rax
+
+        # RBX -> xmm0
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .divide_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .divide_rbx_done
+
+.divide_rbx_int:
+       sar rbx, 2
+       cvtsi2sd xmm0, rbx
+
+.divide_rbx_done:
+
+       # RAX -> xmm1
+       mov rcx, rax
+       and rcx, 3
+       cmp rcx, 0
+       je .divide_rax_int
+
+       and rax, -4
+       movsd xmm1, [rax]
+       jmp .divide_rax_done
+
+.divide_rax_int:
+       sar rax, 2
+       cvtsi2sd xmm1, rax
+
+.divide_rax_done:
+       divsd xmm0, xmm1
+
+       call alloc8
+       movsd [rax], xmm0
+       or rax, 2
+
+.divide_done:
+       ret

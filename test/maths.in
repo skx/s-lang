@@ -43,3 +43,50 @@ print( i - i, "\n" );    # int int
 print( f - i, "\n" );    # float int
 print( i - f, "\n" );    # int float
 print( f - f, "\n" );    # float float
+
+
+
+
+
+##
+## MULTIPLY
+##
+
+print( 5 * 5, "\n" );         # int int
+print( 2.5 * 5, "\n" );       # float int
+print( 10 * 0.75, "\n" );     # int float
+print( 10 * 1.50, "\n" );   # float float
+
+#
+# Now with variables
+#
+let i = 4;
+let f = 2;
+
+print( i * i, "\n" );    # int int
+print( f * i, "\n" );    # float int
+print( i * f, "\n" );    # int float
+print( f * f, "\n" );    # float float
+
+
+
+
+##
+## DIVIDE
+##
+
+print( 10   / 2, "\n" );     # int int
+print( 25.5 / 2, "\n" );     # float int
+print( 10   / 2.5, "\n" );   # int float
+print( 10.0 / 2.5, "\n" );   # float float
+
+#
+# Now with variables
+#
+let i = 100;
+let f = 25.5;
+
+print( i / i, "\n" );    # int int
+print( f / i, "\n" );    # float int
+print( i / f, "\n" );    # int float
+print( f / f, "\n" );    # float float
