@@ -16,7 +16,7 @@ In terms of features:
   * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`, for integers, floats, and mixtures of the two.
   * Logical operations: `&&` and `||`.
 * Support for integers, floats, and strings.
-  * Float and string literals are interned.
+  * String literals are interned.
   * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
 * The ability to include inline assembly via `inline { .. }`.
   * `inline` statements are generated inline as they are encountered.
