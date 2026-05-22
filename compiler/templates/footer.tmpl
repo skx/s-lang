@@ -18,8 +18,7 @@
 #####
 
 .section .bss
-command_line_arguments:
-        .quad 0
+.align 8
 initial_esp:
         .quad 0
 envp_ptr:
@@ -77,3 +76,4 @@ argument_base:
 {{.}}
 {{end}}
 {{end}}
+
