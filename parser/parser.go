@@ -336,7 +336,7 @@ func (p *Parser) parseLogicalAnd() (Expr, error) {
 // parseStatements is used to parse a collection of statements.
 //
 // It is extracted into a function because our WHILE and IF blocks
-// will themselves contain statements - when they exist.
+// will themselves contain statements.
 func (p *Parser) parseStatements() ([]Statement, error) {
 	res := []Statement{}
 
@@ -351,6 +351,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 		case lexer.INTEGER, lexer.FLOAT, lexer.STRING:
 			return res, fmt.Errorf("bare literal is illegal: %s", p.curToken.String())
+
 		case lexer.BREAK:
 			res = append(res, &Break{})
 
@@ -578,6 +579,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					Name:      name,
 					Arguments: params,
 				})
+
 			} else if p.l.Peek().Type == lexer.ASSIGN {
 
 				// consume '='
