@@ -8,13 +8,12 @@ import (
 	"fmt"
 )
 
-// FloatEntry is used in populating our code,
-// via the text/template engine.
+// FloatEntry is used in populating our code, via the text/template engine.
 type FloatEntry struct {
-	// Identifier is the ID we calculate for the given string
+	// Identifier is the ID we calculate for the given float.
 	Identifier string
 
-	// Value is the float value.
+	// Value is the actual floating-point value.
 	Value float64
 }
 

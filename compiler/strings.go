@@ -9,10 +9,9 @@ import (
 	"strings"
 )
 
-// StringEntry is used in populating our code,
-// via the text/template engine.
+// StringEntry is used in populating our code, via the text/template engine.
 type StringEntry struct {
-	// Identifier is the ID we calculate for the given string
+	// Identifier is the ID we calculate for the given string.
 	Identifier string
 
 	// Value is the literal value of the string.
@@ -22,11 +21,13 @@ type StringEntry struct {
 	Encoded string
 }
 
-// StringTable holds our state
+// StringTable holds our state.
 type StringTable struct {
+	// values holds known-strings, and their details.
 	values map[string]string
 }
 
+// NewStringTable is our constructor.
 func NewStringTable() *StringTable {
 	return &StringTable{
 		values: make(map[string]string),

@@ -79,6 +79,7 @@ type Token struct {
 	Value interface{}
 }
 
+// String returns a human-readable version of our token.
 func (t Token) String() string {
 	if t.Type == INTEGER {
 		return fmt.Sprintf("Token{Type:%s Value:%s}", t.Type, fmt.Sprintf("%d", int64(t.Value.(float64))))
@@ -157,6 +158,7 @@ func (l *Lexer) Peek() *Token {
 	return l.peek
 }
 
+// peekChar looks one character forward within our input.
 func (l *Lexer) peekChar() string {
 	val := ""
 	if l.position < len(l.input) {
