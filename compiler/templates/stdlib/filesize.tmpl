@@ -1,0 +1,102 @@
+#
+# Return the filesize of the specified file.
+#
+# Returns zero on error.
+#
+
+.section .text.filesize,"ax",@progbits
+
+filesize:
+        push rbp
+        mov rbp, rsp
+        sub rsp, 16
+
+        mov rdi, [rbp+16]  # Filename
+
+        #
+        # Type check
+        #
+        mov rcx, rdi
+        and rcx, 3
+        cmp rcx, 1
+        jne filesize_type_fail
+
+        and rdi, -4           # Remove type
+
+        #
+        # open(filename, O_RDONLY, 0)
+        #
+
+        mov rax, 2                   # sys_open
+        xor rsi, rsi                 # O_RDONLY
+        xor rdx, rdx
+        syscall
+
+        # open failed?
+        cmp rax, 0
+        jl filesize_error
+
+        #
+        # Save fd
+        #
+        mov [rbp-8], rax
+
+        #
+        # lseek(fd, 0, SEEK_END)
+        #
+        mov rdi, [rbp-8]
+        xor rsi, rsi
+        mov rdx, 2                   # SEEK_END
+        mov rax, 8                   # sys_lseek
+        syscall
+
+        #
+        # Error?
+        #
+        cmp rax, 0
+        jl filesize_close_error
+
+        #
+        # Save filesize
+        #
+        mov [rbp-16], rax
+
+        #
+        # close(fd)
+        #
+        mov rdi, [rbp-8]
+        mov rax, 3                   # sys_close
+        syscall
+
+        mov rax, [rbp-16]   # File size
+        sal rax, 2          # Tag as int
+
+filesize_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+filesize_type_fail:
+        mov rax, offset filesize_type_fail_msg
+        or rax, 1
+        jmp filesize_cleanup
+
+filesize_error:
+        xor rax, rax
+        jmp filesize_cleanup
+
+filesize_close_error:
+        mov rdi, [rbp-8]
+        mov rax, 3                   # sys_close
+        syscall
+
+        xor rax, rax
+        jmp filesize_cleanup
+
+
+.section .data.filesize,"aw",@progbits
+
+.align 4
+filesize_type_fail_msg:
+        .ascii "filesize: expected STRING"
+        .byte 0

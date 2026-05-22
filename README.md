@@ -43,6 +43,7 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
     * The classic "Hello World" program.
     * A simple "cat", which copies STDIN to STDOUT.
     * Them mandelbrot generation program (takes 8 minutes to complete)!
+  * If executed with the path to a brainfuck program it will read and execute that.
 * [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20.
 * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
 * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
@@ -181,6 +182,8 @@ We embed a small number of functions within the generated programs, our so-calle
   * Return the Nth command-line argument, as a string.
 * `exit(N)`
   * Terminate execution with the given exit-code.
+* `filesize(STR)`
+  * Return the size of the given file.
 * `float2int(F)`
   * Convert the given floating-point number to an integer.
 * `getc()`
@@ -198,6 +201,8 @@ We embed a small number of functions within the generated programs, our so-calle
   * Print each argument in turn.
 * `putc(N)`
   * Print the ASCII character corresponding to the given integer to STDOUT, i.e `putc(42);` will print `*`.
+* `readfile(STR)`
+  * Return the contents of the given file.
 * `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
 * `strlen(STR)`

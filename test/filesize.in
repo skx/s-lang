@@ -1,0 +1,13 @@
+#
+# Test that we can get the size of our own file
+#
+
+let file = "filesize.in";
+
+print("The filesize of ", file, " is ", filesize(file), "\n");
+
+#
+# Type failures
+#
+print(filesize(3), "\n");
+print(filesize(1.25), "\n");
