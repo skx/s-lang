@@ -14,7 +14,7 @@ _start:
         mov [rip + initial_esp], rsp
 
         #
-        # argc
+        # Save the count of arguments away.
         #
         mov rsi, rsp
         mov rax, [rsi]
@@ -33,9 +33,10 @@ _start:
         #   terminating NULL
         #
         lea rcx, [rbx + rax*8 + 8]
-        mov [envp_ptr], rcx
+        mov [rip + envp_ptr], rcx
 
         #
         # Setup our initial heap allocator
         #
         call init_heap
+
