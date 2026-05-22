@@ -17,14 +17,9 @@ type Parser struct {
 }
 
 // New returns our new parser-object.
-func New(l *lexer.Lexer) *Parser {
+func New(program string) *Parser {
 
-	// Create the parser, and prime the pump
-	p := &Parser{l: l}
-
-	// All done
-	return p
-
+	return &Parser{l: lexer.NewLexer(program)}
 }
 
 // ParseProgram used to parse the whole program

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"s-lang/lexer"
 	"s-lang/parser"
 	"strings"
 
@@ -110,9 +109,7 @@ func (p *parseCommand) parseFile(path string) error {
 		return err
 	}
 
-	lex := lexer.NewLexer(string(data))
-
-	parse := parser.New(lex)
+	parse := parser.New(string(data))
 	program, err := parse.ParseProgram()
 	if err != nil {
 		return err

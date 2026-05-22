@@ -220,9 +220,8 @@ func (c *Compiler) Compile() (string, error) {
 	//
 	tmpl = template.Must(tmpl.Parse(buf.String()))
 
-	// Create a lexer and parser
-	lex := lexer.NewLexer(string(c.Source))
-	parse := parser.New(lex)
+	// Create a new parser
+	parse := parser.New(string(c.Source))
 
 	// now parse the program
 	program, err := parse.ParseProgram()
