@@ -269,7 +269,55 @@ There is space left for one more type, if the lower two bits are `11`, in the fu
 
 ### Type Examples
 
-* TODO
+You should be able to work this out from the "Types" section above, or from looking at the code, but here are examples of getting values for each of our types:
+
+Getting an integer from RAX:
+
+        sar rax, 2  # Shift right, removing lower two bits.
+
+Getting the float from RAX:
+
+        and rax, -4       # Clear the type bits
+        movsd xmm0, [rax] # Load the heap-allocated float.
+
+Getting a string/pointer from RAX:
+
+        mov rdi, rax  # Get the string
+        and rdi, -4   # Remove typing bits
+
+Returning a number from a function:
+
+        mov rax, 42   # Load the value
+        sal rax, 2    # Lower two bits are 00
+
+Returning a float from a function:
+
+        call alloc8         # allocate 8-byte boxed float
+        movsd [rax], xmm0   # store payload
+        or rax, 2           # tag pointer as float (10)
+
+Returning a string from a function:
+
+        mov rax, offset str_ptr  # Load the string
+        or rax, 1                # Mark the type
+
+Finally here's how to do type-checking of the parameter in RAX:
+
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je print_integer
+
+        cmp rcx, 1
+        je print_string
+
+        cmp rcx, 2
+        je print_float
+
+        cmp rcx, 3
+        je print_reserved
+        ret
 
 
 
