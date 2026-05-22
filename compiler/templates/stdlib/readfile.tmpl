@@ -1,0 +1,174 @@
+#
+# Read the contents of the named file,
+# returning them in a freshly malloc'd
+# string/pointer.
+#
+# Returns zero on error.
+#
+
+.section .text.readfile,"ax",@progbits
+
+readfile:
+        push rbp
+        mov rbp, rsp
+        sub rsp, 32
+
+        #
+        # Stack locals
+        #
+        # [rbp-8]   = fd
+        # [rbp-16]  = filesize (untagged)
+        # [rbp-24]  = buffer (untagged)
+        # [rbp-32]  = filename (tagged)
+        #
+
+        #
+        # Get filename parameter
+        #
+        mov rax, [rbp+16]
+
+        #
+        # Type check
+        #
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 1
+        jne readfile_type_fail
+
+        #
+        # Save tagged filename
+        #
+        mov [rbp-32], rax
+
+        #
+        # filesize(filename)
+        #
+        push rax
+        mov rax, 1
+        call filesize
+        add rsp, 8
+
+        #
+        # filesize failed?
+        #
+        test rax, rax
+        jz readfile_error
+
+        #
+        # Untag filesize
+        #
+        sar rax, 2
+        mov [rbp-16], rax
+
+        #
+        # open(filename, O_RDONLY, 0)
+        #
+        mov rdi, [rbp-32]
+        and rdi, -4
+
+        mov rax, 2                   # sys_open
+        xor rsi, rsi                 # O_RDONLY
+        xor rdx, rdx
+        syscall
+
+        #
+        # open failed?
+        #
+        cmp rax, 0
+        jl readfile_error
+
+        #
+        # Save fd
+        #
+        mov [rbp-8], rax
+
+        #
+        # malloc(filesize + 1)
+        #
+        mov rax, [rbp-16]
+        inc rax
+        sal rax, 2                   # tag integer
+
+        push rax
+        call malloc
+        add rsp, 8
+
+        #
+        # malloc failed?
+        #
+        test rax, rax
+        jz readfile_close_error
+
+        #
+        # Save untagged buffer pointer
+        #
+        and rax, -4
+        mov [rbp-24], rax
+
+        #
+        # read(fd, buffer, filesize)
+        #
+        xor rax, rax                 # sys_read
+        mov rdi, [rbp-8]
+        mov rsi, [rbp-24]
+        mov rdx, [rbp-16]
+        syscall
+
+        #
+        # read failed?
+        #
+        cmp rax, 0
+        jl readfile_close_error
+
+        #
+        # Null terminate buffer
+        #
+        mov rcx, [rbp-24]
+        mov rdx, [rbp-16]
+        mov byte ptr [rcx + rdx], 0
+
+        #
+        # close(fd)
+        #
+        mov rdi, [rbp-8]
+        mov rax, 3                   # sys_close
+        syscall
+
+        #
+        # Return tagged string pointer
+        #
+        mov rax, [rbp-24]
+        or rax, 1
+
+readfile_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+
+readfile_type_fail:
+        mov rax, offset readfile_type_fail_msg
+        or rax, 1
+        jmp readfile_cleanup
+
+
+readfile_error:
+        xor rax, rax
+        jmp readfile_cleanup
+
+
+readfile_close_error:
+        mov rdi, [rbp-8]
+        mov rax, 3                   # sys_close
+        syscall
+
+        xor rax, rax
+        jmp readfile_cleanup
+
+
+.section .data.readfile,"aw",@progbits
+
+.align 4
+readfile_type_fail_msg:
+        .ascii "readfile: expected STRING"
+        .byte 0

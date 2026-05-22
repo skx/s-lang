@@ -1,0 +1,7 @@
+
+print( readfile( "putc.in" ), "\n" );
+
+# type fail
+print( readfile( 1 ), "\n" );
+print( readfile( 1.5 ), "\n" );
+
