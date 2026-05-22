@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"s-lang/lexer"
 	"testing"
 )
 
@@ -23,8 +22,7 @@ func TestLetStatements(t *testing.T) {
 		{"let x = \"steve\";"},
 	}
 	for _, tt := range tests {
-		l := lexer.NewLexer(tt.input)
-		p := New(l)
+		p := New(tt.input)
 		program, err := p.ParseProgram()
 		if err != nil {
 			t.Fatalf("unexpected error parsing program")
@@ -72,8 +70,7 @@ func TestValid(t *testing.T) {
 		{"let a = 10; while(a) { let a = a - 1; println( a ); };"},
 	}
 	for _, tt := range tests {
-		l := lexer.NewLexer(tt.input)
-		p := New(l)
+		p := New(tt.input)
 		_, err := p.ParseProgram()
 		if err != nil {
 			t.Fatalf("unexpected err parsing program: %s %s", tt.input, err)
@@ -117,8 +114,7 @@ func TestErrors(t *testing.T) {
 		{"while ( 3 * 3 ) { return \"steve\"; } "},
 	}
 	for _, tt := range tests {
-		l := lexer.NewLexer(tt.input)
-		p := New(l)
+		p := New(tt.input)
 		_, err := p.ParseProgram()
 		if err == nil {
 			t.Fatalf("expected err parsing program, but got none: %s", tt.input)
