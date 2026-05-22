@@ -141,12 +141,12 @@ func (b *BinaryExpr) String() string {
 
 func (BinaryExpr) expr() {}
 
-// Break holds a break-statement, only valid within a while loop
+// Break holds a break-statement, these are only valid within a while loop.
 type Break struct {
 	// Empty
 }
 
-// Continue holds a continue-statement, only valid within a while loop
+// Continue holds a continue-statement, these are only valid within a while loop.
 type Continue struct {
 	// Empty
 }
@@ -207,16 +207,18 @@ type Let struct {
 // Inside a function it breaks out of that function, allowing execution to continue
 // at the point the function was called from.
 type Return struct {
-	// Expression is the return code we'll have
+	// Expression is used for the return value, or exit-code if
+	// the return statement is in the top-level, and not within
+	// the body of a function.
 	Expression Expr
 }
 
 // While is our looping operation which currently allows a block of code to
 // be repeated while a variable contains a non-zero value.
 type While struct {
-	// Expression is the expression we evaluate each time through the loop
+	// Expression is the expression we evaluate each time through the loop.
 	Expression Expr
 
-	// Statements are the things we execute while the condition is true
+	// Statements are the things we execute while the condition is true.
 	Statements []Statement
 }

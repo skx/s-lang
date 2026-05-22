@@ -25,14 +25,15 @@ import (
 //go:embed templates/stdlib/*.tmpl
 var templateFS embed.FS
 
-// Option defines a config-setting option for our constructor.
+// Option defines a config-setting option for use with the compiler-constructor function, New.
 //
 // We use the decorator-pattern to allow flexible updates for the
 // configuration values we allow.
 type Option func(*Compiler) error
 
 // WithConstantFolding allows specifying whether constant folding
-// is applied.
+// is applied after the compiler parses the program, and before it
+// generates the assembly language for it.
 func WithConstantFolding(enable bool) Option {
 	return func(c *Compiler) error {
 		c.constantFolding = enable
@@ -153,8 +154,10 @@ type Compiler struct {
 	typeCheck *check.Types
 }
 
-// New creates a new compiler instance, to compile the
-// given program.
+// New creates a new compiler instance.
+//
+// Using one of our Option methods source can be passed into the compiler,
+// and options set.
 func New(options ...Option) (*Compiler, error) {
 	tmp := &Compiler{
 		stringTable:     NewStringTable(),

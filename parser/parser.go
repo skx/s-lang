@@ -1,5 +1,7 @@
 // Package parser parses input programs, via our lexer, and allows AST nodes
-// to be generated - these can then be walked and turned into assembly.
+// to be generated.
+// Our compiler will walk the generated AST nodes to generate an assembly
+// language representation of the givne input function.
 package parser
 
 import (

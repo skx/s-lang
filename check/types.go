@@ -62,7 +62,7 @@ func (tc *Types) RegisterStdLib() {
 
 }
 
-// Type2String converts the given Type to a string description
+// Type2String converts the given Type to a string description.
 func (tc *Types) Type2String(in Type) string {
 	switch in {
 	case INTEGER:
@@ -91,7 +91,8 @@ func (tc *Types) AddUserFunction(name string, argCount int) {
 }
 
 // Check is called to see if the given argument types and counts
-// are valid for the known standard library function.
+// are valid for the known standard library function, or registered
+// user-function, as added via AddUserFunction.
 func (tc *Types) Check(name string, supplied []Type) error {
 
 	// Is this a check of a known function?
