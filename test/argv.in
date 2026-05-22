@@ -1,0 +1,7 @@
+print("Received ", argc(), " arguments\n");
+
+print("Arg 0 is ", argv(0), "\n" );
+
+# Type fail
+print(argv( "Steve" ), "\n" );
+print(argv( 1.5), "\n" );

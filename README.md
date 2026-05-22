@@ -175,9 +175,10 @@ This performs the same generation as in the `compile` sub-command, but also runs
 
 We embed a small number of functions within the generated programs, our so-called "standard library".  These are functions which seemed to be useful enough to include globally, and each function that accepts arguments has type-checking, both at compile-time and run-time.
 
-* `args()`
-  * Return the supplied program name, and command-line arguments.
-  * See [examples/brainfuck.in](examples/brainfuck.in) where this is used to determine which brainfuck program to execute.
+* `argc()`
+  * Return the count of supplied command-line arguments.
+* `argv(N)`
+  * Return the Nth command-line argument, as a string.
 * `exit(N)`
   * Terminate execution with the given exit-code.
 * `float2int(F)`

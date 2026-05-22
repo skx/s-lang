@@ -43,6 +43,7 @@ func New() *Types {
 // to disable this checking to test our run-time type checking.
 func (tc *Types) RegisterStdLib() {
 
+	tc.known["argv"] = []Type{INTEGER}
 	tc.known["getenv"] = []Type{STRING}
 	tc.known["int2float"] = []Type{INTEGER}
 	tc.known["float2int"] = []Type{FLOAT}

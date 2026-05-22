@@ -1,0 +1,15 @@
+#
+# Get the number of command-line arguments.
+#
+#
+
+.section .text.args,"ax",@progbits
+
+argc:
+        push rbp
+        mov rbp, rsp
+        mov rax, [argument_count]
+        sal rax, 2
+        mov rsp, rbp
+        pop rbp
+        ret

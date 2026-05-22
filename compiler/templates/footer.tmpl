@@ -24,6 +24,10 @@ initial_esp:
         .quad 0
 envp_ptr:
         .quad 0
+argument_count:
+        .quad 0
+argument_base:
+        .quad 0
 
 
 {{ if .StringTable }}
