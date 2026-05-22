@@ -4,7 +4,7 @@ package parser
 
 import (
 	"fmt"
-	"s-lang/lexer"
+	"github.com/skx/s-lang/lexer"
 )
 
 // Parser object

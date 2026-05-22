@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
+	"github.com/skx/s-lang/parser"
 	"os"
-	"s-lang/parser"
 	"strings"
 	"testing"
 )

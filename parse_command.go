@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"os"
-	"s-lang/parser"
 	"strings"
 
+	"github.com/skx/s-lang/parser"
 	"github.com/skx/subcommands"
 )
 

@@ -2,7 +2,7 @@ package parser
 
 import (
 	"fmt"
-	"s-lang/lexer"
+	"github.com/skx/s-lang/lexer"
 )
 
 // Statement represents a single statement.

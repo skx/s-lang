@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/skx/s-lang/lexer"
 	"github.com/skx/subcommands"
-	"s-lang/lexer"
 )
 
 // Structure for our options and state.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"s-lang/compiler"
+	"github.com/skx/s-lang/compiler"
 )
 
 // Structure for our options and state.

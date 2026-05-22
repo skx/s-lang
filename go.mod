@@ -1,4 +1,4 @@
-module s-lang
+module github.com/skx/s-lang
 
 go 1.26.1
 

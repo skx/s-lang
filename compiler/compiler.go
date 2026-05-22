@@ -14,9 +14,9 @@ import (
 	"strings"
 	"text/template"
 
-	"s-lang/check"
-	"s-lang/lexer"
-	"s-lang/parser"
+	"github.com/skx/s-lang/check"
+	"github.com/skx/s-lang/lexer"
+	"github.com/skx/s-lang/parser"
 )
 
 // templateFS holds the templates for our prelude/prologue and standard library
