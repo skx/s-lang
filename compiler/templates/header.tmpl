@@ -11,33 +11,31 @@ _start:
         # Save initial ESP away because any push/pops will screw
         # our maths up and make it hard to reason about things.
         #
-        mov [initial_esp], rsp
+        mov [rip + initial_esp], rsp
 
         #
-        # Calculate the start of the block containing environmental
-        # variables, and save that away in the storage area envp_ptr.
+        # argc
         #
-        push rax
-        push rsi
-        push rbx
-         mov rsi, [initial_esp]
-         mov rax, [rsi]
-         lea rbx, [rsi + rax*8 + 16]
-         mov [envp_ptr], rbx
-        pop rbx
-        pop rsi
-        pop rax
+        mov rsi, rsp
+        mov rax, [rsi]
+        mov [rip + argument_count], rax
 
+        #
+        # argv starts immediately after argc
+        #
+        lea rbx, [rsi + 8]
+        mov [rip + argument_base], rbx
+
+        #
+        # envp starts after:
+        #   argc
+        #   argv pointers
+        #   terminating NULL
+        #
+        lea rcx, [rbx + rax*8 + 8]
+        mov [envp_ptr], rcx
 
         #
         # Setup our initial heap allocator
         #
         call init_heap
-
-
-        #
-        # Allocate a string to copy command line arguments into
-        # and then do that.  The result will be "command_line_arguments"
-        # contains a pointer to a copy of them.
-        #
-        call copy_arguments

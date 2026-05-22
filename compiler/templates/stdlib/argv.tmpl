@@ -1,0 +1,87 @@
+#
+# Get access to the Nth command-line argument.
+#
+
+.section .text.argv,"ax",@progbits
+
+argv:
+        push rbp
+        mov rbp, rsp
+
+        mov rax, [rbp+16]    # tagged integer index
+
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        jne argv_type_fail
+
+        sar rax, 2           # untag index
+
+        mov rdi, [argument_base]
+        mov rax, [rdi + rax * 8]   # rax = char *
+        push rax                   # save original pointer
+
+        #
+        # strlen
+        #
+        xor rcx, rcx
+
+.argv_next_char:
+        cmp byte ptr [rax + rcx], 0
+        je .argv_done
+
+        inc rcx
+        jmp .argv_next_char
+
+.argv_done:
+
+        inc rcx              # include NUL
+
+        #
+        # malloc expects tagged int
+        #
+        mov rax, rcx
+        sal rax, 2
+
+        push rax
+        call malloc
+        add rsp, 8
+
+        and rax, -4          # untag malloc result
+        mov rdi, rax         # destination
+        pop rsi              # source string
+        push rax
+
+.argv_copy_loop:
+        mov bl, [rsi]
+        mov [rdi], bl
+
+        inc rsi
+        inc rdi
+
+        test bl, bl
+        jne .argv_copy_loop
+
+        #
+        # return tagged pointer
+        #
+        pop rax
+#        mov rax, rdi
+        or rax, 1
+.argv_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+
+argv_type_fail:
+        mov rax, offset argv_type_fail_msg
+        or rax, 1
+        jmp .argv_cleanup
+
+.section .data.argv,"aw",@progbits
+
+.align 4
+argv_type_fail_msg:
+        .ascii "argv: expected INT"
+        .byte 00
