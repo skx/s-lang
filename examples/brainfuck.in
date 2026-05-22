@@ -1,3 +1,16 @@
+#
+# brainfuck interpreter, launch with the name of the program to execute.
+#
+# For example:
+#
+#   ./brainfuck cat
+#   ./brainfuck hello
+#   ./brainfuck mandelbrot
+#
+# Since we cannot read files yet these programs are inline.
+#
+
+
 let cat = ",[.,]"
 let hello = ">++++++++[<+++++++++>-]<.>++++[<+++++++>-]<+.+++++++..+++.>>++++++[<+++++++>-]<++.------------.>++++++[<+++++++++>-]<+.<.+++.------.--------.>>>++++[<++++++++>-]<+."
 let mandel = "+++++++++++++[->++>>>+++++>++>+<<<<<<]>>>>>++++++>--->>>>>>>>>>+++++++++++++++[[
