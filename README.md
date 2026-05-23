@@ -201,6 +201,8 @@ We embed a small number of functions within the generated programs, our so-calle
   * Print each argument in turn.
 * `putc(N)`
   * Print the ASCII character corresponding to the given integer to STDOUT, i.e `putc(42);` will print `*`.
+* `rand(N)`
+  * Return a random number between 0-(N-1).
 * `readfile(STR)`
   * Return the contents of the given file.
 * `sleep(N|F)`

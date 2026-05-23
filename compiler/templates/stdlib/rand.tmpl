@@ -1,0 +1,55 @@
+#
+# Return a random number, capped by the given value.
+#
+
+.section .text.rand,"ax",@progbits
+
+rand:
+        push rbp
+        mov rbp, rsp
+
+        mov rax, [rbp+16]    # tagged integer index
+
+        mov rcx, rax         # type check
+        and rcx, 3
+        cmp rcx, 0
+        jne rand_type_fail
+
+        sar rax, 2           # untag number
+        push rax             # save it
+
+        mov rax, 318                 # syscall: getrandom
+        lea rdi, [rip + rand_value]  # random value location
+        mov rsi, 4                   # number of bytes
+        xor rdx, rdx                 # flags = 0
+        syscall
+
+        pop rcx              # limit the value
+        mov eax, [rip + rand_value]
+        xor edx, edx
+        div ecx
+
+        mov rax, rdx
+        sal rax, 2
+
+.rand_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+
+rand_type_fail:
+        mov rax, offset rand_type_fail_msg
+        or rax, 1
+        jmp .rand_cleanup
+
+.section .data.argv,"aw",@progbits
+
+.align 8
+rand_value:
+   .quad 0
+
+.align 8
+rand_type_fail_msg:
+        .ascii "rand: expected INT"
+        .byte 00
