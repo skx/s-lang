@@ -1,0 +1,93 @@
+#
+# Delay for a given duration.
+#
+# We accept floats, or ints.  Internally we convert an integer
+# to a float.
+#
+
+.section .text.sleep,"ax",@progbits
+
+sleep:
+        push rbp
+        mov rbp, rsp
+        mov rax, [rbp+16]    # get the value
+
+        mov rcx, rax  # get the type
+        and rcx, 3
+
+        cmp rcx, 0
+        je sleep_integer
+
+        cmp rcx, 2
+        je sleep_float
+
+        # Fallthrough means this isn't necessary
+        # cmp rcx, 1
+        #je sleep_type_fail
+
+        # Fallthrough means this isn't necessary
+        # cmp rcx, 3
+        # je sleep_type_fail
+
+sleep_type_fail:
+        mov rax, offset sleep_type_fail_msg
+        or rax, 1
+        jmp sleep_cleanup_exit
+
+
+#
+# sleep integer - convert the value to float,
+# then jump into the float routine.
+#
+sleep_integer:
+        sar rax, 2           # remove type bits
+        cvtsi2sd xmm0, rax   # convert to float
+        jmp sleep_float_raw  # now jump to the float-routine
+
+#
+# sleep float - convert into seconds and second-parts
+# then sleep.
+#
+sleep_float:
+        and rax, -4       # remove type bits
+        movsd xmm0, [rax] # load the value
+
+sleep_float_raw:
+
+        # Extract integer seconds
+        cvttsd2si rax, xmm0
+        mov [ts], rax       # tv_sec
+
+        # fractional part
+        cvtsi2sd xmm1, rax
+        subsd xmm0, xmm1
+
+        # convert fraction to nanoseconds
+        mov rdx, 1000000000
+        cvtsi2sd xmm1, rdx
+        mulsd xmm0, xmm1
+
+        cvttsd2si rax, xmm0
+        mov [ts + 8], rax   # tv_nsec
+
+        mov eax, 35         # SYS_nanosleep
+        lea rdi, [rip + ts]
+        xor esi, esi
+        syscall
+sleep_cleanup:
+        xor rax, rax   # int.  zero.
+sleep_cleanup_exit:
+        pop rbp
+        ret
+
+
+
+.section .bss.sleep, "aw",@nobits
+ts: .skip 16              # timespec: tv_sec, tv_nsec
+
+.section .data.sleep,"aw",@progbits
+
+.align 8
+sleep_type_fail_msg:
+        .ascii "sleep: expected INTEGER/FLOAT"
+        .byte 00
