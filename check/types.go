@@ -121,20 +121,20 @@ func (tc *Types) Check(name string, supplied []Type) error {
 		switch s {
 
 		case INTEGER:
-			if got != INTEGER {
+			if got != INTEGER && got != UNKNOWN {
 				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
 			}
 		case FLOAT:
-			if got != INTEGER {
+			if got != INTEGER && got != UNKNOWN {
 				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
 			}
 		case NUMBER:
-			if got != INTEGER && got != FLOAT {
+			if got != INTEGER && got != FLOAT && got != UNKNOWN {
 				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
 			}
 
 		case STRING:
-			if got != STRING {
+			if got != STRING && got != UNKNOWN {
 				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
 			}
 		case UNKNOWN:
