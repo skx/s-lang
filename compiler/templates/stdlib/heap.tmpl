@@ -14,21 +14,6 @@
 .section .text.heap,"ax",@progbits
 
 init_heap:
-
-.ifdef TRACE_ALLOCATIONS
-        push rax
-        push rbx
-        push rcx
-        push rbp
-          mov rax, offset init_heap_msg
-          or rax, 1   # tagged as a string
-          call print_string
-        pop rbp
-        pop rcx
-        pop rbx
-        pop rax
-.endif
-
         mov rax, 12
         xor rdi, rdi
         syscall
@@ -40,19 +25,6 @@ init_heap:
 .section .text.alloc,"ax",@progbits
 
 alloc8:
-.ifdef TRACE_ALLOCATIONS
-        push rax
-        push rbx
-        push rcx
-        push rbp
-          mov rax, offset alloc8_msg
-          or rax, 1   # tagged as a string
-          call print_string
-        pop rbp
-        pop rcx
-        pop rbx
-        pop rax
-.endif
         push rbx
         mov rax, [rip + heap_ptr]   # rax = old ptr (allocation start)
 
@@ -112,8 +84,8 @@ malloc:
     jmp .malloc_done
 
 .malloc_fail:
-        mov rax, offset malloc_fail_msg
-        call print_string_raw
+    mov rax, offset malloc_fail_msg
+    call print_string_raw
     xor rax, rax
 
 .malloc_done:
@@ -125,21 +97,9 @@ malloc:
 
 .section .data.heap,"aw",@progbits
 
+.align 8
 heap_ptr:
         .quad 0
-
-.ifdef TRACE_ALLOCATIONS
-
-.align 8
-init_heap_msg:
-        .ascii "init heap\n"
-        .byte 00
-
-.align 8
-alloc8_msg:
-        .ascii "allocated memory\n"
-        .byte 00
-.endif
 
 .align 8
 malloc_fail_msg:
