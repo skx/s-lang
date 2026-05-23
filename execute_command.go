@@ -11,11 +11,21 @@ import (
 type executeCommand struct {
 	// The binary to generate, and later run.
 	output string
+
+	// stdlibCheck specifies whether we should do
+	// compile-time type checking of the standard
+	// library calls.
+	stdlibCheck bool
+
+	// verbose will show sections which were removed
+	verbose bool
 }
 
 // Arguments adds per-command args to the object.
 func (e *executeCommand) Arguments(f *flag.FlagSet) {
 	f.StringVar(&e.output, "output", "a.out", "Where to write the generated binary")
+	f.BoolVar(&e.verbose, "verbose", false, "Show more detail")
+	f.BoolVar(&e.stdlibCheck, "check-stdlib", true, "Should we run compile-time type checking on the standard library.")
 }
 
 // Info returns the name of this subcommand.
@@ -36,7 +46,10 @@ Example:
 func (e *executeCommand) processFile(path string) error {
 
 	// Use our generate Command as a helper
-	g := &compileCommand{output: e.output}
+	g := &compileCommand{
+		output:      e.output,
+		verbose:     e.verbose,
+		stdlibCheck: e.stdlibCheck}
 	err := g.processFile(path)
 	if err != nil {
 		return err

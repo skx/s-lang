@@ -16,6 +16,7 @@ const (
 	_ = iota
 	INTEGER
 	FLOAT
+	NUMBER
 	STRING
 	UNKNOWN
 )
@@ -44,11 +45,12 @@ func New() *Types {
 func (tc *Types) RegisterStdLib() {
 
 	tc.known["argv"] = []Type{INTEGER}
+	tc.known["float2int"] = []Type{FLOAT}
 	tc.known["getenv"] = []Type{STRING}
 	tc.known["int2float"] = []Type{INTEGER}
-	tc.known["float2int"] = []Type{FLOAT}
 	tc.known["malloc"] = []Type{INTEGER}
 	tc.known["putc"] = []Type{INTEGER}
+	tc.known["sleep"] = []Type{NUMBER}
 	tc.known["str2float"] = []Type{STRING}
 	tc.known["str2int"] = []Type{STRING}
 	tc.known["strcmp"] = []Type{STRING, STRING}
@@ -73,6 +75,8 @@ func (tc *Types) Type2String(in Type) string {
 		return "string"
 	case UNKNOWN:
 		return "unknown"
+	case NUMBER:
+		return "number"
 	default:
 		return "CANT HAPPEN"
 	}
@@ -107,12 +111,36 @@ func (tc *Types) Check(name string, supplied []Type) error {
 			name, len(known), len(supplied))
 	}
 
-	// for each supplied type
-	for i, s := range supplied {
+	// for each expected type see if we have a match
+	for i, s := range known {
 
-		// if the types differ
-		if s != known[i] && !(known[i] == UNKNOWN || supplied[i] == UNKNOWN) {
-			return fmt.Errorf("type mismatch for %s: %s != %s", name, tc.Type2String(known[i]), tc.Type2String(supplied[i]))
+		// What we received
+		got := supplied[i]
+
+		switch s {
+
+		case INTEGER:
+			if got != INTEGER {
+				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
+			}
+		case FLOAT:
+			if got != INTEGER {
+				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
+			}
+		case NUMBER:
+			if got != INTEGER && got != FLOAT {
+				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
+			}
+
+		case STRING:
+			if got != STRING {
+				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
+			}
+		case UNKNOWN:
+			// This is for user-functions, and is okay.
+		default:
+			return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
+
 		}
 	}
 
