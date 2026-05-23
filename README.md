@@ -44,9 +44,14 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
     * A simple "cat", which copies STDIN to STDOUT.
     * Them mandelbrot generation program (takes 8 minutes to complete)!
   * If executed with the path to a brainfuck program it will read and execute that.
-* [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20.
-* [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
-* [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
+* [examples/life.in](examples/life.in)
+  * Conway's Game of Life.
+  * Randomly populate 20% of the arena, and evolve until bored!
+* Math examples:
+  * [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20.
+  * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
+  * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
+  * [examples/primes.in](examples/primes.in) - Calculate first 100 prime numbers.
 
 Syntax is covered pretty well in our "misc example" file:
 

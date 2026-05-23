@@ -22,6 +22,9 @@ If you'd like to see the generated assembly for each example as well as produce 
   * The standard test.
 * [functions.in](functions.in)
   * Demonstrate user-defined functions, and inline-assembly.
+* [life.in](life.in)
+  * Conway's Game of Life.
+  * Randomly populate 20% of the arena, and evolve until bored!
 * [primes.in](primes.in)
   * Calculate the first 100 prime numbers.
 * [string.in](string.in)
