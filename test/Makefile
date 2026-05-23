@@ -27,7 +27,7 @@ clean:
 %: %.in ../s-lang
 	@echo "$<"
 	@echo " compiling $< to $@"
-	@../s-lang compile -check-stdlib=false -tiny=false -output $@ $<
+	@../s-lang compile -check-stdlib=false -output $@ $<
 	@strip --strip-all $@
 	@echo " executing $@ > $@.out"
 	@./$@ > $@.out 2>&1 || true
