@@ -1,0 +1,12 @@
+let a = rand(100);
+while( a < 10 ) {
+   let a = rand(100);
+}
+print("got a random result of less than ten!\n");
+
+# Type fail
+print( rand( 1.5 ) );
+newline();
+
+print( rand( "steve" ) );
+newline();
