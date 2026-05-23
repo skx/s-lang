@@ -51,6 +51,7 @@ func (tc *Types) RegisterStdLib() {
 	tc.known["malloc"] = []Type{INTEGER}
 	tc.known["putc"] = []Type{INTEGER}
 	tc.known["sleep"] = []Type{NUMBER}
+	tc.known["sqrt"] = []Type{NUMBER}
 	tc.known["str2float"] = []Type{STRING}
 	tc.known["str2int"] = []Type{STRING}
 	tc.known["strcmp"] = []Type{STRING, STRING}

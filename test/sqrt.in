@@ -1,0 +1,8 @@
+print( sqrt( 9 ) );
+newline();
+
+print( sqrt( 2 ) );
+newline();
+
+print( sqrt( "steve" ) );
+newline();

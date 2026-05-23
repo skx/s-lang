@@ -1,0 +1,77 @@
+#
+# Calculate and return the square root of the given value.
+#
+# We accept floats, or ints, but we always return a floating
+# point number.
+#
+
+.section .text.sqrt,"ax",@progbits
+
+sqrt:
+        push rbp
+        mov rbp, rsp
+        mov rax, [rbp+16]    # get the value
+
+        mov rcx, rax  # get the type
+        and rcx, 3
+
+        cmp rcx, 0
+        je sqrt_integer
+
+        cmp rcx, 2
+        je sqrt_float
+
+        # Fallthrough means this isn't necessary
+        # cmp rcx, 1
+        #je sqrt_type_fail
+
+        # Fallthrough means this isn't necessary
+        # cmp rcx, 3
+        # je sqrt_type_fail
+
+sqrt_type_fail:
+        mov rax, offset sqrt_type_fail_msg
+        or rax, 1
+        jmp sqrt_cleanup_exit
+
+
+#
+# integer - convert the value to float,
+# then jump into the float routine.
+#
+sqrt_integer:
+        sar rax, 2           # remove type bits
+        cvtsi2sd xmm0, rax   # convert to float
+        jmp sqrt_float_raw  # now jump to the float-routine
+
+#
+# float - convert into a floating point then sqrt.
+#
+sqrt_float:
+        and rax, -4       # remove type bits
+        movsd xmm0, [rax] # load the value
+
+sqrt_float_raw:
+        sqrtsd xmm0, xmm0   # double-precision float
+
+        # allocate 8-byte boxed float
+        call alloc8
+
+        # store payload
+        movsd [rax], xmm0
+
+        # tag pointer as float (10)
+        or rax, 2
+
+sqrt_cleanup_exit:
+        pop rbp
+        ret
+
+
+
+.section .data.sqrt,"aw",@progbits
+
+.align 8
+sqrt_type_fail_msg:
+        .ascii "sqrt: expected INTEGER/FLOAT"
+        .byte 00
