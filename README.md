@@ -205,6 +205,9 @@ We embed a small number of functions within the generated programs, our so-calle
   * Return the contents of the given file.
 * `sleep(N|F)`
   * Sleep for the given duration, integer or float.
+* `sqrt(N|F)`
+  * Calculate the square root of the given integer/float.
+  * Always returns a floating-point result.
 * `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
 * `strlen(STR)`
