@@ -22,6 +22,8 @@ If you'd like to see the generated assembly for each example as well as produce 
   * The standard test.
 * [functions.in](functions.in)
   * Demonstrate user-defined functions, and inline-assembly.
+* [primes.in](primes.in)
+  * Calculate the first 100 prime numbers.
 * [string.in](string.in)
   * Demonstrate iterating over strings, setting their contents, etc.
   * Also shows converting a string to an int.
