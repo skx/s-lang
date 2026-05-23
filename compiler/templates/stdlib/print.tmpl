@@ -348,7 +348,7 @@ print_reserved:
 
 .section .data.print,"aw",@progbits
 
-.align 4
+.align 8
 reserved_stub_msg:
         .ascii "placeholder for RESERVED print\n"
         .byte 00
@@ -359,7 +359,8 @@ reserved_stub_msg:
 print_rax_buffer:
         .skip 32
 
-million:    .double 1000000.0
+million:
+  .double 1000000.0
 
 .section .bss.print,"aw",@nobits
         .lcomm buffer, 128
