@@ -203,6 +203,8 @@ We embed a small number of functions within the generated programs, our so-calle
   * Print the ASCII character corresponding to the given integer to STDOUT, i.e `putc(42);` will print `*`.
 * `readfile(STR)`
   * Return the contents of the given file.
+* `sleep(N|F)`
+  * Sleep for the given duration, integer or float.
 * `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
 * `strlen(STR)`
