@@ -25,3 +25,4 @@ endif
 	$(GEN_ASM_CMD)
 	@# actually compile
 	../s-lang compile -output $@ $<
+	strip --strip-all $@
