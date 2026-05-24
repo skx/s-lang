@@ -80,7 +80,7 @@ func (c *compileCommand) processFile(path string) error {
 	defer os.Remove(f.Name() + ".o")
 
 	// link command - might be more verbose
-	ldArgs := []string{"ld", "--gc-sections", "-s", "-o", c.output, f.Name() + ".o"}
+	ldArgs := []string{"ld", "--gc-sections", "-s", "-no-pie", "-z", "noseparate-code", "-o", c.output, f.Name() + ".o"}
 	if c.verbose {
 		ldArgs = append(ldArgs, "--print-gc-sections")
 	}

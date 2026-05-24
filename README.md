@@ -2,7 +2,7 @@
 
 This repository contains a compiler for a minimal programming language, targeting linux/amd64 systems.
 
-The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 8k.
+The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 1k.
 
 * Written in Golang for portability, although the generated code is obviously Linux/AMD64-specific.
 * We have a real lexer, and parser, and internally generate an AST which is then walked to generate the assembly language representation of the program.
@@ -360,6 +360,28 @@ You can see how this is handled in [our standard-library functions](compiler/tem
         mov rax, 1   # one argument is being passed
         call print   # call the stdlib function
      }
+
+
+
+## Optimizing Generated Binary Size
+
+When the `compile` sub-command is executed we run generate `NAME.s` from `NAME.in`, and then:
+
+      as -msyntax=intel -mnaked-reg NAME.s -o NAME.o
+      ld --gc-sections -s -no-pie -z noseparate-code -o NAME NAME.o
+
+The linker command here shrinks our binaries significantly, if you don't want/need that size-saving then a more typical usage will suffice:
+
+      ld -o NAME NAME.o
+
+The difference in the two approaches can be seen by our brainfuck example:
+
+* Just using `ld -o brainfuck brainfuck.o`:
+  * `-rwxr-xr-x 1 skx skx 38648 May 24 13:27 brainfuck`
+* With our longer `ld` usage:
+  * `-rwxr-xr-x 1 skx skx 18208 May 24 13:28 brainfuck`
+
+We went from 25k to 18k, which is a good saving.
 
 
 
