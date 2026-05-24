@@ -12,7 +12,8 @@ If you'd like to see the generated assembly for each example as well as produce 
   * Reads the command-line arguments to decide what to do.
     * Either run one of the embedded examples.
     * Or executes the program in the path you specify.
-* [cat.in](cat.in) - Simple `cat` which echos input.
+* [cat.in](cat.in)
+  * A simple `cat` program which echos input.
 * [example.in](example.in)
   * Misc. examples.
 * [factorial.in](factorial.in)
