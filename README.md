@@ -341,6 +341,8 @@ Finally here's how to do type-checking of the parameter in RAX:
         je print_reserved
         ret
 
+You can see some tips on debugging with `gdb` in [DEBUGGING.md](DEBUGGING.md).
+
 
 
 ## ABI
