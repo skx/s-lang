@@ -1,6 +1,10 @@
 #
 # Conway's game of life.
 #
+# Runs forever, or until Ctrl-C is pressed.   Thanks to the
+# ctrl_c() function we restore the cursor and clear the screen
+# before terminating cleanly.
+#
 
 
 let WIDTH  = 80;
@@ -150,4 +154,13 @@ function cls() {
 
     putc(27);
     print("[H");
+}
+
+#
+# This is called if Ctrl-C is detected.
+#
+function ctrl_c() {
+   cls();
+   show_cursor();
+   print("\nCtrl-C pressed.\n");
 }

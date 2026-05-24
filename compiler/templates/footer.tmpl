@@ -3,7 +3,7 @@
         # terminating RETURN statement.
         #
         xor rax, rax
-        jmp exit_with_rax
+        jmp exit
 
 
 #####
@@ -14,7 +14,7 @@
 
 
 #####
-#####  Copied version of command-line arguments
+#####  Stored pointers to command line arguments, environment, etc.
 #####
 
 .section .bss
@@ -27,6 +27,64 @@ argument_count:
         .quad 0
 argument_base:
         .quad 0
+
+
+
+#####
+#####  Setup and handler for a CTRL-C/signal detection.
+#####
+
+#
+.section .text
+
+# Function called on signal
+sigint_handler:
+
+       # call the optional "ctrl_c" user_function, if present.
+.ifdef ctrl_c
+       call ctrl_c
+.endif
+
+       # call the optional "at_exit" user_function, if present.
+.ifdef at_exit
+       call at_exit
+.endif
+
+       mov rax, 60  # SYS_exit
+       xor rdi, rdi
+       syscall
+
+sigint_restorer:
+       mov rax, 15  # SYS_rt_sigreturn
+       syscall
+
+#
+# Linux x86-64 sigaction flags
+#
+.equ SA_RESTORER, 0x04000000
+
+#
+# struct sigaction
+#
+# struct sigaction {
+#     void (*sa_handler)(int);
+#     unsigned long sa_flags;
+#     void (*sa_restorer)(void);
+#     sigset_t sa_mask;
+# };
+#
+.section .data
+
+.align 8
+sigaction_struct:
+    .quad sigint_handler     # sa_handler
+    .quad SA_RESTORER        # sa_flags
+    .quad sigint_restorer    # sa_restorer
+
+    # sigset_t (128 bits / 16 bytes minimum)
+    .quad 0
+    .quad 0
+
 
 
 {{ if .StringTable }}
@@ -76,4 +134,3 @@ argument_base:
 {{.}}
 {{end}}
 {{end}}
-

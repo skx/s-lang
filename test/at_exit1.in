@@ -1,0 +1,3 @@
+function at_exit() {
+   print("at_exit called\n");
+}

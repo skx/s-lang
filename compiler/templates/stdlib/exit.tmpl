@@ -18,10 +18,23 @@
 .section .text.exit,"ax",@progbits
 
 exit:
+        # save the value, in case we have an at_exit
+        # function which will trash it.
+        push rax
+
+.ifdef at_exit
+        #
+        # Call the at_exit handler if we have one.
+        #
+        call at_exit
+.endif
+        #
+        # restore the saved exit-value.
+        #
+        pop rax
         sar rax, 2
 exit_with_rax:
         mov rdi, rax
         mov rax, 60     # sys_exit
         syscall
         ret
-
