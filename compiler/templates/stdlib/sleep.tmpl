@@ -83,6 +83,7 @@ sleep_cleanup_exit:
 
 
 .section .bss.sleep, "aw",@nobits
+.align 8
 ts: .skip 16              # timespec: tv_sec, tv_nsec
 
 .section .data.sleep,"aw",@progbits
