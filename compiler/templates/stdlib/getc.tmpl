@@ -8,17 +8,20 @@
 getc:
         push rbp
         mov rbp, rsp
+        sub rsp, 8           # make space for getc buffer
+                             # [rbp-8] = buffer
 
-        mov     rax, 0                   # SYS_read
-        mov     rdi, 0                   # STDIN_FILENO
-        mov     rsi, offset getc_buffer  # buffer
-        mov     rdx, 1                   # read exactly 1 byte
+
+        mov     rax, 0      # SYS_read
+        mov     rdi, 0      # STDIN_FILENO
+        lea rsi, [rbp-8]
+        mov     rdx, 1      # read exactly 1 byte
         syscall
 
         cmp rax, 1  # success?
         jne getc_failed
 
-        mov al, [getc_buffer]
+        mov al, [rsp]
         movsx rax, al
         sal rax, 2
         jmp getc_cleanup
@@ -31,10 +34,6 @@ getc_failed:
         sal rax, 2
 
 getc_cleanup:
+        mov rsp, rbp
         pop rbp
         ret
-
-.section .bss.getc,"aw",@nobits
-
-getc_buffer: .byte 0x00
-

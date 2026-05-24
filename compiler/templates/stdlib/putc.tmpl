@@ -12,6 +12,8 @@
 putc:
         push rbp
         mov rbp, rsp
+        sub rsp, 8           # make space for our putc buffer
+                             # [rbp-8] = buffer
 
         mov rax, [rbp+16]    # get the integer
 
@@ -22,10 +24,11 @@ putc:
 
         sar rax, 2           # remove type bits
 
-        mov byte ptr [printc_buffer], al
+        mov byte ptr [rbp - 8], al  # store in the space we set for the stack
         mov     eax, 1
         mov     edi, 1
-        mov     rsi, offset printc_buffer
+        mov     rsi, rbp    # rsi = rbp-8
+        sub     rsi ,8      # i.e. the stack location we put the character
         mov     edx, 1
         syscall
 
@@ -37,8 +40,6 @@ putc:
         pop rbp
         ret
 
-
-
 putc_type_fail:
         mov rax, offset putc_type_fail_msg
         or rax, 1
@@ -47,10 +48,7 @@ putc_type_fail:
 
 .section .data.putc,"aw",@progbits
 
-printc_buffer: .byte 0x00
-
 .align 8
 putc_type_fail_msg:
         .ascii "putc: expected INTEGER"
         .byte 00
-
