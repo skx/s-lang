@@ -1,3 +1,8 @@
+#
+# Conway's game of life.
+#
+
+
 let WIDTH  = 80;
 let HEIGHT = 24;
 let SIZE   = WIDTH * HEIGHT;
@@ -11,14 +16,11 @@ let next  = malloc(SIZE);
 cls();
 
 newline();
-newline();
 print("game of life - press Ctrl-c to terminate.\n");
 newline();
 sleep(1);
 
 
-#
-#  Populate the world with 100 points.
 #
 #  Set approximately 20% of the pixels, randomly.
 #
@@ -33,15 +35,16 @@ while( n ) {
        let n = n - 1;
 }
 
-# hide the cursor
+#
 hide_cursor();
 
 while( 1 ) {
 
     cls();
 
+    #
     # compute next generation
-
+    #
     let y = 1;
     while( y < HEIGHT - 1 ) {
 
@@ -88,14 +91,21 @@ while( 1 ) {
         let y = y + 1;
     }
 
+
+    #
     # render
+    #
+    # Note that to avoid confusion we don't
+    # draw the borders.  So we skip the top
+    # row, and bottom row, and don't draw
+    # the lefmost or rightmost values
+    #
+    let y = 1;
+    while( y < (HEIGHT - 1) ) {
 
-    let y = 0;
-    while( y < HEIGHT ) {
+        let x = 1;
 
-        let x = 0;
-
-        while( x < WIDTH ) {
+        while( x < (WIDTH - 1) ) {
 
             let idx = x + y * WIDTH;
 
@@ -122,6 +132,7 @@ while( 1 ) {
     sleep( 1/3 );
 }
 
+
 function hide_cursor() {
    putc(27);
    print("[?25l");
@@ -132,7 +143,7 @@ function show_cursor () {
    print("[?25h");
 }
 
-# clear screen
+# clear screen, and move cursor to top-left.
 function cls() {
     putc(27);
     print("[2J");
