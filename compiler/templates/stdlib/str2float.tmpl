@@ -12,10 +12,6 @@
 # Result returned in xmm0.
 #
 
-.section .rodata
-str2float_negate:
-        .quad 0x8000000000000000
-
 .section .text.str2float,"ax",@progbits
 
 str2float:
@@ -147,8 +143,11 @@ str2float_type_fail:
 
 .section .data.str2float,"aw",@progbits
 
+.align 16
+str2float_negate:
+        .quad 0x8000000000000000
+
 .align 8
 str2float_type_fail_msg:
         .ascii "str2float: expected STRING"
         .byte 00
-
