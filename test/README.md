@@ -1,6 +1,8 @@
 # Test
 
-This directory contains a series of smple test programs, which allow compling fixed programs and ensuring that their output matches expectations.
+This directory contains a series of simple test programs, along with their expected output.
+
+Running the tests is a simple matter of compiling each program in turn, executing it to record the output which was generated, and then comparing that with the expected result.
 
 There is a `Makefile` supplied which will run all tests, when invoked via `make`:
 
