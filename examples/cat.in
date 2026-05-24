@@ -10,7 +10,7 @@
 #
 let a = getc();
 
-while(a) {
+while(a > 0) {
    putc(a);
    let a = getc();
 }

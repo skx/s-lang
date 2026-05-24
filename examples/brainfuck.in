@@ -274,6 +274,10 @@ while(index < length) {
    # ,: read from STDIN
    if (c == ',') {
       let x = getc();
+      if ( x < 0 ) {
+         # failed to read from STDIN
+         return( 1 );
+      }
       ram[cellptr] = x;
    }
 
