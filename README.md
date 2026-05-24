@@ -23,6 +23,10 @@ In terms of features:
   * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the assembly-generation.  So you can add "`.section blah .. ..`" without fear of breaking things.
 * Looping is available with the `while` statement, including standard support for `break` and `continue`.
 * Conditional support with `if` with `else` branch too.
+* Support for defining a Ctrl-C handler, or code to run at exit-time.
+  * `ctrl_c` is called, if defined, when SIGINT is received.
+    * We use this in [examples/life.in](examples/life.in) to clear the screen, and restore the cursor.
+  * `at_exit` is called, if defined, when the program terminates.
 
 Anti-features, or limitations:
 

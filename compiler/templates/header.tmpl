@@ -40,3 +40,13 @@ _start:
         #
         call init_heap
 
+        #
+        # Setup a signal handler, so Ctrl-c
+        # routes to a known function.
+        #
+        mov rax, 13          # SYS_rt_sigaction
+        mov rdi, 2           # SIGINT
+        lea rsi, [rip + sigaction_struct]
+        xor rdx, rdx
+        mov r10, 8
+        syscall
