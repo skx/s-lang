@@ -9,13 +9,14 @@ If you'd like to see the generated assembly for each example as well as produce 
 ## Contents
 
 * [brainfuck.in](brainfuck.in) - Brainfuck interpreter.
-  * Runs the classic "Hello World" example program.
-  * Fails to run the mandelbrot example, but I've not looked into why yet.
+  * Reads the command-line arguments to decide what to do.
+    * Either run one of the embedded examples.
+    * Or executes the program in the path you specify.
 * [cat.in](cat.in) - Simple `cat` which echos input.
 * [example.in](example.in)
   * Misc. examples.
 * [factorial.in](factorial.in)
-  * Calculate factories.
+  * Calculate factorials.
 * [fibonacci.in](fibonacci.in)
   * Calculate the fibonacci sequence, recursively.
 * [fizzbuzz.in](fizzbuzz.in)
@@ -29,9 +30,9 @@ If you'd like to see the generated assembly for each example as well as produce 
   * Calculate the first 100 prime numbers.
 * [string.in](string.in)
   * Demonstrate iterating over strings, setting their contents, etc.
-  * Also shows converting a string to an int.
+  * Also shows some conversion and comparison results.
 * [types.in](types.in)
-  * Demonstration of our types
+  * Demonstration of our types.
 * [while.in](while.in)
   * Demonstrate using (nested) while-loops.
 
