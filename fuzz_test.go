@@ -45,6 +45,7 @@ func FuzzProject(f *testing.F) {
 		"function names must be identifiers",    //
 		"argument lengths differ for function",  // unCtion A(A){A()
 		"cannot assign",                         // let 0=0': cannot assign to *parser.IntegerLiteral
+		"only permits a numerical expression",   // if/while
 	}
 
 	//
