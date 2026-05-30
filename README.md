@@ -222,6 +222,8 @@ We embed a small number of functions within the generated programs, our so-calle
 * `sqrt(N|F)`
   * Calculate the square root of the given integer/float.
   * Always returns a floating-point result.
+* `strcat(STR, STR)`
+  * Combine the two strings, and return the new string.
 * `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
 * `strdup(STR)`

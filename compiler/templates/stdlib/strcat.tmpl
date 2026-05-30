@@ -1,0 +1,133 @@
+#
+# Concatenate two strings and return a newly allocated result.
+#
+
+.section .text.strcat,"ax",@progbits
+
+strcat:
+        push rbp
+        mov  rbp, rsp
+
+        #
+        # Type check first argument
+        #
+        mov  rdi, [rbp+16]
+
+        mov  rcx, rdi
+        and  rcx, 3
+        cmp  rcx, 1
+        jne  strcat_type_fail
+
+        #
+        # Type check second argument
+        #
+        mov  rsi, [rbp+24]
+
+        mov  rcx, rsi
+        and  rcx, 3
+        cmp  rcx, 1
+        jne  strcat_type_fail
+
+        #
+        # Remove typing
+        #
+        and  rdi, -4         # first string
+        and  rsi, -4         # second string
+
+        #
+        # Find length of first string -> R8
+        #
+        xor  r8, r8
+.strcat_len1:
+        cmp  byte ptr [rdi+r8], 0
+        je   .strcat_len1_done
+        inc  r8
+        jmp  .strcat_len1
+
+.strcat_len1_done:
+
+        #
+        # Find length of second string -> R9
+        #
+        xor  r9, r9
+.strcat_len2:
+        cmp  byte ptr [rsi+r9], 0
+        je   .strcat_len2_done
+        inc  r9
+        jmp  .strcat_len2
+
+.strcat_len2_done:
+
+        #
+        # Allocate len1 + len2 + 1 bytes
+        #
+        mov  rax, r8
+        add  rax, r9
+        inc  rax              # terminator
+
+        push rdi              # preserve source pointers
+        push rsi
+
+        sal  rax, 2           # encode integer size
+        call malloc
+        and  rax, -4          # untag allocation
+
+        pop  rsi
+        pop  rdi
+
+        #
+        # Save result pointer
+        #
+        push rax
+
+        #
+        # Copy first string (without terminator)
+        #
+.strcat_copy_first:
+        mov  dl, [rdi]
+        test dl, dl
+        je   .strcat_copy_second_start
+
+        mov  [rax], dl
+        inc  rdi
+        inc  rax
+        jmp  .strcat_copy_first
+
+        #
+        # Copy second string (including terminator)
+        #
+.strcat_copy_second_start:
+
+.strcat_copy_second:
+        mov  dl, [rsi]
+        mov  [rax], dl
+
+        inc  rsi
+        inc  rax
+
+        test dl, dl
+        jne  .strcat_copy_second
+
+        #
+        # Return tagged pointer
+        #
+        pop  rax
+        or   rax, 1
+
+.strcat_cleanup:
+        mov  rsp, rbp
+        pop  rbp
+        ret
+
+strcat_type_fail:
+        mov  rax, offset strcat_type_fail_msg
+        or   rax, 1
+        jmp  .strcat_cleanup
+
+
+.section .data.strcat,"aw",@progbits
+
+.align 8
+strcat_type_fail_msg:
+        .ascii "strcat: expected STRING"
+        .byte 0

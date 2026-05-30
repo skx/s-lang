@@ -1,0 +1,13 @@
+let a =  strcat( "Hello, ", "world!\n");
+print(a);
+
+
+
+# Type failures
+print( strcat( 3,     "Test" ), "\n" );
+print( strcat( 1 / 3, "Test" ), "\n" );
+
+print( strcat( "Test", 1/3 ), "\n" );
+print( strcat( "Test", 3   ), "\n" );
+
+print( strcat( 3 , 3  ), "\n" );
