@@ -45,13 +45,8 @@ sigint_handler:
 .ifdef sigint
        call sigint
 .else
-
-.ifdef ctrl_c
-       call ctrl_c
-.else
        mov rax, offset SIGINT_CAUGHT
        call print_string_raw
-.endif
 .endif
 
        # call the optional "at_exit" user_function, if present.

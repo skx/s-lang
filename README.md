@@ -24,8 +24,10 @@ In terms of features:
 * Looping is available with the `while` statement, including standard support for `break` and `continue`.
 * Conditional support with `if` with `else` branch too.
 * Support for defining a Ctrl-C handler, or code to run at exit-time.
-  * `ctrl_c` is called, if defined, when SIGINT is received.
+  * `sigint()` is called, if defined, when SIGINT is received.
     * We use this in [examples/life.in](examples/life.in) to clear the screen, and restore the cursor.
+  * `sigfpe()` is called, if defined, when SIGFPE is received.
+    * This is the floating-point exception generated upon division by zero.
   * `at_exit` is called, if defined, when the program terminates.
 
 Anti-features, or limitations:
