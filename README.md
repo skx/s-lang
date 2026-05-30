@@ -42,7 +42,7 @@ That said the code is clean, and hopefully readable, and we've got good test-cas
 
 ## Example Programs
 
-See [examples/](examples/) for "real" programs.  A couple of highlights:
+See [examples/](examples/) for _real_ programs.  A couple of highlights:
 
 * [examples/brainfuck.in](examples/brainfuck.in) - Brainfuck interpreter.
   * Runs several obvious programs:
@@ -58,6 +58,7 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
   * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
   * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
   * [examples/primes.in](examples/primes.in) - Calculate first 100 prime numbers.
+  * [examples/num2hex.in](examples/num2hex.in) - Convert a decimal number to a hex string.
 
 Syntax is covered pretty well in our "misc example" file:
 
@@ -223,6 +224,8 @@ We embed a small number of functions within the generated programs, our so-calle
   * Always returns a floating-point result.
 * `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
+* `strdup(STR)`
+  * Allocate a copy of the given string, and return it.
 * `strlen(STR)`
   * Return the length of the given string.
 * `str2int(STR)`
