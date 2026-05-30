@@ -115,6 +115,8 @@ The following is a tour of our language:
 
 Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
 
+There is an emacs lisp mode, [s-lang.el](s-lang.el) providing syntax highlighting for our language, although there are no other features beyond that.
+
 
 
 ## Usage
