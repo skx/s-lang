@@ -1,0 +1,78 @@
+#
+# Return a copy of the given string.
+#
+
+.section .text.strdup,"ax",@progbits
+
+strdup:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]    # Get the string
+
+        mov rcx, rdi         # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne strdup_type_fail
+
+        and rdi, -4          # Remove typing
+
+        xor rax, rax
+.strdup_next_char:
+        cmp byte ptr [rdi + rax], 0
+        je .strdup_done
+        inc rax
+        jmp .strdup_next_char
+.strdup_done:
+
+        #
+        # RDI points to the string.
+        # RAX has the length.
+        #
+        push rdi
+
+        # Allocate the memory
+        inc rax       # Add space for terminator
+        sal rax, 2    # Add typing
+        call malloc
+        and rax, -4   # untype the result
+
+        pop rdi
+
+        #
+        # Now: RDI points to the source string
+        #      RAX points to the new allocation
+        #
+        # Save the allocation as we'll return it.
+        push rax
+
+        # Implement the strcpy from RDI -> RAX
+.strcat_copy_loop:
+        mov dl, [rdi]
+        mov [rax], dl
+        inc rdi
+        inc rax
+        test dl, dl
+        jne .strcat_copy_loop
+
+        # return the allocated memory address to the caller
+        pop  rax
+        or rax, 1          # Add typing
+
+.strdup_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+strdup_type_fail:
+        mov rax, offset strdup_type_fail_msg
+        or rax, 1
+        jmp .strdup_cleanup
+
+
+.section .data.strdup,"aw",@progbits
+
+.align 8
+strdup_type_fail_msg:
+        .ascii "strdup: expected STRING"
+        .byte 00

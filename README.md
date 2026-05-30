@@ -223,6 +223,8 @@ We embed a small number of functions within the generated programs, our so-calle
   * Always returns a floating-point result.
 * `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
+* `strdup(STR)`
+  * Allocate a copy of the given string, and return it.
 * `strlen(STR)`
   * Return the length of the given string.
 * `str2int(STR)`
