@@ -1,11 +1,6 @@
-inline {
-  TRACE_ALLOCATIONS :
-}
-
 #
 # calculate fibonacci numbers, via recursion.
 #
-
 function fib ( n ) {
    if ( n == 1 ) {
       return( 0 );
