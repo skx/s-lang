@@ -53,6 +53,8 @@ func (tc *Types) RegisterStdLib() {
 	tc.known["rand"] = []Type{INTEGER}
 	tc.known["sleep"] = []Type{NUMBER}
 	tc.known["sqrt"] = []Type{NUMBER}
+	tc.known["strcat"] = []Type{STRING, STRING}
+	tc.known["strdup"] = []Type{STRING}
 	tc.known["str2float"] = []Type{STRING}
 	tc.known["str2int"] = []Type{STRING}
 	tc.known["strcmp"] = []Type{STRING, STRING}
