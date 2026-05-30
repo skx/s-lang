@@ -403,7 +403,13 @@ ok      s-lang/lexer	0.006s
 ok      s-lang/parser	0.003s
 ```
 
-In addition to the golang tests we have some functional test-cases beneath `test/`, there is a trivial driver which executes each of the sample programs, and compares the output produced to known-good results:
+There is also support for the fuzz-testing that golang provides, you can run five minutes of fuzz-testing by executing the following (remove the `-fuzztime=300s` to run _forever_, and remove `-parallel=1` to run more than a single instance at a time):
+
+```
+go test -fuzztime=300s -parallel=1 -fuzz=FuzzProject -v
+```
+
+In addition to the golang tests, and fuzzer, we have some functional test-cases beneath `test/`, there is a trivial driver which executes each of the sample programs, and compares the output produced to known-good results:
 
 ```
 $ cd test && make

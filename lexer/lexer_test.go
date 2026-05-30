@@ -125,7 +125,7 @@ func TestIssue15(t *testing.T) {
 		expectedLiteral string
 	}{
 		{LET, "let"},
-		{IDENT, "b"},
+		{IDENT, "b2_steve3"},
 		{ASSIGN, "="},
 		{INTEGER, "1"},
 		{SEMICOLON, ";"},
@@ -146,7 +146,7 @@ func TestIssue15(t *testing.T) {
 		{EOF, ""},
 	}
 
-	l := NewLexer("LeT b = 1; ( b -b); LET C = 3.1;")
+	l := NewLexer("LeT b2_steve3 = 1; ( b -b); LET C = 3.1;")
 
 	for i, tt := range tests {
 		tok := l.Next()
@@ -251,7 +251,7 @@ func TestComment(t *testing.T) {
 }
 
 func TestPeek(t *testing.T) {
-	lexer := NewLexer(`let a = 3;`)
+	lexer := NewLexer(`let a = 3; let b = 3.3;`)
 
 	first := lexer.Peek()
 	if first.Type != LET {
@@ -371,15 +371,24 @@ func TestCharacterLiterals(t *testing.T) {
 		}
 	}
 
-	// error if unclosed.
-
-	l = NewLexer(`'ss`)
-
+	// error if unclosed due to EOF
+	l = NewLexer(`'s`)
 	tok := l.Next()
 	if tok.Type != ERROR {
 		t.Fatalf("expected error, got %s", tok)
 	}
-	if !strings.Contains(tok.Value.(string), "expected character litera") {
+	if !strings.Contains(tok.Value.(string), "unterminated character literal") {
 		t.Fatalf("got error, but wrong one: %s", tok.Value.(string))
 	}
+
+	// error if unclosed generally
+	l = NewLexer(`'steve`)
+	tok = l.Next()
+	if tok.Type != ERROR {
+		t.Fatalf("expected error, got %s", tok)
+	}
+	if !strings.Contains(tok.Value.(string), "expected close of character literal") {
+		t.Fatalf("got error, but wrong one: %s", tok.Value.(string))
+	}
+
 }

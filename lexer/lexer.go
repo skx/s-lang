@@ -201,10 +201,15 @@ func (l *Lexer) Next() *Token {
 		// Look for the more annoying cases
 		case "'":
 			l.position++
+			if l.position+2 >= len(l.input) {
+				return &Token{Value: "unterminated character literal", Type: ERROR}
+			}
+
 			c := l.input[l.position]
+
 			l.position++
 			if l.peekChar() != "'" {
-				return &Token{Type: ERROR, Value: fmt.Sprintf("expected character literal, got %s", l.peekChar())}
+				return &Token{Type: ERROR, Value: fmt.Sprintf("expected close of character literal, got %s", l.peekChar())}
 			}
 			l.position++
 			return &Token{Value: float64(c), Type: INTEGER}
