@@ -368,7 +368,9 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 		case lexer.FUNCTION:
 			name := p.l.Next()
-
+			if name.Type != lexer.IDENT {
+				return res, fmt.Errorf("function names must be identifiers")
+			}
 			start := p.l.Next()
 			if start.Type != lexer.LPAREN {
 				return res, fmt.Errorf("missing '(' after function name %s", name)
@@ -379,6 +381,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			for {
 				tok := p.l.Next()
+				if tok.Type == lexer.EOF {
+					return res, fmt.Errorf("unexpected EOF in function definition")
+				}
+
 				// )?  Then we're at the end
 				if tok.Type == lexer.RPAREN {
 					break
@@ -523,7 +529,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			// index
 			if p.l.Peek().Type == lexer.LINDEX {
 
-				// consume '('
+				// consume '['
 				p.l.Next()
 
 				index, err := p.parseExpr()
@@ -558,6 +564,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 				for {
 					t := p.l.Peek()
+
+					if t.Type == lexer.EOF {
+						return res, fmt.Errorf("unexpected EOF in function call")
+					}
 
 					if t.Type == lexer.RPAREN {
 						p.l.Next()
