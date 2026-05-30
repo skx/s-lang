@@ -13,6 +13,9 @@ clean:
 	cd test && make clean
 	cd examples && make clean
 
+.PHONY: fuzz
+fuzz:
+	nice -n 19 go test -parallel=1 -fuzz=FuzzProject -v
 
 .PHONY: test
 test:
