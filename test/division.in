@@ -1,0 +1,6 @@
+# Division by zero will trap execution
+let a= 3;
+let b = 3 - 3;
+print( a / b , "\n" );
+
+print("Not reached..\n");

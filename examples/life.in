@@ -2,7 +2,7 @@
 # Conway's game of life.
 #
 # Runs forever, or until Ctrl-C is pressed.   Thanks to the
-# ctrl_c() function we restore the cursor and clear the screen
+# sigint() function we restore the cursor and clear the screen
 # before terminating cleanly.
 #
 
@@ -159,7 +159,7 @@ function cls() {
 #
 # This is called if Ctrl-C is detected.
 #
-function ctrl_c() {
+function sigint() {
    cls();
    show_cursor();
    print("\nCtrl-C pressed.\n");
