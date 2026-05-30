@@ -46,7 +46,29 @@ _start:
         #
         mov rax, 13          # SYS_rt_sigaction
         mov rdi, 2           # SIGINT
-        lea rsi, [rip + sigaction_struct]
+        lea rsi, [rip + sigaction_struct_sigint]
         xor rdx, rdx
         mov r10, 8
         syscall
+        test rax, rax
+        js sigint_fail
+
+        # install SIGFPE handler
+        mov rax, 13
+        mov rdi, 8          # SIGFPE
+        lea rsi, [rip + sigaction_struct_sigfpe]
+        xor rdx, rdx
+        mov r10, 8
+        syscall
+        js sigint_fail
+
+        #
+        # Clear the divide by zero mask.
+        #
+        # This ensures that a floating-point division by
+        # zero will fire SIGFPE, rather than producing
+        # something like +Inf
+        #
+        stmxcsr [mxcsr]
+        and dword ptr [mxcsr], ~(1 << 9)
+        ldmxcsr [mxcsr]
