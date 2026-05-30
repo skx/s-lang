@@ -1,0 +1,79 @@
+#
+# Given a number convert to a hex-string
+#
+function num2hex(n) {
+
+    let digits = "0123456789ABCDEF";
+    let buf    = "000000000000";    # Working buffer
+    let retbuf = "************";    # Return buffer
+    let i      = 0;
+
+    #
+    # Ensure retbuf is full of NULL bytes
+    #
+    let b = strlen(retbuf);
+    while( b ) {
+        retbuf[b]= 0;
+        let b = b - 1;
+    }
+
+    #
+    # Special-case zero
+    #
+    if ( n == 0 ) {
+        return ( strdup("0x0" ) );
+    }
+
+    #
+    # Build digits backwards
+    #
+    while ( n > 0 ) {
+
+        #
+        # quotient = n / 16
+        #
+        let q = float2int(n / 16);
+
+        #
+        # remainder = n - (q * 16)
+        #
+        let d = n - (q * 16);
+
+        #
+        # store hex digit
+        #
+        buf[i] = digits[d];
+
+        #
+        # continue with quotient
+        #
+        let n = q;
+        let i = i + 1;
+    }
+
+    #
+    # Join digits in reverse order
+    #
+    # But first prefix "0x"
+    #
+    let c = 2;
+    retbuf[0] = '0'
+    retbuf[1] = 'x'
+
+    while ( i > 0 ) {
+        let i = i - 1;
+        retbuf[c] = buf[i];
+        let c = c + 1;
+    }
+    return (strdup(retbuf));
+}
+
+
+#
+# Show a table
+#
+let n = 0;
+while( n < 257 ) {
+   print( n , "\t", num2hex(n ), "\n" );
+   let n = n + 1;
+}

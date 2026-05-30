@@ -27,6 +27,9 @@ If you'd like to see the generated assembly for each example as well as produce 
 * [life.in](life.in)
   * Conway's Game of Life.
   * Randomly populate 20% of the arena, and evolve until bored!
+* [num2hex.in](num2hex.in)
+  * Convert a (decimal) number to hex, and return that result.
+  * e.g. "255" -> "`0xFF`".
 * [primes.in](primes.in)
   * Calculate the first 100 prime numbers.
 * [string.in](string.in)

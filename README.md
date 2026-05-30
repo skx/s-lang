@@ -42,7 +42,7 @@ That said the code is clean, and hopefully readable, and we've got good test-cas
 
 ## Example Programs
 
-See [examples/](examples/) for "real" programs.  A couple of highlights:
+See [examples/](examples/) for _real_ programs.  A couple of highlights:
 
 * [examples/brainfuck.in](examples/brainfuck.in) - Brainfuck interpreter.
   * Runs several obvious programs:
@@ -58,6 +58,7 @@ See [examples/](examples/) for "real" programs.  A couple of highlights:
   * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
   * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
   * [examples/primes.in](examples/primes.in) - Calculate first 100 prime numbers.
+  * [examples/num2hex.in](examples/num2hex.in) - Convert a decimal number to a hex string.
 
 Syntax is covered pretty well in our "misc example" file:
 
