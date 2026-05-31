@@ -15,16 +15,10 @@ strlen:
         cmp rcx, 1
         jne strlen_type_fail
 
-        and rdi, -4          # Remove typing
-
-        xor rax, rax
-.strlen_next_char:
-        cmp byte ptr [rdi + rax], 0
-        je .strlen_done
-        inc rax
-        jmp .strlen_next_char
-.strlen_done:
+        and rdi, -4         # Remove typing
+        call strlen_raw     # Count the length
         sal rax, 2          # Add typing
+
 .strlen_cleanup:
         mov rsp, rbp
         pop rbp
@@ -35,11 +29,9 @@ strlen_type_fail:
         or rax, 1
         jmp .strlen_cleanup
 
-
 .section .data.strlen,"aw",@progbits
 
 .align 8
 strlen_type_fail_msg:
         .ascii "strlen: expected STRING"
         .byte 00
-
