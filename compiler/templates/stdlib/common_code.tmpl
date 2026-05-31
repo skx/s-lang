@@ -1,0 +1,46 @@
+#
+# This file contains some common-code which is used by our internal standard library functions.
+#
+
+
+.section .text.common_code,"ax",@progbits
+
+
+#
+# strlen_raw: Count the length of an untagged string.
+#
+# Input:
+#   RDI = untagged string
+#
+# Output:
+#   RAX = length
+#
+strlen_raw:
+        xor  rax, rax
+.strlen_raw_len_loop:
+        cmp  byte ptr [rdi+rax], 0
+        je   .strlen_raw_done
+        inc  rax
+        jmp  .strlen_raw_len_loop
+.strlen_raw_done:
+        ret
+
+
+#
+# strcpy_raw: Copy a NUL-terminated string.
+#
+# Input:
+#   RDI = source
+#   RSI = destination
+#
+# Output:
+#   RSI advanced past terminator
+#
+strcpy_raw:
+        mov  al, [rdi]
+        mov  [rsi], al
+        inc  rdi
+        inc  rsi
+        test al, al
+        jne  .strcpy_raw
+        ret
