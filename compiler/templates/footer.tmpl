@@ -19,17 +19,37 @@
 
 .section .bss
 .align 8
-initial_esp:
-        .quad 0
+
+#
+# Pointer to the start of the environmental variables.
+#
+# (used by "getenv".)
+#
 envp_ptr:
         .quad 0
+
+#
+# Count of arguments passed to the binary.
+#
+# (used by "argc".)
+#
 argument_count:
         .quad 0
+
+#
+# Pointer to the start of the argument variables array.
+#
+# (used by "argv".)
+#
 argument_base:
         .quad 0
-.align 4
+
+#
+# Temporary holder for flags; used to enable the use of
+# a floating-point exception for floating-point divisions.
+#
 mxcsr:
-    .long 0
+        .quad 0
 
 
 #####

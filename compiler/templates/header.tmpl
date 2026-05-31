@@ -8,12 +8,6 @@
 _start:
 
         #
-        # Save initial ESP away because any push/pops will screw
-        # our maths up and make it hard to reason about things.
-        #
-        mov [rip + initial_esp], rsp
-
-        #
         # Save the count of arguments away.
         #
         mov rsi, rsp
