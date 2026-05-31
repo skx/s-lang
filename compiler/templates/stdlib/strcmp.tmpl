@@ -17,16 +17,13 @@ strcmp:
         and rcx, 3
         cmp rcx, 1
         jne strcmp_type_fail
-
         and rdi, -4          # Remove typing
 
         mov rsi, [rbp+24]    # Get the string
-
         mov rcx, rsi         # type checking
         and rcx, 3
         cmp rcx, 1
         jne strcmp_type_fail
-
         and rsi, -4          # Remove typing
 
         xor rax, rax
@@ -63,4 +60,3 @@ strcmp_type_fail:
 strcmp_type_fail_msg:
         .ascii "strcmp: expected STRING"
         .byte 00
-

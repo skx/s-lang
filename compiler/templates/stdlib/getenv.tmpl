@@ -6,156 +6,138 @@
 # Output: malloc'd string with result, or zero.
 #
 
-.section .text.getenv,"ax",@progbits
 
 #
-# getenv
+# Look up an environment variable and return a
+# newly allocated copy of its value.
 #
-# Input:
-#   tagged string pointer
-#
-# Output:
-#   tagged malloc'd string
-#   or zero if not found
-#
-.section .text.getenv,"ax",@progbits
 
-#
-# getenv
-#
-# Input:
-#   tagged string pointer
-#
-# Output:
-#   tagged malloc'd string
-#   or zero if not found
-#
+.section .text.getenv,"ax",@progbits
 
 getenv:
         push rbp
-        mov rbp, rsp
+        mov  rbp, rsp
 
-        mov rbx, [envp_ptr]        # base address
-        mov rdx, [rbp+16]          # tagged input string
+        mov  rbx, [envp_ptr]        # environment array
+        mov  rdx, [rbp+16]          # tagged variable name
 
-        mov rcx, rdx               # type checking
-        and rcx, 3
-        cmp rcx, 1
-        jne getenv_type_fail
+        #
+        # Type check
+        #
+        mov  rcx, rdx
+        and  rcx, 3
+        cmp  rcx, 1
+        jne  getenv_type_fail
 
-        and rdx, -4                # untag
+        and  rdx, -4               # untag name
 
 .env_loop:
-        mov rsi, [rbx]             # RSI -> "NAME=VALUE"
+        mov  rsi, [rbx]            # "NAME=VALUE"
 
         test rsi, rsi
-        jz .not_found
+        jz   .getenv_not_found
 
-        mov r9, rdx               # R9 -> target NAME
+        mov  r9, rdx              # target name
 
-.compare_loop:
-        mov al, [rsi]
-        mov cl, [r9]
+.getenv_compare_loop:
+        mov  al, [rsi]
+        mov  cl, [r9]
 
-        cmp cl, 0
-        je .check_equal
+        cmp  cl, 0
+        je   .getenv_check_equal
 
         test al, al
-        jz .next_env
+        jz   .getenv_next_env
 
-        cmp al, cl
-        jne .next_env
+        cmp  al, cl
+        jne  .getenv_next_env
 
-        inc rsi
-        inc r9
-        jmp .compare_loop
+        inc  rsi
+        inc  r9
+        jmp  .getenv_compare_loop
 
-.check_equal:
-        cmp byte ptr [rsi], '='
-        jne .next_env
+.getenv_check_equal:
+        cmp  byte ptr [rsi], '='
+        jne  .getenv_next_env
 
-        inc rsi                    # RSI -> VALUE
+        #
+        # RSI currently points at '='
+        # Advance to VALUE.
+        #
+        inc  rsi
 
-#
-# Determine VALUE length
-#
+        #
+        # Save VALUE pointer.
+        #
+        push rsi
 
-        mov r8, rsi                # save VALUE start
-        xor rcx, rcx
+        #
+        # Determine VALUE length.
+        #
+        mov  rdi, rsi
+        call strlen_raw
 
-.getenv_len_loop:
-        cmp byte ptr [rsi], 0
-        je .getenv_len_done
+        #
+        # Include terminator.
+        #
+        inc  rax
 
-        inc rsi
-        inc rcx
-        jmp .getenv_len_loop
+        #
+        # malloc expects tagged size.
+        #
+        sal  rax, 2
 
-.getenv_len_done:
-        inc rcx                    # include terminator
-
-#
-# malloc(size)
-#
-
-        push rcx
+        push rax
         call malloc
-        add rsp, 8
+        add  rsp, 8
 
         test rax, rax
-        jz .not_found
+        jz   .getenv_malloc_fail
 
-#
-# malloc returns tagged pointer
-#
+        and  rax, -4
 
-        and rax, -4
+        #
+        # Recover VALUE pointer.
+        #
+        pop  rdi                  # source
 
-        mov r10, rax               # preserve allocation base
+        #
+        # Preserve allocation base.
+        #
+        push rax
 
-#
-# Copy VALUE
-#
+        mov  rsi, rax             # destination
+        call strcpy_raw
 
-        mov rdi, rax
-        mov rsi, r8
+        #
+        # Return tagged pointer.
+        #
+        pop  rax
+        or   rax, 1
+        jmp  .getenv_cleanup
 
-.getenv_copy_loop:
-        mov cl, [rsi]
-        mov [rdi], cl
+.getenv_next_env:
+        add  rbx, 8
+        jmp  .env_loop
 
-        inc rsi
-        inc rdi
+.getenv_malloc_fail:
+        add  rsp, 8               # discard saved VALUE pointer
+        xor  rax, rax
+        jmp  .getenv_cleanup
 
-        test cl, cl
-        jne .getenv_copy_loop
-
-#
-# Return tagged pointer
-#
-
-        mov rax, r10
-        or  rax, 1
-
-        jmp .getenv_cleanup
-
-.next_env:
-        add rbx, 8
-        jmp .env_loop
-
-.not_found:
-        xor rax, rax
+.getenv_not_found:
+        xor  rax, rax
 
 .getenv_cleanup:
-        mov rsp, rbp
-        pop rbp
+        mov  rsp, rbp
+        pop  rbp
         ret
 
 
 getenv_type_fail:
-        mov rax, offset getenv_type_fail_msg
-        or rax, 1
-        jmp .getenv_cleanup
+        mov  rax, offset getenv_type_fail_msg
+        or   rax, 1
+        jmp  .getenv_cleanup
 
 
 .section .data.getenv,"aw",@progbits
@@ -163,5 +145,4 @@ getenv_type_fail:
 .align 8
 getenv_type_fail_msg:
         .ascii "getenv: expected STRING"
-        .byte 00
-
+        .byte 0
