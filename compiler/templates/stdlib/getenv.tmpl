@@ -35,30 +35,30 @@ getenv:
         mov  rsi, [rbx]            # "NAME=VALUE"
 
         test rsi, rsi
-        jz   .not_found
+        jz   .getenv_not_found
 
         mov  r9, rdx              # target name
 
-.compare_loop:
+.getenv_compare_loop:
         mov  al, [rsi]
         mov  cl, [r9]
 
         cmp  cl, 0
-        je   .check_equal
+        je   .getenv_check_equal
 
         test al, al
-        jz   .next_env
+        jz   .getenv_next_env
 
         cmp  al, cl
-        jne  .next_env
+        jne  .getenv_next_env
 
         inc  rsi
         inc  r9
-        jmp  .compare_loop
+        jmp  .getenv_compare_loop
 
-.check_equal:
+.getenv_check_equal:
         cmp  byte ptr [rsi], '='
-        jne  .next_env
+        jne  .getenv_next_env
 
         #
         # RSI currently points at '='
@@ -92,7 +92,7 @@ getenv:
         add  rsp, 8
 
         test rax, rax
-        jz   .malloc_fail
+        jz   .getenv_malloc_fail
 
         and  rax, -4
 
@@ -116,16 +116,16 @@ getenv:
         or   rax, 1
         jmp  .getenv_cleanup
 
-.next_env:
+.getenv_next_env:
         add  rbx, 8
         jmp  .env_loop
 
-.malloc_fail:
+.getenv_malloc_fail:
         add  rsp, 8               # discard saved VALUE pointer
         xor  rax, rax
         jmp  .getenv_cleanup
 
-.not_found:
+.getenv_not_found:
         xor  rax, rax
 
 .getenv_cleanup:
