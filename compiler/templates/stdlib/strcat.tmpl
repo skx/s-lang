@@ -12,7 +12,6 @@ strcat:
         # Type check first argument
         #
         mov  rdi, [rbp+16]
-
         mov  rcx, rdi
         and  rcx, 3
         cmp  rcx, 1
@@ -22,7 +21,6 @@ strcat:
         # Type check second argument
         #
         mov  rsi, [rbp+24]
-
         mov  rcx, rsi
         and  rcx, 3
         cmp  rcx, 1
@@ -34,83 +32,52 @@ strcat:
         and  rdi, -4         # first string
         and  rsi, -4         # second string
 
-        #
-        # Find length of first string -> R8
-        #
-        xor  r8, r8
-.strcat_len1:
-        cmp  byte ptr [rdi+r8], 0
-        je   .strcat_len1_done
-        inc  r8
-        jmp  .strcat_len1
+        # Save str1/str2
+        mov  r8, rdi
+        mov  r9, rsi
 
-.strcat_len1_done:
+        # Get length of first string
+        mov  rdi, r8
+        call strlen_raw
+        mov  r10, rax
 
-        #
-        # Find length of second string -> R9
-        #
-        xor  r9, r9
-.strcat_len2:
-        cmp  byte ptr [rsi+r9], 0
-        je   .strcat_len2_done
-        inc  r9
-        jmp  .strcat_len2
-
-.strcat_len2_done:
+        # get length of second string
+        mov  rdi, r9
+        call strlen_raw
+        mov  r11, rax
 
         #
-        # Allocate len1 + len2 + 1 bytes
+        # Allocate len1 + len2 + 1
         #
-        mov  rax, r8
-        add  rax, r9
-        inc  rax              # terminator
+        mov  rax, r10
+        add  rax, r11
+        inc  rax
 
-        push rdi              # preserve source pointers
+        push rdi
         push rsi
 
-        sal  rax, 2           # encode integer size
+        sal  rax, 2
         call malloc
-        and  rax, -4          # untag allocation
+        and  rax, -4
 
         pop  rsi
         pop  rdi
 
-        #
-        # Save result pointer
-        #
-        push rax
+        push rax               # Save allocated memory address
 
-        #
-        # Copy first string (without terminator)
-        #
-.strcat_copy_first:
-        mov  dl, [rdi]
-        test dl, dl
-        je   .strcat_copy_second_start
+        # copy first string
+        mov  rsi, rax
+        mov  rdi, r8
+        call strcpy_raw
 
-        mov  [rax], dl
-        inc  rdi
-        inc  rax
-        jmp  .strcat_copy_first
+        # go back one, to overwrite the null
+        dec  rsi
 
-        #
-        # Copy second string (including terminator)
-        #
-.strcat_copy_second_start:
+        # copy the second string
+        mov  rdi, r9
+        call strcpy_raw
 
-.strcat_copy_second:
-        mov  dl, [rsi]
-        mov  [rax], dl
-
-        inc  rsi
-        inc  rax
-
-        test dl, dl
-        jne  .strcat_copy_second
-
-        #
-        # Return tagged pointer
-        #
+        # Add typing and return allocated pointer
         pop  rax
         or   rax, 1
 
