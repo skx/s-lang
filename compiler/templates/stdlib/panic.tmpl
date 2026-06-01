@@ -1,0 +1,47 @@
+#
+# Panic function will print a message and terminate.
+#
+# panic_raw is called by malloc and our signal handler.
+#
+
+
+.section .text.panic,"ax",@progbits
+
+panic:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]    # Get the string
+
+        mov rcx, rdi         # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne panic_type_fail
+
+        and rdi, -4         # Remove typing
+        mov rax, rdi
+
+        # Assume RAX has offset to string
+panic_raw:
+        call print_string
+
+panic_cleanup:
+        mov rdi, rax
+        mov rax, 60     # sys_exit
+        syscall
+        ret
+
+panic_type_fail:
+        mov rax, offset panic_type_fail_msg
+        call print_string_raw
+        jmp panic_cleanup
+
+
+
+
+.section .data.panic,"aw",@progbits
+
+.align 8
+panic_type_fail_msg:
+        .ascii "panic: expected STRING"
+        .byte 00
