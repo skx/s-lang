@@ -117,10 +117,13 @@ sigint_restorer:
 # };
 #
 .section code
+
+#
+# Signal setup failed, panic.
+#
 sigint_fail:
-        mov rax, offset int_fail
-        call print_string_raw
-        call exit
+        mov rax, offset int_fail     # Message to display
+        call panic_raw               # NOTE: Doesn't return
 
 .section .data
 
