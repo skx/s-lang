@@ -51,6 +51,15 @@ argument_base:
 mxcsr:
         .quad 0
 
+#
+# Marker to indicate whether the user-defined "at_exit"
+# function has been called.
+#
+# The function might include an exit statement so we want
+# to avoid recursion and ensure it is only called once.
+#
+at_exit_called:
+        .quad 0
 
 #####
 #####  Handlers for SIGINT (Ctrl-C) and SIGFPE (division by zero).
@@ -70,8 +79,15 @@ sigint_handler:
 .endif
 
        # call the optional "at_exit" user_function, if present.
+       # but only once.  We don't want to call recursively if
+       # that function has an exit statement within it.
 .ifdef at_exit
+       cmp byte ptr [at_exit_called], 0
+       jne 1f
+
+       mov byte ptr [at_exit_called], 1
        call at_exit
+1:
 .endif
 
        mov rax, 60  # SYS_exit
@@ -89,8 +105,15 @@ sigfpe_handler:
 .endif
 
        # call the optional "at_exit" user_function, if present.
+       # but only once.  We don't want to call recursively if
+       # that function has an exit statement within it.
 .ifdef at_exit
+       cmp byte ptr [at_exit_called], 0
+       jne 1f
+
+       mov byte ptr [at_exit_called], 1
        call at_exit
+1:
 .endif
 
        mov rax, 60  # SYS_exit
