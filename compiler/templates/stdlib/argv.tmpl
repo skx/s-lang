@@ -46,8 +46,6 @@ argv:
         sal  rax, 2
         push rax
         call malloc
-        add  rsp, 8
-
         and  rax, -4                # untag malloc result
 
         #

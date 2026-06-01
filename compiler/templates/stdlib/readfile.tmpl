@@ -91,13 +91,6 @@ readfile:
 
         push rax
         call malloc
-        add rsp, 8
-
-        #
-        # malloc failed?
-        #
-        test rax, rax
-        jz readfile_close_error
 
         #
         # Save untagged buffer pointer
@@ -172,4 +165,3 @@ readfile_close_error:
 readfile_type_fail_msg:
         .ascii "readfile: expected STRING"
         .byte 0
-

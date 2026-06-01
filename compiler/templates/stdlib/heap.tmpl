@@ -24,27 +24,19 @@ init_heap:
 
 .section .text.alloc,"ax",@progbits
 
+
+#
+# Allocate eight bytes, and return the pointer to that allocation
+#
+# NOTE: This does not return a typed pointer (we remove the typing
+# so that it may be used immediately).
+#
 alloc8:
-        push rbx
-        mov rax, [rip + heap_ptr]   # rax = old ptr (allocation start)
-
-        mov rbx, rax
-        add rbx, 8            # rbx = new heap end
-
-        mov rdi, rbx
-        mov r10, rax          # preserve allocation start
-
-        mov rax, 12
-        syscall
-
-        # verify brk success
-        cmp rax, rcx
-        jb .malloc_fail
-
-        mov [rip + heap_ptr], rax
-
-        mov rax, r10          # return allocation start
-        pop rbx
+        mov rax, 8     # eight bytes
+        sal rax, 2     # shift left to add typing
+        push rax
+        call malloc    # Allocate the memory
+        and rax, -4    # Remove typing
         ret
 
 
@@ -84,16 +76,15 @@ malloc:
     jmp .malloc_done
 
 .malloc_fail:
-    mov rax, offset malloc_fail_msg
-    call print_string_raw
-    xor rax, rax
+    mov rax, offset malloc_fail_msg    # Message to display
+    call panic_raw                     # NOTE: Doesn't return
 
 .malloc_done:
     pop r12
     pop rbx
     mov rsp, rbp
     pop rbp
-    ret
+    ret 8               # Discard stack entry
 
 .section .data.heap,"aw",@progbits
 
@@ -103,6 +94,5 @@ heap_ptr:
 
 .align 8
 malloc_fail_msg:
-        .ascii "brk failed\n"
+        .ascii "malloc() failed!\nTerminating!\n"
         .byte 00
-

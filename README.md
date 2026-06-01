@@ -210,6 +210,9 @@ We embed a small number of functions within the generated programs, our so-calle
   * Allocate N bytes on the heap.
 * `newline`
   * Print a newline to STDOUT.
+* `panic(STR)`
+  * Print the given message, and exit.
+  * Do not invoke `at_exit()`.
 * `print(...,...,...)`
   * This function is variadic; it will accept any number of arguments of any type.
   * Print each argument in turn.

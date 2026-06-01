@@ -89,12 +89,7 @@ getenv:
 
         push rax
         call malloc
-        add  rsp, 8
-
-        test rax, rax
-        jz   .getenv_malloc_fail
-
-        and  rax, -4
+        and  rax, -4     # Untype the malloc'd result
 
         #
         # Recover VALUE pointer.
@@ -119,11 +114,6 @@ getenv:
 .getenv_next_env:
         add  rbx, 8
         jmp  .env_loop
-
-.getenv_malloc_fail:
-        add  rsp, 8               # discard saved VALUE pointer
-        xor  rax, rax
-        jmp  .getenv_cleanup
 
 .getenv_not_found:
         xor  rax, rax
