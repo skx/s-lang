@@ -1,0 +1,5 @@
+function at_exit() {
+   print("at_exit\n");
+   exit(1);             # this must not trigger a recursive a call to "at_exit"
+}
+exit(3);

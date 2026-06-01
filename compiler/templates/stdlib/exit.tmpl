@@ -22,12 +22,19 @@ exit:
         # function which will trash it.
         push rax
 
+
+       # call the optional "at_exit" user_function, if present.
+       # but only once.  We don't want to call recursively if
+       # that function has an exit statement within it.
 .ifdef at_exit
-        #
-        # Call the at_exit handler if we have one.
-        #
-        call at_exit
+       cmp byte ptr [at_exit_called], 0
+       jne 1f
+
+       mov byte ptr [at_exit_called], 1
+       call at_exit
+1:
 .endif
+
         #
         # restore the saved exit-value.
         #
