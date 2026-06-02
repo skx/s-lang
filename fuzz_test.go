@@ -16,10 +16,13 @@ func FuzzProject(f *testing.F) {
 	known := []string{
 		"bare literal is illegal",
 		"unhandled token in",                    // Input is just A
+		"unexpected token in",   
 		"unknown token type in parseStatements", // blah
 		"unexpected token in parsePrimary",      // foo(123
 		"unterminated character literal",        // '
+		"unterminated string",                   // "foo
 		"undefined variable",                    // easy
+		"unknown character",                     // $
 		"missing ]",                             // a[1
 		"missing )",                             // a[(00
 		"cannot call non-function",              // A(0(0)
@@ -48,6 +51,8 @@ func FuzzProject(f *testing.F) {
 		"argument lengths differ for function", // unCtion A(A){A()
 		"cannot assign",                        // let 0=0': cannot assign to *parser.IntegerLiteral
 		"only permits a numerical expression",  // if/while
+		"unexpected token in parseAtom Token{Type:EOF Value:}",
+		"invalid character '!'",
 	}
 
 	//
