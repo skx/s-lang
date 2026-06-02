@@ -131,6 +131,8 @@ func TestParsePrintStmt(t *testing.T) {
 
 	// nil statement in while() body
 	w := &parser.While{
+		// Need an expression otherwise the printing will segfault
+		Expression: &parser.IntegerLiteral{Value: 13},
 		Statements: []parser.Statement{nil},
 	}
 	err = p.printStmt(w)
@@ -143,7 +145,9 @@ func TestParsePrintStmt(t *testing.T) {
 
 	// nil statement in if() body
 	i := &parser.If{
-		True: []parser.Statement{nil},
+		// Need an expression otherwise the printing will segfault
+		Expression: &parser.IntegerLiteral{Value: 3},
+		True:       []parser.Statement{nil},
 	}
 	err = p.printStmt(i)
 	if err == nil {
