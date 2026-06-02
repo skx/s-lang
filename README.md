@@ -29,6 +29,7 @@ In terms of features:
   * `sigfpe()` is called, if defined, when SIGFPE is received.
     * This is the floating-point exception generated upon division by zero.
   * `at_exit()` is called, if defined, when the program terminates, either due to those previous signals being caught, or at an ordinary exit.
+* User defined functions, with default values.
 
 Anti-features, or limitations:
 
