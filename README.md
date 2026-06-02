@@ -12,7 +12,7 @@ In terms of features:
 
 * Single-pass compiler which generates an assembly output for programs.
 * Parsing uses recursive descent with precedence layers:
-  * Maths operations: `+`, `-`, `*`, `/`
+  * Maths operations: `+`, `-`, `*`, `/`, `%`, and `^`.
   * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`, for integers, floats, and mixtures of the two.
   * Logical operations: `&&` and `||`.
 * Support for integers, floats, and strings.

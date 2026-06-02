@@ -785,6 +785,9 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 		case lexer.MODULUS:
 			fmt.Fprintln(&c.buff, `
 	call modulus`)
+		case lexer.POWER:
+			fmt.Fprintln(&c.buff, `
+	call power`)
 
 		default:
 			return check.UNKNOWN, fmt.Errorf("unhandled BinaryExpr in compileExpr: %v", v)
