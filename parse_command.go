@@ -78,6 +78,8 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "INLINE {%s}", stmt.Text)
 	case *parser.Return:
 		fmt.Fprintf(output, "RETURN(%v)\n", stmt.Expression)
+	case *parser.PostfixExpr:
+		fmt.Fprintf(output, "%s%s\n", stmt.Expr, stmt.Op)
 	case *parser.StringLiteral:
 		fmt.Fprintf(output, "String Literal %s;\n", stmt.Value)
 	case *parser.VariableExpr:
