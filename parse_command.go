@@ -39,7 +39,27 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 	case *parser.Continue:
 		fmt.Fprintf(output, "\tCONTINUE;\n")
 	case *parser.Function:
-		fmt.Fprintf(output, "FUNCTION Definition %s(%v);\n", stmt.Name, stmt.Parameters)
+		args := ""
+		for _, arg := range stmt.Parameters {
+			if len(args) > 0 {
+				args += ", "
+			}
+			args += arg.Name
+			if arg.Default != nil {
+				args += " = "
+				args += arg.Default.String()
+			}
+		}
+		fmt.Fprintf(output, "function %s(%s) { \n", stmt.Name, args)
+		for _, x := range stmt.Statements {
+			fmt.Fprintf(output, "\t")
+			err := p.printStmt(x)
+			if err != nil {
+				return err
+			}
+		}
+		fmt.Fprintf(output, "}\n")
+
 	case *parser.FunctionCallExpr:
 		s := []string{}
 		for _, a := range stmt.Arguments {
@@ -63,7 +83,7 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 	case *parser.VariableExpr:
 		fmt.Fprintf(output, "%s\n", stmt.Name)
 	case *parser.While:
-		fmt.Fprintf(output, "while(%v) {\n", stmt.Expression)
+		fmt.Fprintf(output, "while(%s) {\n", stmt.Expression.String())
 		for _, x := range stmt.Statements {
 			fmt.Fprintf(output, "\t")
 			err := p.printStmt(x)
@@ -73,7 +93,7 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		}
 		fmt.Fprintf(output, "}\n")
 	case *parser.If:
-		fmt.Fprintf(output, "if(%V) { \n", stmt.Expression)
+		fmt.Fprintf(output, "if(%s) { \n", stmt.Expression.String())
 		for _, x := range stmt.True {
 			fmt.Fprintf(output, "\t")
 			err := p.printStmt(x)
