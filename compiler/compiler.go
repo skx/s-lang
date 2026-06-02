@@ -122,6 +122,11 @@ type Compiler struct {
 	// generation of a "RETURN" statement.
 	functions []string
 
+	// knownFunctions keeps track of functions we know
+	// about.  We need this so that we can handle any
+	// default arguments they might have.
+	knownFunctions map[string][]*parser.FunctionParameter
+
 	// scope stores stack-frames which are used to hold
 	// symbols.
 	scope *Scope
@@ -165,6 +170,7 @@ func New(options ...Option) (*Compiler, error) {
 		scope:           NewScope(nil),
 		constantFolding: true,
 		typeCheck:       check.New(),
+		knownFunctions:  make(map[string][]*parser.FunctionParameter),
 	}
 
 	// Allow options to override our defaults
@@ -473,24 +479,47 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 	// Store the types of the functions here
 	callTypes := []check.Type{}
 
-	// We have to loop over the arguments in reverse
-	for i := len(v.Arguments) - 1; i >= 0; i-- {
+	// Confirm this is a known function, so that we
+	// can get access to any default parameters it
+	// might have defined.
+	expected, ok := c.knownFunctions[v.Name]
 
-		// push each argument to the stack
-		retType, err := c.compileExpr(v.Arguments[i])
+	// If this is a known (user) function
+	//
+	// And the number of arguments we've received
+	// does not match what we should be given then
+	// we're in a situation where default arguments
+	// are likely.
+	//
+	if ok && len(expected) != len(v.Arguments) {
+
+		fmt.Printf("function call to %s with defaults\n", v.Name)
+	} else {
+
+		// Otherwise we either have an unknown function
+		// (which is probably `print`, `getenv` or some
+		// other function from our standard library),
+		// or we have just the right number of arguments.
+
+		// We have to loop over the arguments in reverse
+		for i := len(v.Arguments) - 1; i >= 0; i-- {
+
+			// push each argument to the stack
+			retType, err := c.compileExpr(v.Arguments[i])
+			if err != nil {
+				return err
+			}
+			callTypes = append(callTypes, retType)
+			fmt.Fprintf(&c.buff, `
+	push rax`)
+
+		}
+
+		// Type checking
+		err := c.typeCheck.Check(v.Name, callTypes)
 		if err != nil {
 			return err
 		}
-		callTypes = append(callTypes, retType)
-		fmt.Fprintf(&c.buff, `
-	push rax`)
-
-	}
-
-	// Type checking
-	err := c.typeCheck.Check(v.Name, callTypes)
-	if err != nil {
-		return err
 	}
 
 	fmt.Fprintf(&c.buff, `
@@ -799,6 +828,12 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		return err
 
 	case *parser.Function:
+
+		// save this function away, so that it
+		// is known and in the future we can
+		// determine any default parameters
+		// it might have.
+		c.knownFunctions[s.Name] = s.Parameters
 
 		// Add the name of this function to the end
 		// of the list.
