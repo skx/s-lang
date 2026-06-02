@@ -40,10 +40,16 @@ func TestLexer(t *testing.T) {
 		{ERROR, "invalid character '!'"},
 		{ERROR, "invalid character '&'"},
 		{ERROR, "invalid character '|'"},
+		{PLUSPLUS, "++"},
+		{PLUS, "+"},
+		{MINUSMINUS, "--"},
+		{MINUS, "-"},
+		{MODULUS, "%"},
+		{POWER, "^"},
 		{EOF, ""},
 	}
 
-	l := NewLexer("LEt if, WHILE      retURN * = 3 + 4 * 5 - 1 / 2 == <= >= != < > && || ! & |")
+	l := NewLexer("LEt if, WHILE      retURN * = 3 + 4 * 5 - 1 / 2 == <= >= != < > && || ! & | +++ -- - % ^")
 
 	for i, tt := range tests {
 		tok := l.Next()
