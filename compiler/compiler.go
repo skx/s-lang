@@ -782,6 +782,13 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	setne al
 	movzx rax, al
 	sal rax, 2    # add type`)
+		case lexer.MODULUS:
+			fmt.Fprintln(&c.buff, `
+	call modulus`)
+		case lexer.POWER:
+			fmt.Fprintln(&c.buff, `
+	call power`)
+
 		default:
 			return check.UNKNOWN, fmt.Errorf("unhandled BinaryExpr in compileExpr: %v", v)
 		}
@@ -800,6 +807,34 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 	switch s := stmt.(type) {
+
+	case *parser.PostfixExpr:
+		// get
+		err := c.emitLoadVariable(s.Expr.String())
+		if err != nil {
+			return err
+		}
+		// mutate
+		switch s.Op {
+		case "++":
+			fmt.Fprint(&c.buff, `
+	# ++
+	sar rax, 2
+	inc rax
+	sal rax, 2`)
+
+		case "--":
+			fmt.Fprint(&c.buff, `
+	# --
+	sar rax, 2
+	dec rax
+	sal rax, 2`)
+		default:
+			return fmt.Errorf("unknown postfix operation %s", s.Op)
+		}
+		// set
+		err = c.emitStoreVariable(s.Expr.String())
+		return err
 
 	case *parser.Break:
 		if len(c.whiles) == 0 {

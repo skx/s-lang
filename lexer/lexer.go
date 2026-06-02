@@ -49,6 +49,8 @@ const (
 	MINUS    = "-"
 	MULTIPLY = "*"
 	DIVIDE   = "/"
+	POWER    = "^"
+	MODULUS  = "%"
 
 	// Comparisons
 	AND       = "&&"
@@ -59,6 +61,10 @@ const (
 	GTEQUALS  = ">="
 	EQUALS    = "=="
 	NOTEQUALS = "!="
+
+	// postfix
+	PLUSPLUS   = "++"
+	MINUSMINUS = "--"
 )
 
 // TokenType is the type of our tokens.
@@ -125,7 +131,7 @@ func NewLexer(input string) *Lexer {
 	//
 	l.known = make(map[string]string)
 	l.known["*"] = MULTIPLY
-	l.known["+"] = PLUS
+	//	l.known["+"] = PLUS
 	l.known["/"] = DIVIDE
 	l.known["("] = LPAREN
 	l.known[")"] = RPAREN
@@ -135,6 +141,8 @@ func NewLexer(input string) *Lexer {
 	l.known["]"] = RINDEX
 	l.known[";"] = SEMICOLON
 	l.known[","] = COMMA
+	l.known["^"] = POWER
+	l.known["%"] = MODULUS
 
 	l.keywords = make(map[string]bool)
 	l.keywords["break"] = true
@@ -213,6 +221,14 @@ func (l *Lexer) Next() *Token {
 			}
 			l.position++
 			return &Token{Value: float64(c), Type: INTEGER}
+
+		case "+":
+			l.position++
+			if l.peekChar() == "+" {
+				l.position++
+				return &Token{Type: PLUSPLUS, Value: "++"}
+			}
+			return &Token{Type: PLUS, Value: "+"}
 
 		case "<":
 			l.position++
@@ -355,9 +371,13 @@ func (l *Lexer) Next() *Token {
 			token := l.input[start:end]
 
 			if token == "-" {
+				if l.peekChar() == "-" {
+					l.position++
+					return &Token{Value: "--", Type: MINUSMINUS}
+				}
 				return &Token{Value: "-", Type: MINUS}
-
 			}
+
 			// too many periods?
 			bits := strings.Split(token, ".")
 			if len(bits) > 2 {

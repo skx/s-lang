@@ -19,7 +19,7 @@ let f = 10;
 
 while( f ) {
   print( "Loop ", f, "\n" );
-  let f = f - 1;
+  f--;
 }
 
 if ( 2 == 1 ) {
