@@ -15,6 +15,7 @@ In terms of features:
   * Maths operations: `+`, `-`, `*`, `/`, `%`, and `^`.
   * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`, for integers, floats, and mixtures of the two.
   * Logical operations: `&&` and `||`.
+  * Decrement/Increment support for variables ( `i++;`, or `index--;` for example).
 * Support for integers, floats, and strings.
   * String literals are interned.
   * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
@@ -94,7 +95,7 @@ The following is a tour of our language:
     # Looping on a variable is the same as "while ( x > 0 ) .."
     while(x) {
        print("The value in my loop is ", x, "\n");
-       let x = x - 1;
+       x--;
     }
 
     inline {

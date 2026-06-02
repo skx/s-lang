@@ -10,12 +10,12 @@ let sum = 0;
 let a = 0;
 while( a < 10 ) {
 
-   let a = a + 1;
+   a++;
 
    let b = 0;
    while( b < 10 ) {
 
-      let b = b + 1;
+      b++;
       let sum = sum + 1;
    }
 }
@@ -35,7 +35,7 @@ while( a > 0) {
    if ( a == 5 ) {
       break;
    }
-   let a = a - 1;
+   a--;
 }
 if ( a != 5 ) {
    print("break didn't break!" );
