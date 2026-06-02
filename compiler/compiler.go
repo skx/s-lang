@@ -122,6 +122,11 @@ type Compiler struct {
 	// generation of a "RETURN" statement.
 	functions []string
 
+	// knownFunctions keeps track of functions we know
+	// about.  We need this so that we can handle any
+	// default arguments they might have.
+	knownFunctions map[string][]*parser.FunctionParameter
+
 	// scope stores stack-frames which are used to hold
 	// symbols.
 	scope *Scope
@@ -165,6 +170,7 @@ func New(options ...Option) (*Compiler, error) {
 		scope:           NewScope(nil),
 		constantFolding: true,
 		typeCheck:       check.New(),
+		knownFunctions:  make(map[string][]*parser.FunctionParameter),
 	}
 
 	// Allow options to override our defaults
@@ -472,6 +478,36 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 
 	// Store the types of the functions here
 	callTypes := []check.Type{}
+
+	// Confirm this is a known function, so that we
+	// can get access to any default parameters it
+	// might have defined.
+	expected, ok := c.knownFunctions[v.Name]
+
+	// If this is a known (user) function
+	//
+	// And the number of arguments we've received
+	// does not match what we should be given then
+	// we're in a situation where default arguments
+	// are likely.
+	//
+	// So we take the default values and pretend they
+	// were received.
+	//
+	if ok && len(expected) != len(v.Arguments) {
+
+		// How many arguments we were given
+		found := len(v.Arguments)
+
+		// the maximum number of arguments to supply.
+		max := len(expected)
+
+		// Set the default value for each missing argument.
+		for found < max {
+			v.Arguments = append(v.Arguments, expected[found].Default)
+			found++
+		}
+	}
 
 	// We have to loop over the arguments in reverse
 	for i := len(v.Arguments) - 1; i >= 0; i-- {
@@ -800,6 +836,12 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 	case *parser.Function:
 
+		// save this function away, so that it
+		// is known and in the future we can
+		// determine any default parameters
+		// it might have.
+		c.knownFunctions[s.Name] = s.Parameters
+
 		// Add the name of this function to the end
 		// of the list.
 		c.functions = append(c.functions, s.Name)
@@ -814,7 +856,7 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 		// define parameters
 		for i, p := range s.Parameters {
-			_, err := c.scope.DefineArgument(p.Value.(string), i)
+			_, err := c.scope.DefineArgument(p.Name, i)
 			if err != nil {
 				return err
 			}

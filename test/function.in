@@ -1,0 +1,6 @@
+function greet( name = "Steve" ) {
+   print( "Hello, ", name, "\n" );
+}
+
+greet("World");
+greet();

@@ -43,9 +43,10 @@ func FuzzProject(f *testing.F) {
 		"missing '}' after function",            //
 		"missing '{' after function",            //
 		"function names must be identifiers",    //
-		"argument lengths differ for function",  // unCtion A(A){A()
-		"cannot assign",                         // let 0=0': cannot assign to *parser.IntegerLiteral
-		"only permits a numerical expression",   // if/while
+		"parameter without default value after previously seen a default",
+		"argument lengths differ for function", // unCtion A(A){A()
+		"cannot assign",                        // let 0=0': cannot assign to *parser.IntegerLiteral
+		"only permits a numerical expression",  // if/while
 	}
 
 	//
@@ -76,6 +77,7 @@ func FuzzProject(f *testing.F) {
 
 		// function
 		`function foo() { print("steve\n"); }`,
+		`function foo(age, name="Steve") { print(name); }  foo(3)`,
 
 		// return
 		"return(3);",

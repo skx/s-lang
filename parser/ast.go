@@ -159,13 +159,24 @@ type Data struct {
 	Text string
 }
 
+// FunctionParameter is a structure to hold details of the
+// parameters a function accepts.  It is used to allow an
+// optional default to be specified for each parameter.
+type FunctionParameter struct {
+	// Name is the name of the parameter
+	Name string
+
+	// Default, if set, is the value of the parameter
+	Default Expr
+}
+
 // Function holds details about (user-defined) functions.
 type Function struct {
 	// Name is the name of the function that is being defined
 	Name string
 
 	// Parameters holds the parameters the function accepts
-	Parameters []*lexer.Token
+	Parameters []*FunctionParameter
 
 	// Statements are the body of the function
 	Statements []Statement
