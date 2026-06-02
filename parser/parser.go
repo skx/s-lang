@@ -376,6 +376,19 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return res, fmt.Errorf("missing '(' after function name %s", name)
 			}
 
+			// If we've found paramters with default values then
+			// all remaining parameters must have them.
+			//
+			// i.e. this is fine
+			//    function foo( name = "Steve", address = "Secret")
+			//
+			// But this is not
+			//
+			//    function bar( name = "steve", age )
+			//
+			// Record here if we found a default
+			defValue := false
+
 			// collect parameters
 			params := []*FunctionParameter{}
 
@@ -398,6 +411,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 					// If we see "=" then we're looking at a default parameter
 					if p.l.Peek().Type == lexer.ASSIGN {
+
+						// We've seen a default value
+						defValue = true
+
 						p.l.Next()
 
 						// Save the default value.
@@ -409,6 +426,10 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 							Name:    name,
 							Default: val})
 						continue
+					}
+					if defValue {
+						return nil, fmt.Errorf("function %s has parameter without default value after previously seen a default", name)
+
 					}
 					params = append(params, &FunctionParameter{
 						Name: name})
