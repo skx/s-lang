@@ -814,7 +814,7 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 		// define parameters
 		for i, p := range s.Parameters {
-			_, err := c.scope.DefineArgument(p.Value.(string), i)
+			_, err := c.scope.DefineArgument(p.Name, i)
 			if err != nil {
 				return err
 			}
