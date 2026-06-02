@@ -62,7 +62,6 @@ func WithCompileChecking(enable bool) Option {
 type Compiler struct {
 
 	// Source holds the source program we'll work on.
-
 	Source string
 
 	// buff is the writer object we send all generated
@@ -109,18 +108,17 @@ type Compiler struct {
 	// and then run "mov rax, [float_name]".
 	floatTable *FloatTable
 
-	// functions stores the name of functions we're compiling
+	// functionName stores the name of functions we're compiling
+	//
 	// We should only be compiling one function at a time,
-	// but this way we could allow nested functions if we
-	// wanted to.
+	// and we've defined nested functions as being illegal
+	// so we can catch them by testing against the value
+	// here when we start a new one.
 	//
-	// The most recent function we've entered is the LAST
-	// item on the array.
-	//
-	// We need to know if we're compiling code within the
+	// We also need to know if we're compiling code within the
 	// body of a function so we can handle the correct
 	// generation of a "RETURN" statement.
-	functions []string
+	functionName string
 
 	// knownFunctions keeps track of functions we know
 	// about.  We need this so that we can handle any
@@ -842,9 +840,18 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		// it might have.
 		c.knownFunctions[s.Name] = s.Parameters
 
-		// Add the name of this function to the end
-		// of the list.
-		c.functions = append(c.functions, s.Name)
+		// Are we already defining a function?
+		//
+		// That's illegal.
+		if c.functionName != "" {
+			return fmt.Errorf("nested functions are illegal, we're inside %s and trying to define %s",
+				c.functionName, s.Name)
+		}
+
+		//
+		// Record the name of the function we're defining
+		//
+		c.functionName = s.Name
 
 		fmt.Fprintf(&c.buff, `
 	# Skip inline function implementation
@@ -891,8 +898,8 @@ over_function_%s:
 
 		c.popScope()
 
-		// remove the last function from the list
-		c.functions = c.functions[:len(c.functions)-1]
+		// we're no longer defining a function
+		c.functionName = ""
 
 	case *parser.If:
 
@@ -991,8 +998,8 @@ if_%d_end:
 
 		_, exists := c.scope.Lookup(nm)
 
-		// Create a lable for the value, if necessary
-		if len(c.functions) > 0 {
+		// Create a label for the value, if necessary
+		if c.functionName != "" {
 
 			// define local only if it doesn't exist already
 			if !exists {
@@ -1046,13 +1053,13 @@ if_%d_end:
 		// terminate the program with a return.
 		// Instead we just jump to the stack-cleanup
 		// code.
-		if len(c.functions) > 0 {
+		if c.functionName != "" {
 
 			txt := `
 	# RETURN
 	jmp %s_cleanup
 `
-			fmt.Fprintf(&c.buff, txt, c.functions[len(c.functions)-1])
+			fmt.Fprintf(&c.buff, txt, c.functionName)
 		} else {
 
 			txt := `

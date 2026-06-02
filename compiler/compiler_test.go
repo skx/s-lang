@@ -64,6 +64,21 @@ func TestBroken(t *testing.T) {
 	if err == nil {
 		t.Fatalf("expected error, got none.")
 	}
+
+	// nested functions are illegal
+	c, err = New(WithSource(`
+function foo() {
+   function bar() {
+   }
+}
+`))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	_, err = c.Compile()
+	if err == nil {
+		t.Fatalf("expected error, got none.")
+	}
 }
 
 // TestConstantFolding folding attempts to ensure that constant
