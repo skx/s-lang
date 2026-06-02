@@ -84,6 +84,20 @@ func FuzzProject(f *testing.F) {
 		// return
 		"return(3);",
 		"let a = 32; return( a ) ; ",
+
+		// postfix
+		"let i = 3; i++;",
+		"let i = 3; i--;",
+
+		// operations
+		"print( 1 - 2 ); ",
+		"print( 1 + 2 ); ",
+		"print( 1 / 2 ); ",
+		"print( 1 * 2 ); ",
+		"print( 1 % 2 ); ",
+		"print( 1 ^ 2 ); ",
+
+
 	}
 
 	//
