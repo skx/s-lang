@@ -377,7 +377,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			}
 
 			// collect parameters
-			params := []*lexer.Token{}
+			params := []*FunctionParameter{}
 
 			for {
 				tok := p.l.Next()
@@ -394,7 +394,25 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					continue
 				}
 				if tok.Type == lexer.IDENT {
-					params = append(params, tok)
+					name := tok.Value.(string)
+
+					// If we see "=" then we're looking at a default parameter
+					if p.l.Peek().Type == lexer.ASSIGN {
+						p.l.Next()
+
+						// Save the default value.
+						val, err := p.parseExpr()
+						if err != nil {
+							return res, err
+						}
+						params = append(params, &FunctionParameter{
+							Name:    name,
+							Default: val})
+						continue
+					}
+					params = append(params, &FunctionParameter{
+						Name: name})
+
 				}
 			}
 
