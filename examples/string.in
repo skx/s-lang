@@ -76,6 +76,13 @@ if ( str2int("201") != 201  ) {
 }
 
 #
+# Type-check that too.
+#
+if (strcmp(type(str2int("201")), "INTEGER") != 0) {
+   print("Failed to convert string to integer \n");
+}
+
+#
 # Convert a string to a float
 #
 let a = "3.98";
