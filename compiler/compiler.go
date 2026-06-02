@@ -491,35 +491,42 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 	// we're in a situation where default arguments
 	// are likely.
 	//
+	// So we take the default values and pretend they
+	// were received.
+	//
 	if ok && len(expected) != len(v.Arguments) {
 
-		fmt.Printf("function call to %s with defaults\n", v.Name)
-	} else {
+		// How many arguments we were given
+		found := len(v.Arguments)
 
-		// Otherwise we either have an unknown function
-		// (which is probably `print`, `getenv` or some
-		// other function from our standard library),
-		// or we have just the right number of arguments.
+		// the maximum number of arguments to supply.
+		max := len(expected)
 
-		// We have to loop over the arguments in reverse
-		for i := len(v.Arguments) - 1; i >= 0; i-- {
-
-			// push each argument to the stack
-			retType, err := c.compileExpr(v.Arguments[i])
-			if err != nil {
-				return err
-			}
-			callTypes = append(callTypes, retType)
-			fmt.Fprintf(&c.buff, `
-	push rax`)
-
+		// Set the default value for each missing argument.
+		for found < max {
+			v.Arguments = append(v.Arguments, expected[found].Default)
+			found++
 		}
+	}
 
-		// Type checking
-		err := c.typeCheck.Check(v.Name, callTypes)
+	// We have to loop over the arguments in reverse
+	for i := len(v.Arguments) - 1; i >= 0; i-- {
+
+		// push each argument to the stack
+		retType, err := c.compileExpr(v.Arguments[i])
 		if err != nil {
 			return err
 		}
+		callTypes = append(callTypes, retType)
+		fmt.Fprintf(&c.buff, `
+	push rax`)
+
+	}
+
+	// Type checking
+	err := c.typeCheck.Check(v.Name, callTypes)
+	if err != nil {
+		return err
 	}
 
 	fmt.Fprintf(&c.buff, `
