@@ -141,6 +141,20 @@ func (b *BinaryExpr) String() string {
 
 func (BinaryExpr) expr() {}
 
+type PostfixExpr struct {
+	Expr Expr
+	Op   lexer.TokenType
+}
+
+// String returns the value of the given expression.
+func (p *PostfixExpr) String() string {
+	return fmt.Sprintf("%s %s",
+		p.Expr.String(),
+		p.Op)
+}
+
+func (PostfixExpr) expr() {}
+
 // Break holds a break-statement, these are only valid within a while loop.
 type Break struct {
 	// Empty

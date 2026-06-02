@@ -1,13 +1,87 @@
 // Package parser parses input programs, via our lexer, and allows AST nodes
 // to be generated.
+//
 // Our compiler will walk the generated AST nodes to generate an assembly
 // language representation of the givne input function.
+//
+// Our parser is a simple Pratt-based implementation.
 package parser
 
 import (
 	"fmt"
 	"github.com/skx/s-lang/lexer"
 )
+
+const (
+	PREC_LOWEST = iota
+
+	PREC_OR
+	PREC_AND
+
+	PREC_EQUALITY
+	PREC_COMPARISON
+
+	PREC_ADD
+
+	PREC_MUL
+
+	PREC_POWER
+
+	PREC_POSTFIX
+)
+
+// precedence is the function that determines the precedence of the given
+// token-type, and is the key to the Pratt parser.
+func precedence(t lexer.TokenType) int {
+	switch t {
+
+	case lexer.OR:
+		return PREC_OR
+
+	case lexer.AND:
+		return PREC_AND
+
+	case lexer.EQUALS, lexer.NOTEQUALS:
+		return PREC_EQUALITY
+
+	case lexer.LT,
+		lexer.LTEQUALS,
+		lexer.GT,
+		lexer.GTEQUALS:
+		return PREC_COMPARISON
+
+	case lexer.PLUS,
+		lexer.MINUS:
+		return PREC_ADD
+
+	case lexer.MULTIPLY,
+		lexer.DIVIDE,
+		lexer.MODULUS:
+		return PREC_MUL
+
+	case lexer.POWER:
+		return PREC_POWER
+
+	case lexer.LPAREN,
+		lexer.LINDEX,
+		lexer.PLUSPLUS,
+		lexer.MINUSMINUS:
+		return PREC_POSTFIX
+	}
+
+	return PREC_LOWEST
+}
+
+// isRightAssociative is a helper to determine if the given token-type
+// is right-associative.
+func isRightAssociative(t lexer.TokenType) bool {
+	switch t {
+	case lexer.POWER:
+		return true
+	}
+
+	return false
+}
 
 // Parser object
 type Parser struct {
@@ -34,71 +108,136 @@ func (p *Parser) ParseProgram() (*Program, error) {
 
 // parseExpr is called to parse expressions - be they in IF, LET, or WHILE.
 func (p *Parser) parseExpr() (Expr, error) {
-	return p.parseLogicalOr()
+	return p.parsePratt(0)
 }
 
-func (p *Parser) parseAddSub() (Expr, error) {
-	left, err := p.parseMulDiv()
+// parsePratt implements the core of our parsing algorithm.
+func (p *Parser) parsePratt(minPrec int) (Expr, error) {
+
+	left, err := p.parseAtom()
 	if err != nil {
 		return nil, err
 	}
 
 	for {
-		tok := p.l.Peek()
 
-		if tok.Type != lexer.PLUS &&
-			tok.Type != lexer.MINUS {
+		tok := p.l.Peek()
+		prec := precedence(tok.Type)
+
+		if prec <= minPrec {
 			break
 		}
 
-		p.l.Next()
+		switch tok.Type {
 
-		right, err := p.parseMulDiv()
-		if err != nil {
-			return nil, err
-		}
+		//
+		// postfix operators
+		//
+		case lexer.LPAREN:
 
-		left = &BinaryExpr{
-			Left:  left,
-			Op:    tok.Type,
-			Right: right,
+			p.l.Next()
+
+			var args []Expr
+
+			for {
+				t := p.l.Peek()
+
+				if t.Type == lexer.RPAREN {
+					p.l.Next()
+					break
+				}
+
+				if t.Type == lexer.COMMA {
+					p.l.Next()
+					continue
+				}
+
+				expr, err := p.parseExpr()
+				if err != nil {
+					return nil, err
+				}
+
+				args = append(args, expr)
+			}
+
+			v, ok := left.(*VariableExpr)
+			if !ok {
+				return nil, fmt.Errorf("cannot call non-function")
+			}
+
+			left = &FunctionCallExpr{
+				Name:      v.Name,
+				Arguments: args,
+			}
+
+		case lexer.LINDEX:
+
+			p.l.Next()
+
+			index, err := p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
+
+			if p.l.Next().Type != lexer.RINDEX {
+				return nil, fmt.Errorf("missing ]")
+			}
+
+			left = &IndexExpr{
+				Left:  left,
+				Index: index,
+			}
+
+		case lexer.PLUSPLUS:
+
+			p.l.Next()
+
+			left = &PostfixExpr{
+				Expr: left,
+				Op:   lexer.PLUSPLUS,
+			}
+
+		case lexer.MINUSMINUS:
+
+			p.l.Next()
+
+			left = &PostfixExpr{
+				Expr: left,
+				Op:   lexer.MINUSMINUS,
+			}
+
+		//
+		// infix operators
+		//
+		default:
+
+			p.l.Next()
+
+			rhsPrec := prec
+
+			if !isRightAssociative(tok.Type) {
+				rhsPrec = prec
+			} else {
+				rhsPrec = prec - 1
+			}
+
+			right, err := p.parsePratt(rhsPrec)
+			if err != nil {
+				return nil, err
+			}
+
+			left = &BinaryExpr{
+				Left:  left,
+				Op:    tok.Type,
+				Right: right,
+			}
 		}
 	}
 
 	return left, nil
 }
 
-func (p *Parser) parseMulDiv() (Expr, error) {
-	left, err := p.parsePostfix()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		tok := p.l.Peek()
-
-		if tok.Type != lexer.MULTIPLY &&
-			tok.Type != lexer.DIVIDE {
-			break
-		}
-
-		p.l.Next()
-
-		right, err := p.parsePostfix()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &BinaryExpr{
-			Left:  left,
-			Op:    tok.Type,
-			Right: right,
-		}
-	}
-
-	return left, nil
-}
-
+// parsePostfix parses postfix things.
 func (p *Parser) parsePostfix() (Expr, error) {
 	left, err := p.parseAtom()
 	if err != nil {
@@ -170,6 +309,7 @@ func (p *Parser) parsePostfix() (Expr, error) {
 	}
 }
 
+// parseAtom parses literals - or grouped expressions.
 func (p *Parser) parseAtom() (Expr, error) {
 	tok := p.l.Next()
 
@@ -185,154 +325,31 @@ func (p *Parser) parseAtom() (Expr, error) {
 			Value: tok.Value.(float64),
 		}, nil
 
-	case lexer.IDENT:
-		return &VariableExpr{
-			Name: tok.Value.(string),
-		}, nil
-
 	case lexer.STRING:
 		return &StringLiteral{
 			Value: tok.Value.(string),
 		}, nil
 
+	case lexer.IDENT:
+		return &VariableExpr{
+			Name: tok.Value.(string),
+		}, nil
+
 	case lexer.LPAREN:
+
 		expr, err := p.parseExpr()
 		if err != nil {
 			return nil, err
 		}
 
 		if p.l.Next().Type != lexer.RPAREN {
-			return expr, fmt.Errorf("missing )")
+			return nil, fmt.Errorf("missing )")
 		}
 
 		return expr, nil
 	}
 
-	return nil, fmt.Errorf("unexpected token in parsePrimary %v", tok)
-}
-
-func (p *Parser) parseComparison() (Expr, error) {
-	left, err := p.parseAddSub()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		tok := p.l.Peek()
-
-		switch tok.Type {
-
-		case lexer.LT,
-			lexer.LTEQUALS,
-			lexer.GT,
-			lexer.GTEQUALS:
-
-			p.l.Next()
-
-			right, err := p.parseAddSub()
-			if err != nil {
-				return nil, err
-			}
-
-			left = &BinaryExpr{
-				Left:  left,
-				Op:    tok.Type,
-				Right: right,
-			}
-
-		default:
-			return left, nil
-		}
-	}
-}
-
-func (p *Parser) parseEquality() (Expr, error) {
-	left, err := p.parseComparison()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		tok := p.l.Peek()
-
-		switch tok.Type {
-
-		case lexer.EQUALS,
-			lexer.NOTEQUALS:
-
-			p.l.Next()
-
-			right, err := p.parseComparison()
-			if err != nil {
-				return nil, err
-			}
-
-			left = &BinaryExpr{
-				Left:  left,
-				Op:    tok.Type,
-				Right: right,
-			}
-
-		default:
-			return left, nil
-		}
-	}
-}
-
-func (p *Parser) parseLogicalOr() (Expr, error) {
-	left, err := p.parseLogicalAnd()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		tok := p.l.Peek()
-
-		if tok.Type != lexer.OR {
-			return left, nil
-		}
-
-		p.l.Next()
-
-		right, err := p.parseLogicalAnd()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &BinaryExpr{
-			Left:  left,
-			Op:    tok.Type,
-			Right: right,
-		}
-	}
-}
-
-func (p *Parser) parseLogicalAnd() (Expr, error) {
-	left, err := p.parseEquality()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		tok := p.l.Peek()
-
-		if tok.Type != lexer.AND {
-			return left, nil
-		}
-
-		p.l.Next()
-
-		right, err := p.parseEquality()
-		if err != nil {
-			return nil, err
-		}
-
-		left = &BinaryExpr{
-			Left:  left,
-			Op:    tok.Type,
-			Right: right,
-		}
-	}
+	return nil, fmt.Errorf("unexpected token in parseAtom %v", tok)
 }
 
 // parseStatements is used to parse a collection of statements.
@@ -565,9 +582,28 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			name := p.curToken.Value.(string)
 
-			// index
-			if p.l.Peek().Type == lexer.LINDEX {
+			if p.l.Peek().Type == lexer.PLUSPLUS {
+				// consume '++'
+				p.l.Next()
 
+				expr := &PostfixExpr{
+					Expr: &VariableExpr{Name: name},
+					Op:   lexer.PLUSPLUS,
+				}
+				res = append(res, expr)
+			} else if p.l.Peek().Type == lexer.MINUSMINUS {
+
+				// consume '--'
+				p.l.Next()
+
+				expr := &PostfixExpr{
+					Expr: &VariableExpr{Name: name},
+					Op:   lexer.MINUSMINUS,
+				}
+				res = append(res, expr)
+			} else if p.l.Peek().Type == lexer.LINDEX {
+
+				// index
 				// consume '['
 				p.l.Next()
 
