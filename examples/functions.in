@@ -10,6 +10,21 @@ function five () {
 }
 
 #
+# Functions can have default parameters
+#
+function greet(name = "world!" ) {
+   print( "Hello, ", name, "\n" );
+}
+
+
+#
+# Perform the standard greeting.
+#
+greet();
+greet("Steve!");
+
+
+#
 # Call the functions and confirm that works
 #
 let a = four();
