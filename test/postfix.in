@@ -1,0 +1,13 @@
+# count up
+let i = 0;
+while( i < 10) {
+   print(i, "\n");
+   i++;
+}
+
+# count down
+let i = 10;
+while(i) {
+   print(i, "\n");
+   i--;
+}
