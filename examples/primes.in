@@ -1,27 +1,31 @@
-# Calculate and print the first 100 prime numbers
+# Calculate and print the first 100 prime numbers.
 
 let count = 0;
 let number = 2;
 
 while ( count < 100 ) {
 
-  let isPrime = 1;
-  let divisor = 2;
+    let isPrime = 1;
+    let divisor = 2;
 
-  while ( divisor <= sqrt(number) ) {
+    let max = sqrt(number);
 
-    # If divisor divides number exactly, it is not prime
-    if ( number == (float2int(number / divisor)) * divisor ) {
-      let isPrime = 0;
+    # If we've not ruled it out, and we're not above
+    # the mid-way then keep going.
+    while ( isPrime && divisor <= max ) {
+
+        # If divisor divides number exactly, it is not prime
+        if ( number % divisor == 0 ) {
+            let isPrime = 0;
+        }
+
+        divisor++;
     }
 
-    let divisor = divisor + 1;
-  }
+    if ( isPrime ) {
+        print( "Prime ", number, "\n" );
+        count++;
+    }
 
-  if ( isPrime ) {
-    print( "Prime ", number, "\n" );
-    let count = count + 1;
-  }
-
-  let number = number + 1;
+    number++;
 }
