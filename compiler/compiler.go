@@ -120,13 +120,12 @@ type Compiler struct {
 	// generation of a "RETURN" statement.
 	functionName string
 
-	// knownFunctions keeps track of functions we know
-	// about.  We need this so that we can handle any
-	// default arguments they might have.
+	// knownFunctions keeps track of user-defined functions we know
+	// about.  We need this so that we can handle any default arguments
+	// which they might have.
 	knownFunctions map[string][]*parser.FunctionParameter
 
-	// scope stores stack-frames which are used to hold
-	// symbols.
+	// scope stores stack-frames which are used to hold symbols.
 	scope *Scope
 
 	// globalVariables _should_ use the same stack frame,
@@ -203,15 +202,15 @@ func (c *Compiler) Compile() (string, error) {
 	// Which we can then include in our prologue.
 	//
 	var buf strings.Builder
-	buf.WriteString(`{{define "stdlib"}}`)
+	fmt.Fprint(&buf, `{{define "stdlib"}}`)
 	entries, err := fs.Glob(templateFS, "templates/stdlib/*.tmpl")
 	if err != nil {
 		return "", err
 	}
 	for _, f := range entries {
-		buf.WriteString(fmt.Sprintf(`{{template "%s" .}}`, filepath.Base(f)))
+		fmt.Fprintf(&buf, `{{template "%s" .}}`, filepath.Base(f))
 	}
-	buf.WriteString(`{{end}}`)
+	fmt.Fprint(&buf, `{{end}}`)
 
 	//
 	// Load all our templates

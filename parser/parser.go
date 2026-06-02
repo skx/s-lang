@@ -376,7 +376,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				return res, fmt.Errorf("missing '(' after function name %s", name)
 			}
 
-			// If we've found paramters with default values then
+			// If we've found parameters with default values then
 			// all remaining parameters must have them.
 			//
 			// i.e. this is fine
