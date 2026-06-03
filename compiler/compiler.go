@@ -1071,16 +1071,10 @@ if_%d_end:
 		}
 	case *parser.Return:
 
-		// Compile the expression, masking off strings.
-		switch s.Expression.(type) {
-
-		case *parser.StringLiteral:
-			return fmt.Errorf("'return' only permits a numerical expression")
-		default:
-			_, err := c.compileExpr(s.Expression)
-			if err != nil {
-				return err
-			}
+		// Compile the expression
+		_, err := c.compileExpr(s.Expression)
+		if err != nil {
+			return err
 		}
 
 		// If we're compiling a function we don't
@@ -1101,6 +1095,7 @@ if_%d_end:
 `
 			fmt.Fprint(&c.buff, txt)
 		}
+
 	case *parser.While:
 
 		n := c.labelCount
