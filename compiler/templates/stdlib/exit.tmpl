@@ -1,37 +1,32 @@
 #
-# Exit the process with the status code stored in RAX
-#
-# NOTE
-#######
-#
-# This is unlike all other internal functions,
-# which use the stack for parameters and RAX
-# for the argument count.
-#
-# This is because we compile "return; " statements
-# specially.  If the user were to write "exit(33);"
-# that would actually exit, but with the wrong
-# value.  (RAX would be 1 for the argument count,
-# and shifting that would result in an exit code of zero).
+# Exit the process with the given status code.
 #
 
 .section .text.exit,"ax",@progbits
 
 exit:
+        push rbp
+        mov rbp, rsp
+        mov rax, [rbp+16]    # get the integer
+
+        mov rcx, rax         # type checking
+        and rcx, 3
+        cmp rcx, 0
+        jne exit_type_fail
+
         # save the value, in case we have an at_exit
         # function which will trash it.
         push rax
 
-
-       # call the optional "at_exit" user_function, if present.
-       # but only once.  We don't want to call recursively if
-       # that function has an exit statement within it.
+        # call the optional "at_exit" user_function, if present.
+        # but only once.  We don't want to call recursively if
+        # that function has an exit statement within it.
 .ifdef at_exit
-       cmp byte ptr [at_exit_called], 0
-       jne 1f
+        cmp byte ptr [at_exit_called], 0
+        jne 1f
 
-       mov byte ptr [at_exit_called], 1
-       call at_exit
+        mov byte ptr [at_exit_called], 1
+        call at_exit
 1:
 .endif
 
@@ -45,3 +40,22 @@ exit_with_rax:
         mov rax, 60     # sys_exit
         syscall
         ret
+
+#.exit_cleanup:
+#        mov rsp, rbp
+#        pop rbp
+#        ret
+
+exit_type_fail:
+        mov rax, offset exit_type_fail_msg
+        call print_string_raw
+        mov rax, 1
+        jmp exit_with_rax
+
+
+.section .data.exit,"aw",@progbits
+
+.align 8
+exit_type_fail_msg:
+        .ascii "exit: expected INTEGER"
+        .byte 00
