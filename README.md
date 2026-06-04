@@ -36,6 +36,8 @@ Anti-features, or limitations:
 
 * The language is built around numbers (integers&floats), and strings.
   * We have no support for arrays, hashes, or structures.
+  * That said you can _fake_ arrays via indexing into characters of strings, or `malloc`'d areas of memory.
+    * You can see that done in this [test/jumptable.in](test/jumptable.in) where we use it to implement a simple dynamic dispatch routine.
 * There are only a few functions in the standard library.
 
 That said the code is clean, and hopefully readable, and we've got good test-case coverage of both the  golang packages, and the functional operation).
@@ -210,6 +212,7 @@ We embed a small number of functions within the generated programs, our so-calle
   * Convert the given integer to a floating point.
 * `malloc(N)`
   * Allocate N bytes on the heap.
+  * **NOTE**: We have no corresponding `free`.
 * `newline`
   * Print a newline to STDOUT.
 * `panic(STR)`
@@ -324,7 +327,7 @@ Getting a string/pointer from RAX:
 Returning a number from a function:
 
         mov rax, 42   # Load the value
-        sal rax, 2    # Lower two bits are 00
+        sal rax, 2    # Lower two bits are now 00
 
 Returning a float from a function:
 
@@ -356,6 +359,8 @@ Finally here's how to do type-checking of the parameter in RAX:
         ret
 
 You can see some tips on debugging with `gdb` in [DEBUGGING.md](DEBUGGING.md).
+
+**NOTE**  Our `alloc8` and `malloc` functions will do their own error-checking, if allocation fails they will print a message and terminate execution.  That means there is no need to check the result of calls to allocation routines.
 
 
 
@@ -398,6 +403,8 @@ The difference in the two approaches can be seen by our brainfuck example:
   * `-rwxr-xr-x 1 skx skx 18208 May 24 13:28 brainfuck`
 
 We went from 25k to 18k, which is a good saving.
+
+You can see some tips on debugging with `gdb` in [DEBUGGING.md](DEBUGGING.md), if you want to ease your debugging it is recommended you assemble and link yourself, that way there will be debug information available to you.
 
 
 
