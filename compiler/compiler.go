@@ -1071,30 +1071,25 @@ if_%d_end:
 		}
 	case *parser.Return:
 
+		if c.functionName == "" {
+			return fmt.Errorf("return can only be used within a function")
+		}
+
 		// Compile the expression
 		_, err := c.compileExpr(s.Expression)
 		if err != nil {
 			return err
 		}
 
-		// If we're compiling a function we don't
+		// We're compiling a function we don't
 		// terminate the program with a return.
 		// Instead we just jump to the stack-cleanup
 		// code.
-		if c.functionName != "" {
-
-			txt := `
+		txt := `
 	# RETURN
 	jmp %s_cleanup
 `
-			fmt.Fprintf(&c.buff, txt, c.functionName)
-		} else {
-
-			txt := `
-	call exit
-`
-			fmt.Fprint(&c.buff, txt)
-		}
+		fmt.Fprintf(&c.buff, txt, c.functionName)
 
 	case *parser.While:
 

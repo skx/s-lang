@@ -88,7 +88,7 @@ func TestConstantFolding(t *testing.T) {
 	// Simple program
 	c, err := New(WithSource(`
 # 7 is the magic number
-return( 1 + 2 * 3);
+exit( 1 + 2 * 3);
 `))
 	if err != nil {
 		t.Fatalf("failed to create compiler")
@@ -106,7 +106,7 @@ return( 1 + 2 * 3);
 	// Simple program
 	c, err = New(WithSource(`
 # 7 is the magic number
-return( 1 + 2 * 3);
+exit( 1 + 2 * 3);
 `), WithConstantFolding(false))
 	if err != nil {
 		t.Fatalf("failed to create compiler")
@@ -157,7 +157,7 @@ inline { }
 	}
 	txt, err := c.Compile()
 	if err != nil {
-		t.Fatalf("unexpected error compiling empty program: %s", err)
+		t.Fatalf("unexpected error compiling program: %s", err)
 	}
 	if !strings.Contains(txt, "rax, 6") {
 		t.Fatalf("suspicious output")

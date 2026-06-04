@@ -30,7 +30,7 @@ func TestGeneration(t *testing.T) {
 	}
 
 	src := `
-return(3);
+exit(3);
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))
@@ -64,7 +64,7 @@ func TestGenerateOutput(t *testing.T) {
 	}
 
 	src := `
-return(3);
+exit(3);
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))
@@ -160,7 +160,7 @@ func TestGenerateFailureToWrite(t *testing.T) {
 	defer os.Remove(f.Name())
 
 	src := `
-return(3);
+exit(3);
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))
@@ -223,7 +223,7 @@ func TestGenerateDriver(t *testing.T) {
 
 	src = `
 # This is fine.
-return(1);
+exit(1);
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))

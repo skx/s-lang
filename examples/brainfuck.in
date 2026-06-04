@@ -170,7 +170,7 @@ let program = " ";
 #
 if ( argc() != 2 ) {
    print("Usage: brainfuck cat|hello|mandelbrot|/path/to/file.bf\n");
-   return(1);
+   exit(1);
 }
 
 if (strcmp(argv(1),"cat") == 0 ) {
@@ -195,7 +195,7 @@ if (strlen(program)< 2 && filesize( argv(1) ) > 0 ) {
 # At this point the program is empty, or the file read failed
 if (strlen(program) < 2) {
    print("Usage: brainfuck cat|hello|mandelbrot|/path/to/file.bf\n");
-   return(1);
+   exit(1);
 }
 
 
@@ -276,7 +276,7 @@ while(index < length) {
       let x = getc();
       if ( x < 0 ) {
          # failed to read from STDIN
-         return( 1 );
+         exit( 1 );
       }
       ram[cellptr] = x;
    }
@@ -320,6 +320,3 @@ while(index < length) {
    # next opcode
    let index = index + 1;
 }
-
-
-return(0);

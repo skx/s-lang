@@ -15,8 +15,8 @@ func FuzzProject(f *testing.F) {
 	// Known errors we might see
 	known := []string{
 		"bare literal is illegal",
-		"unhandled token in",                    // Input is just A
-		"unexpected token in",   
+		"unhandled token in", // Input is just A
+		"unexpected token in",
 		"unknown token type in parseStatements", // blah
 		"unexpected token in parsePrimary",      // foo(123
 		"unterminated character literal",        // '
@@ -53,6 +53,7 @@ func FuzzProject(f *testing.F) {
 		"only permits a numerical expression",  // if/while
 		"unexpected token in parseAtom Token{Type:EOF Value:}",
 		"invalid character '!'",
+		"return can only be used within a function",
 	}
 
 	//
@@ -87,8 +88,8 @@ func FuzzProject(f *testing.F) {
 		`function foo(age, name="Steve") { print(name); }  foo(3)`,
 
 		// return
-		"return(3);",
-		"let a = 32; return( a ) ; ",
+		"function foo() { return(3); }",
+		"function foo() { let a = 3; return(a); }",
 
 		// postfix
 		"let i = 3; i++;",
@@ -101,8 +102,6 @@ func FuzzProject(f *testing.F) {
 		"print( 1 * 2 ); ",
 		"print( 1 % 2 ); ",
 		"print( 1 ^ 2 ); ",
-
-
 	}
 
 	//
