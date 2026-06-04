@@ -490,20 +490,25 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res, &While{Expression: val, Statements: stmts})
 
 		case lexer.RETURN:
+			var expr Expr
+			var err error
 			start := p.l.Next()
-			if start.Type != lexer.LPAREN {
-				return res, fmt.Errorf("missing '(' after return")
-			}
-			expr, err := p.parseExpr()
-			if err != nil {
-				return nil, err
-			}
+			if start.Type == lexer.SEMICOLON {
+				// "return;" with no value
+			} else {
+				if start.Type != lexer.LPAREN {
+					return res, fmt.Errorf("missing '(' after return")
+				}
+				expr, err = p.parseExpr()
+				if err != nil {
+					return nil, err
+				}
 
-			end := p.l.Next()
-			if end.Type != lexer.RPAREN {
-				return res, fmt.Errorf("missing ')' after return value")
+				end := p.l.Next()
+				if end.Type != lexer.RPAREN {
+					return res, fmt.Errorf("missing ')' after return value")
+				}
 			}
-
 			res = append(res, &Return{Expression: expr})
 
 		case lexer.IDENT:

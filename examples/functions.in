@@ -9,6 +9,7 @@ function five () {
    return (3 + 2);
 }
 
+
 #
 # Functions can have default parameters
 #
@@ -18,11 +19,28 @@ function greet(name = "world!" ) {
 
 
 #
+# The return statement usually returns a value
+# so "return(expr)", however a bare return is also
+# possible
+#
+function early() {
+   if ( 1 == 1 ) {
+     return;
+   }
+}
+
+
+#
+#
 # Perform the standard greeting.
 #
 greet();
 greet("Steve!");
 
+#
+# Confirm our bare return "return;" works
+#
+early();
 
 #
 # Call the functions and confirm that works
