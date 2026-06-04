@@ -30,6 +30,8 @@ strdup:
         # Allocate the memory
         inc rax       # Add space for terminator
         sal rax, 2    # Add typing
+        push rax      # store as stack-arg
+        mov rax, 1    # one argument
         call malloc
         and rax, -4   # untype the result
 

@@ -57,6 +57,8 @@ strcat:
         push rsi
 
         sal  rax, 2
+        push rax        # stack argument
+        mov rax, 1      # one argument
         call malloc
         and  rax, -4
 

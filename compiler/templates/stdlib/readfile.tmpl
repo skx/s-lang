@@ -89,7 +89,8 @@ readfile:
         inc rax
         sal rax, 2                   # tag integer
 
-        push rax
+        push rax        # stack-argument
+        mov rax, 1      # one argument
         call malloc
 
         #
