@@ -1,0 +1,17 @@
+#
+# strdup
+#
+
+
+# Variable
+let a = "Steve\n";
+print(strdup(a));
+
+# string
+print(strdup("Hello, world!"), "\n");
+
+#
+# Type failure
+#
+print(strdup( 3 ), "\n" );
+print(strdup( 1.5 ), "\n" );
