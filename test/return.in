@@ -1,0 +1,10 @@
+function null() {
+   return;
+}
+function four() {
+   return( 4 );
+}
+
+
+print( null() , "\n" );
+print( four() , "\n" );
