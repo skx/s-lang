@@ -1,0 +1,15 @@
+Type of int : 
+	INTEGER
+	INTEGER
+
+Type of float : 
+	FLOAT
+	FLOAT
+
+Type of string : 
+	STRING
+	STRING
+
+Value:43 Type:INTEGER
+Value:This is the end Type:STRING
+Value:3.75000 Type:FLOAT

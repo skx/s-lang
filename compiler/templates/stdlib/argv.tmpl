@@ -44,7 +44,8 @@ argv:
         # malloc expects a tagged integer size.
         #
         sal  rax, 2
-        push rax
+        push rax          # stack argument
+        mov rax, 1        # one argument
         call malloc
         and  rax, -4                # untag malloc result
 

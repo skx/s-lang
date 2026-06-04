@@ -26,3 +26,18 @@ endif
 	@# actually compile
 	../s-lang compile -output $@ $<
 	strip --strip-all $@
+	@echo "Executing $@"
+	@# execute
+	@./$@ > $@.out 2>&1 < $@ || true
+	@echo " comparing $@.out to $@.expected"
+	@cmp $@.out $@.expected || exit "program $< did not match"
+	@rm $@.out
+
+
+# We can't run "life" so we have a more specific rule for that
+# binary.
+life: life.in ../s-lang
+	$(GEN_ASM_CMD)
+	../s-lang compile -output $@ $<
+	strip --strip-all $@
+	@echo "Skipping execution of $@"

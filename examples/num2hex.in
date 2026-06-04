@@ -12,16 +12,16 @@ function num2hex(n) {
     # Ensure retbuf is full of NULL bytes
     #
     let b = strlen(retbuf);
-    while( b ) {
+    while( b > 0 ) {
         retbuf[b]= 0;
-        let b = b - 1;
+        b--;
     }
 
     #
     # Special-case zero
     #
     if ( n == 0 ) {
-        return ( strdup("0x0" ) );
+        return (strdup("0x0"));
     }
 
     #
@@ -37,7 +37,7 @@ function num2hex(n) {
         #
         # remainder = n - (q * 16)
         #
-        let d = n - (q * 16);
+        let d = n % 16;
 
         #
         # store hex digit
@@ -48,8 +48,10 @@ function num2hex(n) {
         # continue with quotient
         #
         let n = q;
-        let i = i + 1;
+        i++;
     }
+
+
 
     #
     # Join digits in reverse order
@@ -61,9 +63,9 @@ function num2hex(n) {
     retbuf[1] = 'x'
 
     while ( i > 0 ) {
-        let i = i - 1;
+        i--;
         retbuf[c] = buf[i];
-        let c = c + 1;
+        c++;
     }
     return (strdup(retbuf));
 }
@@ -75,5 +77,5 @@ function num2hex(n) {
 let n = 0;
 while( n < 257 ) {
    print( n , "\t", num2hex(n ), "\n" );
-   let n = n + 1;
+   n++;
 }

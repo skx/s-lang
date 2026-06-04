@@ -1,0 +1,16 @@
+Precedence means this should equal 7: 7
+This should be 43: 43
+Hello, world!  The magic number is 42
+A=4: 4
+Steve Did this!
+Loop 10
+Loop 9
+Loop 8
+Loop 7
+Loop 6
+Loop 5
+Loop 4
+Loop 3
+Loop 2
+Loop 1
+ELSE works :)

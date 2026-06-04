@@ -1,0 +1,16 @@
+Hello, world!
+Hello, Steve!
+four() -> 4 five() -> 5
+Before function A is: 13
+Before function B is: 17
+  Inside debug() A is 13
+  Inside debug() B is 17
+  Inside debug() MY is 33
+  Inside debug() NAME is 42
+  Inside debug() MY is  my name
+  Inside debug() NAME is Marlo
+A should still be 13: 13
+B should still be 17: 17
+max() was called!
+Result of max(): 210
+Result of steve() -> 42

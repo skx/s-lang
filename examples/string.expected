@@ -1,0 +1,10 @@
+The string 'steve' is 5 bytes long
+HELLO, I AM A STRING IN UPPER-CASE
+strcmp(steve,rteve) is 1
+strcmp(Steve,rteve) is -31
+strcmp(Steve,Tteve) is -1
+strcmp(Steve,Steve) is 0
+strcmp(Steve,Steve*) is -42
+Hello, world!
+string '3.98' -> 3.98000
+STRING -> FLOAT
