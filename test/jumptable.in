@@ -1,0 +1,130 @@
+###
+### This is a bit of an advanced example.
+###
+### The idea is that we can define an array of function
+### pointers, each pointer points to a function.
+###
+### These can be looked up and dynamically invoked, to
+### give us a simple way to implement a scripting
+### language, or brainfuck interpreter, for example.
+###
+
+
+
+##
+## handlers - functions which are dynamically invoked.
+##
+function jnop() {
+   # NOP
+   print("NOP\n");
+}
+function jstar() {
+   print("*\n");
+}
+function jplus() {
+   print("+\n");
+}
+function jminus() {
+   print("-\n");
+}
+
+
+#
+# record the address of a function handler against a character
+#
+# Addresses in linux/amd64 are four bytes so we have to manually
+# calculate the various 8-bit values.
+#
+function setStack(stack, index, value) {
+    let index = index * 4;
+
+    stack[index] = value % 256;
+    value = float2int(value / 256);
+
+    index++;
+    stack[index] = value % 256;
+    value = float2int(value / 256);
+
+    index++;
+    stack[index] = value % 256;
+    value = float2int(value / 256);
+
+    index++;
+    stack[index] = value % 256;
+}
+
+#
+# get the address of a function handler, by character.
+#
+# This does the inverse of setStack.
+#
+function getStack(stack, index) {
+    let index = index * 4;
+
+    let b0 = stack[index];
+    index++;
+
+    let b1 = stack[index];
+    index++;
+
+    let b2 = stack[index];
+    index++;
+
+    let b3 = stack[index];
+
+    return(
+        b0 +
+        256 * b1 +
+        65536 * b2 +
+        16777216 * b3
+    );
+ }
+
+
+#
+# We're going to assume our "program" is ASCII, which means
+# we need to have 255 possible handlers.
+#
+# As noted each address is four bytes so we multiply the
+# size appropriately and record the functions we know.
+#
+let jump = malloc(256 * 4);
+
+#
+# Ensure every value has a handler
+#
+let i = 0;
+while( i < 256 ) {
+  setStack(jump, i, jnop);
+  i++;
+}
+
+#
+# Now the real handlers
+#
+setStack(jump, '*', jstar);
+setStack(jump, '+', jplus);
+setStack(jump, '-', jminus);
+
+
+##
+## Define a "program" we'll execute
+##
+let program = "++x++*+-
+  -----**";
+
+#
+# Walk the program for each bit
+#
+let i = 0;
+while( i < strlen(program) ) {
+
+   # Get the address of the handler.
+   a = getStack(jump, program[i] );
+
+   # Call it
+   inline {
+       call rax
+   }
+   i++;
+}
