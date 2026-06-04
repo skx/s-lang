@@ -1075,16 +1075,22 @@ if_%d_end:
 			return fmt.Errorf("return can only be used within a function")
 		}
 
-		// Compile the expression
-		_, err := c.compileExpr(s.Expression)
-		if err != nil {
-			return err
+		// Compile the expression if present
+		//
+		// Our return statement is special as it has two forms:
+		//
+		//    return;
+		//    return( EXPR );
+		//
+		if s.Expression != nil {
+			_, err := c.compileExpr(s.Expression)
+			if err != nil {
+				return err
+			}
 		}
 
-		// We're compiling a function we don't
-		// terminate the program with a return.
-		// Instead we just jump to the stack-cleanup
-		// code.
+		// Within a function a return just becomes a jump
+		// to the cleanup/function exit.
 		txt := `
 	# RETURN
 	jmp %s_cleanup
