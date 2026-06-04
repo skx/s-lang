@@ -237,78 +237,6 @@ func (p *Parser) parsePratt(minPrec int) (Expr, error) {
 	return left, nil
 }
 
-// parsePostfix parses postfix things.
-func (p *Parser) parsePostfix() (Expr, error) {
-	left, err := p.parseAtom()
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		switch p.l.Peek().Type {
-
-		// function call
-		case lexer.LPAREN:
-			p.l.Next() // consume '('
-
-			var args []Expr
-
-			for {
-				t := p.l.Peek()
-
-				if t.Type == lexer.RPAREN {
-					p.l.Next()
-					break
-				}
-
-				if t.Type == lexer.COMMA {
-					p.l.Next()
-					continue
-				}
-
-				expr, err := p.parseExpr()
-				if err != nil {
-					return nil, err
-				}
-
-				args = append(args, expr)
-			}
-
-			// only identifiers are callable right now
-			v, ok := left.(*VariableExpr)
-			if !ok {
-				return nil, fmt.Errorf("cannot call non-function")
-			}
-
-			left = &FunctionCallExpr{
-				Name:      v.Name,
-				Arguments: args,
-			}
-
-		// index operation
-		case lexer.LINDEX:
-			p.l.Next() // consume '['
-
-			index, err := p.parseExpr()
-			if err != nil {
-				return nil, err
-			}
-
-			if p.l.Next().Type != lexer.RINDEX {
-				return nil, fmt.Errorf("missing ]")
-			}
-
-			left = &IndexExpr{
-				Left:  left,
-				Index: index,
-			}
-
-		default:
-			return left, nil
-		}
-	}
-}
-
 // parseAtom parses literals - or grouped expressions.
 func (p *Parser) parseAtom() (Expr, error) {
 	tok := p.l.Next()
@@ -519,7 +447,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res, &Inline{Text: p.curToken.Value.(string)})
 
 		case lexer.LET:
-			left, err := p.parsePostfix()
+			left, err := p.parseExpr()
 			if err != nil {
 				return res, err
 			}
