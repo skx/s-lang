@@ -2,4 +2,4 @@
 # The smallest possible example.
 #
 
-return(42);
+exit(42);
