@@ -17,7 +17,7 @@ jobs:
        run: go test ./...
 
      - name: Run the functional tests
-       run: cd test && make
+       run: cd test/ && make
 
      - name: Run the example tests
-       run: cd test && make
+       run: cd examples/ && make
