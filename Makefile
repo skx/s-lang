@@ -21,3 +21,4 @@ fuzz:
 test:
 	go test ./...
 	cd test && make
+	cd example && make
