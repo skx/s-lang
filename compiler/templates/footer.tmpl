@@ -2,8 +2,10 @@
         # Exit explicitly, just in case the program was missing a
         # terminating RETURN statement.
         #
-        xor rax, rax
-        jmp exit
+        mov rax, 0
+        push rax
+        mov rax, 1
+        call exit
 
 
 #####
