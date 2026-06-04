@@ -113,7 +113,7 @@ The following is a tour of our language:
     print( "steve", " ", 21);
 
     # Exit with the given status
-    return(1 + 2 * 3);
+    exit(1 + 2 * 3);
 
 Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
 
