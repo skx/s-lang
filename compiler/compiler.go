@@ -297,8 +297,16 @@ func (c *Compiler) popScope() {
 // The complexity here comes from determining if a variable is local or global.
 func (c *Compiler) emitLoadVariable(name string) error {
 
-	sym, ok := c.scope.Lookup(name)
-	if !ok {
+	_, ok1 := c.knownFunctions[name]
+	if ok1 {
+		fmt.Fprintf(&c.buff, `
+	mov rax, offset %s
+`, name)
+		return nil
+	}
+
+	sym, ok2 := c.scope.Lookup(name)
+	if !ok2 {
 		return fmt.Errorf("undefined variable: %s", name)
 	}
 
@@ -890,6 +898,7 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		fmt.Fprintf(&c.buff, `
 	# Skip inline function implementation
 	jmp over_function_%s
+.align 8
 %s:`, s.Name, s.Name)
 
 		// new function scope
