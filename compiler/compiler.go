@@ -646,69 +646,6 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 	switch v := e.(type) {
 
-	// get str[index]
-	case *parser.IndexExpr:
-		err := c.emitLoadIndex(v)
-		return check.UNKNOWN, err
-
-	// str[index] = value
-	case *parser.IndexAssign:
-		err := c.emitStoreIndex(v)
-		return check.UNKNOWN, err
-
-	// N
-	case *parser.IntegerLiteral:
-
-		fmt.Fprintf(&c.buff, `
-	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
-
-		return check.INTEGER, nil
-
-	// F
-	case *parser.FloatLiteral:
-
-		id := c.floatTable.Add(v.Value)
-
-		fmt.Fprintf(&c.buff, `
-	# Float literal %f
-
-	# allocate 8-byte boxed float
-	call alloc8
-
-	# load float constant
-	movsd xmm0, [%s]
-
-	# store payload
-	movsd [rax], xmm0
-
-	# tag pointer as float (10)
-	or rax, 2
-`, v.Value, id)
-		return check.FLOAT, nil
-
-	// foo(..)
-	case *parser.FunctionCallExpr:
-		err := c.emitFunctionCall(v)
-		return check.UNKNOWN, err
-
-	// id
-	case *parser.VariableExpr:
-		err := c.emitLoadVariable(v.Name)
-		return check.UNKNOWN, err
-
-	// "str"
-	case *parser.StringLiteral:
-		str := v.Value
-		id := c.stringTable.Add(str)
-
-		txt := fmt.Sprintf(`
-	mov rax, offset %s
-	or rax, 1   # tagged as a string
-`, id)
-		fmt.Fprint(&c.buff, txt)
-
-		return check.STRING, nil
-
 	// left OP right
 	case *parser.BinaryExpr:
 
@@ -805,6 +742,70 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 		//
 		// Since we don't know which it is effectively "unknown".
 		return check.UNKNOWN, err
+
+	// F
+	case *parser.FloatLiteral:
+
+		id := c.floatTable.Add(v.Value)
+
+		fmt.Fprintf(&c.buff, `
+	# Float literal %f
+
+	# allocate 8-byte boxed float
+	call alloc8
+
+	# load float constant
+	movsd xmm0, [%s]
+
+	# store payload
+	movsd [rax], xmm0
+
+	# tag pointer as float (10)
+	or rax, 2
+`, v.Value, id)
+		return check.FLOAT, nil
+
+	// foo(..)
+	case *parser.FunctionCallExpr:
+		err := c.emitFunctionCall(v)
+		return check.UNKNOWN, err
+
+	// str[index] = value
+	case *parser.IndexAssign:
+		err := c.emitStoreIndex(v)
+		return check.UNKNOWN, err
+
+	// get str[index]
+	case *parser.IndexExpr:
+		err := c.emitLoadIndex(v)
+		return check.UNKNOWN, err
+
+	// N
+	case *parser.IntegerLiteral:
+
+		fmt.Fprintf(&c.buff, `
+	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
+
+		return check.INTEGER, nil
+
+	// "str"
+	case *parser.StringLiteral:
+		str := v.Value
+		id := c.stringTable.Add(str)
+
+		txt := fmt.Sprintf(`
+	mov rax, offset %s
+	or rax, 1   # tagged as a string
+`, id)
+		fmt.Fprint(&c.buff, txt)
+
+		return check.STRING, nil
+
+	// id
+	case *parser.VariableExpr:
+		err := c.emitLoadVariable(v.Name)
+		return check.UNKNOWN, err
+
 	default:
 		return check.UNKNOWN, fmt.Errorf("unhandled token in compileExpr: %v", v)
 	}
@@ -815,34 +816,6 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 	switch s := stmt.(type) {
-
-	case *parser.PostfixExpr:
-		// get
-		err := c.emitLoadVariable(s.Expr.String())
-		if err != nil {
-			return err
-		}
-		// mutate
-		switch s.Op {
-		case "++":
-			fmt.Fprint(&c.buff, `
-	# ++
-	sar rax, 2
-	inc rax
-	sal rax, 2`)
-
-		case "--":
-			fmt.Fprint(&c.buff, `
-	# --
-	sar rax, 2
-	dec rax
-	sal rax, 2`)
-		default:
-			return fmt.Errorf("unknown postfix operation %s", s.Op)
-		}
-		// set
-		err = c.emitStoreVariable(s.Expr.String())
-		return err
 
 	case *parser.Break:
 		if len(c.whiles) == 0 {
@@ -869,10 +842,8 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 `, label)
 		fmt.Fprint(&c.buff, txt)
 
-	case *parser.FunctionCallExpr:
-
-		err := c.emitFunctionCall(s)
-		return err
+	case *parser.Data:
+		c.rawData = append(c.rawData, s.Text)
 
 	case *parser.Function:
 
@@ -944,6 +915,11 @@ over_function_%s:
 		// we're no longer defining a function
 		c.functionName = ""
 
+	case *parser.FunctionCallExpr:
+
+		err := c.emitFunctionCall(s)
+		return err
+
 	case *parser.If:
 
 		// Generate a unique label
@@ -1011,17 +987,14 @@ if_%d_end:
 `, n)
 		fmt.Fprint(&c.buff, txt)
 
-	case *parser.Inline:
-		fmt.Fprint(&c.buff, "\n"+s.Text+"\n")
-
 	case *parser.IndexAssign:
 		err := c.emitStoreIndex(s)
 		if err != nil {
 			return err
 		}
 
-	case *parser.Data:
-		c.rawData = append(c.rawData, s.Text)
+	case *parser.Inline:
+		fmt.Fprint(&c.buff, "\n"+s.Text+"\n")
 
 	case *parser.Let:
 
@@ -1078,6 +1051,35 @@ if_%d_end:
 		if err != nil {
 			return err
 		}
+
+	case *parser.PostfixExpr:
+		// get
+		err := c.emitLoadVariable(s.Expr.String())
+		if err != nil {
+			return err
+		}
+		// mutate
+		switch s.Op {
+		case "++":
+			fmt.Fprint(&c.buff, `
+	# ++
+	sar rax, 2
+	inc rax
+	sal rax, 2`)
+
+		case "--":
+			fmt.Fprint(&c.buff, `
+	# --
+	sar rax, 2
+	dec rax
+	sal rax, 2`)
+		default:
+			return fmt.Errorf("unknown postfix operation %s", s.Op)
+		}
+		// set
+		err = c.emitStoreVariable(s.Expr.String())
+		return err
+
 	case *parser.Return:
 
 		if c.functionName == "" {
@@ -1163,6 +1165,8 @@ while_%d_end:
 
 	default:
 		return fmt.Errorf("unhandled token in generateStmt %v", stmt)
+
 	}
+
 	return nil
 }
