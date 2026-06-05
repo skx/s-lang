@@ -17,35 +17,36 @@ func FuzzProject(f *testing.F) {
 		"bare literal is illegal",
 		"unhandled token in", // Input is just A
 		"unexpected token in",
-		"unknown token type in parseStatements", // blah
-		"unexpected token in parsePrimary",      // foo(123
-		"unterminated character literal",        // '
-		"unterminated string",                   // "foo
-		"undefined variable",                    // easy
-		"unknown character",                     // $
-		"missing ]",                             // a[1
-		"missing )",                             // a[(00
-		"cannot call non-function",              // A(0(0)
-		"symbol already defined",                // duplicate variable
-		"'(' after if",                          // IF ..
-		"')' after if",                          //
-		"'}' after if",                          //
-		"'{' after if",                          //
-		"'}' after else",                        // IF .. ELSE
-		"'{' after else",                        //
-		"'=' after LET",                         //
-		"missing '(' after while",               // WHILE
-		"missing ')' after while",               //
-		"missing '{' after while",               //
-		"missing '}' after while",               //
-		"missing '(' after return",              // RETURN
-		"missing ')' after return",              //
-		"unexpected EOF",                        // FUNCTIOn
-		"missing '(' after function",            //
-		"missing ')' after function",            //
-		"missing '}' after function",            //
-		"missing '{' after function",            //
-		"function names must be identifiers",    //
+		"unknown token type in parseStatements",  // blah
+		"unexpected token in parsePrimary",       // foo(123
+		"unterminated character literal",         // '
+		"unterminated string",                    // "foo
+		"undefined variable",                     // easy
+		"unknown character",                      // $
+		"missing ]",                              // a[1
+		"missing )",                              // a[(00
+		"cannot call non-function",               // A(0(0)
+		"symbol already defined",                 // duplicate variable
+		"'(' after if",                           // IF ..
+		"')' after if",                           //
+		"'}' after if",                           //
+		"'{' after if",                           //
+		"'}' after else",                         // IF .. ELSE
+		"'{' after else",                         //
+		"'=' after LET",                          //
+		"missing '(' after while",                // WHILE
+		"missing ')' after while",                //
+		"missing '{' after while",                //
+		"missing '}' after while",                //
+		"missing '(' after return",               // RETURN
+		"missing ')' after return",               //
+		"unexpected EOF",                         // FUNCTIOn
+		"missing '(' after function",             //
+		"missing ')' after function",             //
+		"missing '}' after function",             //
+		"missing '{' after function",             //
+		"function names must be identifiers",     //
+		"function arguments must be identifiers", //
 		"parameter without default value after previously seen a default",
 		"nested functions are illegal",         //
 		"argument lengths differ for function", // unCtion A(A){A()
@@ -54,11 +55,12 @@ func FuzzProject(f *testing.F) {
 		"unexpected token in parseAtom Token{Type:EOF Value:}",
 		"invalid character '!'",
 		"return can only be used within a function",
-		"'}' after switch",           // switch
-		"'{' after switch",           //
-		"'}' after case",             // switch
-		"'{' after case",             //
-		"expected case|default, got", //
+		"'}' after switch",                          // switch
+		"'{' after switch",                          //
+		"'}' after case",                            // switch
+		"'{' after case",                            //
+		"expected case|default, got",                //
+		"only integer literals for CASE statements", //
 	}
 
 	//
