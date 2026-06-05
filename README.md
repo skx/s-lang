@@ -51,11 +51,11 @@ That said the code is clean, and hopefully readable, and we've got good test-cas
 See [examples/](examples/) for _real_ programs.  A couple of highlights:
 
 * [examples/brainfuck.in](examples/brainfuck.in) - Brainfuck interpreter.
-  * Runs several obvious programs:
+  * Contains three hardcoded programs inline:
     * The classic "Hello World" program.
     * A simple "cat", which copies STDIN to STDOUT.
-    * The mandelbrot generation program (takes 8 minutes to complete)!
-  * If executed with the path to a brainfuck program it will read and execute that.
+    * The impressive mandelbrot generation program!
+  * If executed with the path to a file containing a brainfuck program it will read and execute that.
 * [examples/life.in](examples/life.in)
   * Conway's Game of Life.
   * Randomly populate 20% of the arena, and evolve until bored!
