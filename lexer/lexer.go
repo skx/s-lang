@@ -21,14 +21,17 @@ const (
 
 	// Statements
 	BREAK    = "BREAK"
+	CASE     = "CASE"
 	CONTINUE = "CONTINUE"
 	DATA     = "DATA"
+	DEFAULT  = "DEFAULT"
 	ELSE     = "ELSE"
 	FUNCTION = "FUNCTION"
 	IF       = "IF"
 	INLINE   = "INLINE"
 	LET      = "LET"
 	RETURN   = "RETURN"
+	SWITCH   = "SWITCH"
 	WHILE    = "WHILE"
 
 	// Specials
@@ -146,14 +149,16 @@ func NewLexer(input string) *Lexer {
 
 	l.keywords = make(map[string]bool)
 	l.keywords["break"] = true
+	l.keywords["case"] = true
 	l.keywords["continue"] = true
+	l.keywords["default"] = true
 	l.keywords["else"] = true
 	l.keywords["function"] = true
 	l.keywords["if"] = true
 	l.keywords["let"] = true
 	l.keywords["return"] = true
+	l.keywords["switch"] = true
 	l.keywords["while"] = true
-
 	return l
 }
 
