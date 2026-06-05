@@ -386,6 +386,8 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					params = append(params, &FunctionParameter{
 						Name: name})
 
+				} else {
+					return res, fmt.Errorf("function arguments must be identifiers")
 				}
 			}
 
