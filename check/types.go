@@ -45,6 +45,7 @@ func New() *Types {
 func (tc *Types) RegisterStdLib() {
 
 	tc.known["argv"] = []Type{INTEGER}
+	tc.known["exit"] = []Type{INTEGER}
 	tc.known["float2int"] = []Type{FLOAT}
 	tc.known["getenv"] = []Type{STRING}
 	tc.known["int2float"] = []Type{INTEGER}
@@ -62,7 +63,6 @@ func (tc *Types) RegisterStdLib() {
 
 	// ignored standard library functons:
 	//
-	//   exit: that's too late
 	//   type: Any type is valid.
 	//  print: variadic arguments of any type.
 
