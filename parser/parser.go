@@ -386,6 +386,8 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					params = append(params, &FunctionParameter{
 						Name: name})
 
+				} else {
+					return res, fmt.Errorf("function arguments must be identifiers")
 				}
 			}
 
@@ -607,6 +609,91 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 		case lexer.SEMICOLON:
 			// NOP
 
+		case lexer.SWITCH:
+
+			// look for the expression
+			expr, err := p.parseExpr()
+			if err != nil {
+				return res, err
+			}
+
+			// switch statement
+			swtch := &Switch{Value: expr}
+
+			start := p.l.Next()
+			if start.Type != lexer.LBRACE {
+				return res, fmt.Errorf("missing '{' after switch")
+			}
+
+			// Process the block which we think will contain
+			// various case-statements
+			for {
+				tok := p.l.Next()
+				if tok.Type == lexer.EOF {
+					return res, fmt.Errorf("unexpected EOF in switch statement")
+				}
+				if tok.Type == lexer.RBRACE {
+					break
+				}
+
+				tmp := &Case{}
+
+				// Default will be handled specially
+				if tok.Type == lexer.DEFAULT {
+
+					// We have a default-case here.
+					tmp.Default = true
+
+				} else if tok.Type == lexer.CASE {
+
+					// Here we allow "case default" even though
+					// most people would prefer to write "default".
+					if tok.Type == lexer.DEFAULT {
+						tmp.Default = true
+					} else {
+
+						// parse the match-expression.
+						left, err := p.parseExpr()
+						if err != nil {
+							return res, err
+						}
+
+						tmp.Expression = left
+					}
+				} else {
+					// error - unexpected token
+					return res, fmt.Errorf("expected case|default, got %s", tok)
+				}
+
+				tok = p.l.Next()
+				if tok.Type != lexer.LBRACE {
+					return res, fmt.Errorf("missing '{' after case")
+				}
+
+				// parse the block
+				stmts, err := p.parseStatements()
+				if err != nil {
+					return res, err
+				}
+				tmp.Statements = stmts
+
+				// save the choice away
+				swtch.Choices = append(swtch.Choices, tmp)
+
+			}
+
+			// More than one default is a bug
+			count := 0
+			for _, c := range swtch.Choices {
+				if c.Default {
+					count++
+				}
+			}
+			if count > 1 {
+				return res, fmt.Errorf("A switch-statement should only have one default block")
+			}
+
+			res = append(res, swtch)
 		case lexer.STRING:
 			return res, fmt.Errorf("bare literal is illegal: %s", p.curToken.String())
 

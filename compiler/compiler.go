@@ -1163,6 +1163,126 @@ while_%d_end:
 		// remove the number from the most recent while-list
 		c.whiles = c.whiles[:len(c.whiles)-1]
 
+	case *parser.Switch:
+		//
+		// So we allow:
+		//   switch a {
+		//    case 2 { .. }
+		//    case 3 { .. }
+		//    default { }
+		//
+		// We compile the expression, a, and that will give the result in RAX.
+		//
+		// Then for each one we need to have a jump to the right block,
+		// if equal.  And a fall-through to the default
+		//
+		//
+
+		// create a label
+		n := c.labelCount
+		c.labelCount++
+
+		fmt.Fprint(&c.buff, `
+	# SWITCH `)
+
+		// Generate the expression
+		_, err := c.compileExpr(s.Value)
+		if err != nil {
+			return err
+		}
+
+		// Untag the value
+		fmt.Fprint(&c.buff, `
+	sar rax, 2 `)
+
+		// Now we handle each of the case statements
+		// skipping the default
+		for i, cas := range s.Choices {
+
+			// skip the default
+			if cas.Default {
+				continue
+			}
+
+			// At the moment we only handle integers
+			val, ok := cas.Expression.(*parser.IntegerLiteral)
+			if !ok {
+				return fmt.Errorf("only integer literals for CASE statements")
+			}
+
+			fmt.Fprintf(&c.buff, `
+	# CASE %d
+	cmp rax, %d
+	jz switch_%d_case_%d
+`, val.Value, val.Value, n, i)
+
+		}
+
+		// Now we have the jump-tables for each case,
+		// if none match we'll fall-through to the default
+		// case
+		for _, cas := range s.Choices {
+
+			// skip the default
+			if !cas.Default {
+				continue
+			}
+
+			fmt.Fprint(&c.buff, `
+	# FALL-THROUGH DEFAULT
+`)
+			// assemble the body
+			for _, s := range cas.Statements {
+				err := c.generateStmt(s)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		//
+		// Here we've finished the case-jumps
+		// and we either have generated a default-case
+		// or done nothing if there was none present.
+		//
+		// Either way we now need to skip over the implementations
+		// of the specific, non-default, handlers.
+		//
+		fmt.Fprintf(&c.buff, `
+	jmp switch_%d_end
+`, n)
+
+		// OK now we include each body
+		// Now we handle each of the case statements
+		// skipping the default
+		for i, cas := range s.Choices {
+
+			// skip the default
+			if cas.Default {
+				continue
+			}
+
+			fmt.Fprintf(&c.buff, `
+switch_%d_case_%d:
+`, n, i)
+			for _, s := range cas.Statements {
+				err := c.generateStmt(s)
+				if err != nil {
+					return err
+				}
+			}
+
+			fmt.Fprintf(&c.buff, `
+	jmp switch_%d_end
+`, n)
+
+		}
+
+		// All over now
+		fmt.Fprintf(&c.buff, `
+switch_%d_end:
+`, n)
+
 	default:
 		return fmt.Errorf("unhandled token in generateStmt %v", stmt)
 

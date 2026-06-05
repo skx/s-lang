@@ -24,12 +24,14 @@ In terms of features:
   * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the assembly-generation.  So you can add "`.section blah .. ..`" without fear of breaking things.
 * Looping is available with the `while` statement, including standard support for `break` and `continue`.
 * Conditional support with `if` with `else` branch too.
-* Some support for catching signals, and "magic functions":
+* We support `switch` statements, albeit only with integer/character literals for the `case` matches.
+  * `default` is supported too, of course.
+* Some support for catching signals via "magic functions":
   * `sigint()` is called, if defined, when SIGINT is received (i.e. Ctrl-C is pressed).
     * We use this in [examples/life.in](examples/life.in) to clear the screen, and restore the cursor.
   * `sigfpe()` is called, if defined, when SIGFPE is received.
     * This is the floating-point exception generated upon division by zero.
-  * `at_exit()` is called, if defined, when the program terminates, either due to those previous signals being caught, or at an ordinary exit.
+* Cleanup via `at_exit()` which is called, if defined, when the program terminates, either due to signals being caught, or at an ordinary exit.
 * User defined functions, with default values.
 
 Anti-features, or limitations:
@@ -52,7 +54,7 @@ See [examples/](examples/) for _real_ programs.  A couple of highlights:
   * Runs several obvious programs:
     * The classic "Hello World" program.
     * A simple "cat", which copies STDIN to STDOUT.
-    * Them mandelbrot generation program (takes 8 minutes to complete)!
+    * The mandelbrot generation program (takes 8 minutes to complete)!
   * If executed with the path to a brainfuck program it will read and execute that.
 * [examples/life.in](examples/life.in)
   * Conway's Game of Life.

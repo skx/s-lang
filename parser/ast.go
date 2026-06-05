@@ -247,3 +247,27 @@ type While struct {
 	// Statements are the things we execute while the condition is true.
 	Statements []Statement
 }
+
+// Switch handles a switch statement
+type Switch struct {
+
+	// Value is the thing that is evaluated to determine
+	// which block should be executed.
+	Value Expr
+
+	// The branches we handle
+	Choices []*Case
+}
+
+// Case handles the case within a switch statement
+type Case struct {
+
+	// Default branch?
+	Default bool
+
+	// Expression is the thing we match
+	Expression Expr
+
+	// Statements holds the code to execute if there is a match.
+	Statements []Statement
+}
