@@ -54,6 +54,11 @@ func FuzzProject(f *testing.F) {
 		"unexpected token in parseAtom Token{Type:EOF Value:}",
 		"invalid character '!'",
 		"return can only be used within a function",
+		"'}' after switch",           // switch
+		"'{' after switch",           //
+		"'}' after case",             // switch
+		"'{' after case",             //
+		"expected case|default, got", //
 	}
 
 	//
@@ -87,13 +92,17 @@ func FuzzProject(f *testing.F) {
 		`function foo() { function bar() { print("steve\n");  } }`,
 		`function foo(age, name="Steve") { print(name); }  foo(3)`,
 
+		// postfix
+		"let i = 3; i++;",
+		"let i = 3; i--;",
+
 		// return
 		"function foo() { return(3); }",
 		"function foo() { let a = 3; return(a); }",
 
-		// postfix
-		"let i = 3; i++;",
-		"let i = 3; i--;",
+		"let a = 3; switch a { case 3 { print(\"three\"); } case 4 { print(4); } default { print(33); } }",
+		"let a = 3; switch a { case 3 { print(\"three\"); } case 4 { print(4); } default { print(33); } ",
+		"let a = 3; switch a { case 3 { print(\"three\"); } case 4 { ",
 
 		// operations
 		"print( 1 - 2 ); ",
