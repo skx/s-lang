@@ -1238,12 +1238,19 @@ while_%d_end:
 					return err
 				}
 			}
+		}
 
-			fmt.Fprintf(&c.buff, `
+		//
+		// Here we've finished the case-jumps
+		// and we either have generated a default-case
+		// or done nothing if there was none present.
+		//
+		// Either way we now need to skip over the implementations
+		// of the specific, non-default, handlers.
+		//
+		fmt.Fprintf(&c.buff, `
 	jmp switch_%d_end
 `, n)
-
-		}
 
 		// OK now we include each body
 		// Now we handle each of the case statements
