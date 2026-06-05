@@ -82,6 +82,20 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "%s%s\n", stmt.Expr, stmt.Op)
 	case *parser.StringLiteral:
 		fmt.Fprintf(output, "String Literal %s;\n", stmt.Value)
+	case *parser.Switch:
+		fmt.Fprintf(output, "switch( %s ) {\n", stmt.Value)
+		for _, x := range stmt.Choices {
+			fmt.Fprintf(output, "\tcase %s {\n", x.Expression)
+			for _, s := range x.Statements {
+				fmt.Fprintf(output, "\t\t")
+				err := p.printStmt(s)
+				if err != nil {
+					return err
+				}
+			}
+			fmt.Fprintf(output, "\t}\n")
+		}
+		fmt.Fprintf(output, "}\n")
 	case *parser.VariableExpr:
 		fmt.Fprintf(output, "%s\n", stmt.Name)
 	case *parser.While:
