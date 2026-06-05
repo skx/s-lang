@@ -1,0 +1,22 @@
+function s( a ) {
+   switch( a ) {
+        case 1 {
+                print("one\n");
+        }
+        case 2 {
+                print("two\n");
+        }
+        case 3 {
+                print("three\n");
+        }
+        default {
+                print("neither one, two, nor three
+");
+        }
+   }
+}
+
+s(1);
+s(2);
+s(3);
+s(5);
