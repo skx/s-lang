@@ -7,7 +7,7 @@
 #   ./brainfuck hello
 #   ./brainfuck mandelbrot
 #
-# Since we cannot read files yet these programs are inline.
+# Any other argument will be assumed to be a filename to read.
 #
 
 
@@ -206,117 +206,197 @@ let cellptr = 0;
 # Allocate the memory for the cells
 let ram = malloc(4096);
 
-function getClose(i) {
+# Cache of open-close offsets.
+let jumpOpen  = malloc(length * 2);
+let jumpClose = malloc(length * 2);
 
-   let count = 1;
-   while(count) {
-       let i = i + 1;
+#
+# We want to store 0-65535 inside our stack, but we
+# can't do that directly - only eight-bit values.
+#
+# (Well we don't need such big numbers, but we want
+# to store offsets within our program - and the program
+# will certainly be longer than 255 bytes.)
+#
+# Split it into two parts.
+#
+function setStack(stack, index, value) {
+    stack[index*2]     = value % 256;
+    stack[index*2 + 1] = float2int(value / 256);
+}
 
-       # get the next opcode
-       let c = program[i];
+#
+# Helper to do the retrival.
+#
+function getStack(stack, index) {
+    return( stack[index*2] + (256 * stack[index*2 + 1]) );
+}
 
-       if (c == ']') {  # close
-          let count = count - 1;
-       }
-       if (c == '[') {  # open
-          let count = count + 1;
-       }
-   }
-   return(i+1);
+#
+# Same story, we can't set a value bigger than 255 into
+# our byte-array, so we have to split the value into two
+# eight-bit pieces.
+#
+function setJump(table, index, value) {
+
+    let low  = value % 256;
+    let high = float2int(value / 256);
+
+    table[index*2]     = low;
+    table[index*2 + 1] = high;
+}
+
+#
+# Get the value
+#
+function getJump(table, index) {
+
+    let low  = table[index*2];
+    let high = table[index*2 + 1];
+
+    return(low + (256 * high));
 }
 
 
-function getOpen(i) {
-   let count = 1;
-   while(count) {
-       let i = i - 1;
+#
+# Build our jump tables for loop open/close
+#
+# We use a temporary stack here (never freed, oops), and
+# populate the global "jumpOpen" and "jumpClose" arrays
+# with the appropriate offsets.
+#
+function buildJumpTable() {
 
-       # get the next opcode
-       let c = program[i];
+    let stack = malloc(length * 2);
+    let sp = 0;
+    let i = 0;
 
-       if (c == ']') {  # close
-          let count = count + 1;
-       }
-       if (c == '[') {  # open
-          let count = count - 1;
-       }
-   }
-   return(i);
+    while (i < length) {
+
+        switch (program[i]) {
+
+            case '[' {
+               setStack(stack, sp, i);
+               sp++;
+            }
+
+            case ']' {
+
+               if (sp == 0) {
+                  print("Unmatched ]\n");
+                  return(1);
+               }
+
+               sp--
+
+               let open = getStack(stack, sp);
+               let close = i;
+
+               #
+               # '[' jumps to instruction after ']'
+               #
+               setJump(jumpOpen, open, close + 1);
+
+               #
+               # ']' jumps back to matching '['
+               #
+               setJump(jumpClose, close, open);
+            }
+        }
+        i++;
+    }
+
+    if (sp != 0) {
+        print("Unmatched [\n");
+        return(1);
+    }
+    return(0);
+}
+
+
+#
+# Build the jump table of cached
+# loop indexes.
+#
+if ( buildJumpTable() != 0 ) {
+   print("failed to succesfully build our jump table!\n");
+   exit(0);
 }
 
 
 # while we have the program
 while(index < length) {
 
-   # get the next opcode
-   let c = program[index];
+   # Process the next character.
+   #
+   # NOTE: We use a switch-statement here so that we handle
+   # each known opcode.
+   #
+   # Anything that isn't recognized as a valid instruction will be ignored.
+   #
+   switch (program[index]) {
 
-   # +: increment the value at the cellptr
-   if (c == '+') {
-      let n = ram[cellptr];
-      let n = n + 1 ;
-      if(n > 255) {
-        let n = 0;
-      }
-      ram[cellptr] = n;
-   }
-
-   # -: decrement the value at the cellptr
-   if (c == '-') {
-      let n = ram[cellptr];
-      let n = n - 1 ;
-      if(n < 0) {
-         let n = 255;
-      }
-      ram[cellptr] = n;
-   }
-
-   # ,: read from STDIN
-   if (c == ',') {
-      let x = getc();
-      if ( x < 0 ) {
-         # failed to read from STDIN
-         exit( 1 );
-      }
-      ram[cellptr] = x;
-   }
-
-   # .: print contents of cellptr
-   if (c == '.') {
-      let n = ram[cellptr];
-      putc(n);
-   }
-
-   # <: decrement cellptr
-   if (c == '<') {
-      let cellptr = cellptr - 1;
-   }
-
-   # >: increment cellptr
-   if (c == '>') {
-      let cellptr = cellptr + 1;
-   }
-
-   # [: loop open
-   if (c == '[') {
-     # is the byte at the data pointer zero?
-     let n = ram[cellptr];
-     if (n == 0) {
-       let index = getClose(index);
-       continue;
+     # +: increment the value at the cellptr
+     case '+' {
+        let n = ram[cellptr];
+        n++;
+        ram[cellptr] = n;
      }
-   }
 
-   # ]: loop close
-   if (c == ']') {
-     # is the byte at the data pointer zero?
-     let n = ram[cellptr];
-     if (n != 0) {
-       let index = getOpen(index);
-       continue;
+     # -: decrement the value at the cellptr
+     case '-' {
+        let n = ram[cellptr];
+        n--;
+        ram[cellptr] = n;
+     }
+
+     # ,: read from STDIN
+     case ',' {
+        let x = getc();
+        if ( x < 0 ) {
+           # failed to read from STDIN
+           exit( 1 );
+        }
+        ram[cellptr] = x;
+     }
+
+     # .: print contents of cellptr
+     case '.' {
+        let n = ram[cellptr];
+        putc(n);
+     }
+
+     # <: decrement cellptr
+     case '<' {
+        cellptr--;
+     }
+
+     # >: increment cellptr
+     case '>' {
+       cellptr++;
+     }
+
+     # [: loop open
+     case '[' {
+        # is the byte at the data pointer zero?
+        let n = ram[cellptr];
+        if (n == 0) {
+          let index = getJump(jumpOpen, index);
+          continue;
+        }
+     }
+
+     # ]: loop close
+     case ']' {
+        # is the byte at the data pointer zero?
+        let n = ram[cellptr];
+        if (n != 0) {
+           let index = getJump(jumpClose, index);
+           continue;
+        }
      }
    }
 
    # next opcode
-   let index = index + 1;
+   index++;
 }
