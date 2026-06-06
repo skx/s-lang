@@ -77,6 +77,21 @@ type Compiler struct {
 	// statements.
 	labelCount int
 
+	// pragmas stores any pragma values we've received.
+	//
+	// Pragmas are nothing more than arbitrary "key = value"
+	// pairs, which can be used by this compiler to alter
+	// its behaviour.
+	//
+	// Currently we allow defining pragmas to specify the
+	// size of values which are retrieved/stored within
+	// arrays - we do this because we have no notion of
+	// typing so we cannot define "u8", "u16", etc.
+	//
+	// It might be we'll extend their use further in the
+	// future, but that is an open question.
+	pragmas map[string]string
+
 	// whiles is updated every time we enter a new
 	// while-scope.
 	//
@@ -162,12 +177,13 @@ type Compiler struct {
 // and options set.
 func New(options ...Option) (*Compiler, error) {
 	tmp := &Compiler{
-		stringTable:     NewStringTable(),
-		floatTable:      NewFloatTable(),
-		scope:           NewScope(nil),
 		constantFolding: true,
-		typeCheck:       check.New(),
+		floatTable:      NewFloatTable(),
 		knownFunctions:  make(map[string][]*parser.FunctionParameter),
+		pragmas:         make(map[string]string),
+		scope:           NewScope(nil),
+		stringTable:     NewStringTable(),
+		typeCheck:       check.New(),
 	}
 
 	// Allow options to override our defaults
@@ -249,7 +265,7 @@ func (c *Compiler) Compile() (string, error) {
 		}
 	}
 
-	// Helper struct
+	// Helper struct to populate the footer-template.
 	type FooterData struct {
 
 		// String data for the template rendering
@@ -265,6 +281,9 @@ func (c *Compiler) Compile() (string, error) {
 		Data []string
 	}
 
+	// Create a concrete instance of the structure
+	// above, with things we've created/updated
+	// as we've parsed and compiled the user-program.
 	vars := &FooterData{
 		StringTable: c.stringTable.GetAll(),
 		FloatTable:  c.floatTable.GetAll(),
@@ -273,7 +292,7 @@ func (c *Compiler) Compile() (string, error) {
 	}
 
 	// Render the footer, which will also include
-	// our standard library
+	// our standard library.
 	err = tmpl.ExecuteTemplate(&c.buff, "footer.tmpl", vars)
 	if err != nil {
 		return "", err
@@ -340,6 +359,24 @@ func (c *Compiler) emitLoadVariable(name string) error {
 // emitLoadIndex emits the code for "xx[N]".
 func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
+	size := "byte"
+
+	// See if we got a size pragma
+	val, ok := c.pragmas[expr.Left.String()]
+	if ok {
+		switch val {
+		case "size8":
+			size = "byte"
+		case "size16":
+			size = "word"
+		case "size32":
+			size = "quad"
+		default:
+			return fmt.Errorf("unknown value in 'pragm %s %s'",
+				expr.Left.String(), val)
+		}
+	}
+
 	// Compile base expression
 	_, err := c.compileExpr(expr.Left)
 	if err != nil {
@@ -357,33 +394,44 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 		return err
 	}
 
-	fmt.Fprint(&c.buff, `
+	extra := ""
+	if size == "word" {
+		// 2 x index
+		extra = "add rax, rax"
+	}
+	if size == "quad" {
+		// 4 x index
+		extra = "add rax, rax\n  add rax, rax\n"
+	}
+
+	fmt.Fprintf(&c.buff, `
 	# index object -> integer
 	sar rax, 2
 
+	%s
 	# restore base
 	pop rbx
-`)
+`, extra)
 
 	//
 	// rbx = tagged string
 	// rax = integer index
 	//
 
-	fmt.Fprint(&c.buff, `
+	fmt.Fprintf(&c.buff, `
 	# untag string pointer
 	and rbx, -4
 
-	# compute address of character
+	# compute address to read from
 	add rbx, rax
 
-	# load byte
-	movzx rax, byte ptr [rbx]
+	# load value
+	xor rax, rax
+	movzx rax, %s ptr [rbx]
 
-	# allocate boxed integer result
-	and rax, 255
+	# mark as integer
 	sal rax, 2
-`)
+`, size)
 
 	return nil
 }
@@ -391,6 +439,24 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 // emitStoreIndex generates the code for "x[N] = y"
 func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 
+	size := "byte"
+
+	// See if we got a size pragma
+	val, ok := c.pragmas[expr.Left.String()]
+	if ok {
+		switch val {
+		case "size8":
+			size = "byte"
+		case "size16":
+			size = "word"
+		case "size32":
+			size = "quad"
+		default:
+			return fmt.Errorf("unknown value in 'pragm %s %s'",
+				expr.Left.String(), val)
+		}
+	}
+
 	// Compile base expression
 	_, err := c.compileExpr(expr.Left)
 	if err != nil {
@@ -408,11 +474,26 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		return err
 	}
 
-	fmt.Fprint(&c.buff, `
+	extra := ""
+	register := "al"
+
+	if size == "word" {
+		// 2 x index
+		extra = "add rax, rax"
+		register = "ax"
+	}
+	if size == "quad" {
+		// 4 x index
+		extra = "add rax, rax\n  add rax, rax\n"
+		register = "rax"
+	}
+
+	fmt.Fprintf(&c.buff, `
 	# index object -> integer
 	sar rax, 2
+	%s
 	push rax
-`)
+`, extra)
 
 	// compile value to set
 	_, err = c.compileExpr(expr.Expression)
@@ -424,21 +505,21 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 	// rbx == offset
 	// rcx == base
 
-	fmt.Fprint(&c.buff, `
+	fmt.Fprintf(&c.buff, `
 	pop rbx     # offset (already untagged)
 	pop rcx     # base
 	and rcx, -4 # untag base
 	sar rax, 2  # untag value
 
-	# compute address of character
+	# compute address to update
 	add rbx, rcx
 
-	# load byte
-	mov byte ptr [rbx], al
+	# save value
+	mov %s ptr [rbx], %s
 
 	# return the value
 	sal rax, 2
-`)
+`, size, register)
 
 	return nil
 }
@@ -770,12 +851,12 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 		err := c.emitFunctionCall(v)
 		return check.UNKNOWN, err
 
-	// str[index] = value
+	// ptr[index] = value
 	case *parser.IndexAssign:
 		err := c.emitStoreIndex(v)
 		return check.UNKNOWN, err
 
-	// get str[index]
+	// ptr[index]
 	case *parser.IndexExpr:
 		err := c.emitLoadIndex(v)
 		return check.UNKNOWN, err
@@ -1051,6 +1132,9 @@ if_%d_end:
 		if err != nil {
 			return err
 		}
+
+	case *parser.Pragma:
+		c.pragmas[s.Key] = s.Value
 
 	case *parser.PostfixExpr:
 		// get
