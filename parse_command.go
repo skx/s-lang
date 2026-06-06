@@ -80,6 +80,8 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "RETURN(%v)\n", stmt.Expression)
 	case *parser.PostfixExpr:
 		fmt.Fprintf(output, "%s%s\n", stmt.Expr, stmt.Op)
+	case *parser.Pragma:
+		fmt.Fprintf(output, "pragma %s = %s;\n", stmt.Key, stmt.Value)
 	case *parser.StringLiteral:
 		fmt.Fprintf(output, "String Literal %s;\n", stmt.Value)
 	case *parser.Switch:
