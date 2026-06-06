@@ -584,6 +584,19 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res,
 				&Let{Left: left, Expression: vals})
 
+		case lexer.PRAGMA:
+			k := p.l.Next()
+			if k.Type != lexer.IDENT {
+				return res, fmt.Errorf("pragma key must be an ident")
+			}
+			v := p.l.Next()
+			if v.Type != lexer.IDENT {
+				return res, fmt.Errorf("pragma value must be an ident")
+			}
+			res = append(res, &Pragma{
+				Key:   k.Value.(string),
+				Value: v.Value.(string),
+			})
 		case lexer.RETURN:
 			var expr Expr
 			var err error
