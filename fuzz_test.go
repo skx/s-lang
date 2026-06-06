@@ -61,6 +61,8 @@ func FuzzProject(f *testing.F) {
 		"'{' after case",                            //
 		"expected case|default, got",                //
 		"only integer literals for CASE statements", //
+		"pragma key must be an ident",               // pragma
+		"pragma value must be an ident",             // pragma
 	}
 
 	//
@@ -113,6 +115,10 @@ func FuzzProject(f *testing.F) {
 		"print( 1 * 2 ); ",
 		"print( 1 % 2 ); ",
 		"print( 1 ^ 2 ); ",
+
+		// misc
+		"pragma foo bar",
+		"let foo = malloc(2); pragma foo bar; ",
 	}
 
 	//

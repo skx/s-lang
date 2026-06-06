@@ -1,0 +1,28 @@
+#
+# Test that we can address word-values directly,
+# using a pragma
+#
+
+
+# allocate memory for 3 entries.
+let a = malloc(3 * 2);
+
+#
+# Set the values as 8-bit
+#
+a[0] = 12;
+a[1] = 33;  # 12 + 256 * 33 = 8460
+a[2] = 2;
+a[3] = 27;  # 2 + 256 * 27 = 6914
+
+#
+# Now mark this array as holding sixteen-bit values,
+# rather than 8-bit values, and retrieve their
+# contents.
+#
+pragma a size16
+print( a[0], "\n");  # 8460
+print( a[1], "\n");  # 6912
+print( a[2], "\n");  # 0
+print( a[3], "\n");  # 0
+

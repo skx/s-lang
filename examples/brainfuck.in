@@ -206,57 +206,13 @@ let cellptr = 0;
 # Allocate the memory for the cells
 let ram = malloc(4096);
 
-# Cache of open-close offsets.
+# Cache of open offsets; note we store 16-bit values.
 let jumpOpen  = malloc(length * 2);
+pragma jumpOpen size16
+
+# Cache of close offsets; note we store 16-bit values.
 let jumpClose = malloc(length * 2);
-
-#
-# We want to store 0-65535 inside our stack, but we
-# can't do that directly - only eight-bit values.
-#
-# (Well we don't need such big numbers, but we want
-# to store offsets within our program - and the program
-# will certainly be longer than 255 bytes.)
-#
-# Split it into two parts.
-#
-function setStack(stack, index, value) {
-    stack[index*2]     = value % 256;
-    stack[index*2 + 1] = float2int(value / 256);
-}
-
-#
-# Helper to do the retrival.
-#
-function getStack(stack, index) {
-    return( stack[index*2] + (256 * stack[index*2 + 1]) );
-}
-
-#
-# Same story, we can't set a value bigger than 255 into
-# our byte-array, so we have to split the value into two
-# eight-bit pieces.
-#
-function setJump(table, index, value) {
-
-    let low  = value % 256;
-    let high = float2int(value / 256);
-
-    table[index*2]     = low;
-    table[index*2 + 1] = high;
-}
-
-#
-# Get the value
-#
-function getJump(table, index) {
-
-    let low  = table[index*2];
-    let high = table[index*2 + 1];
-
-    return(low + (256 * high));
-}
-
+pragma jumpClose size16
 
 #
 # Build our jump tables for loop open/close
@@ -267,7 +223,21 @@ function getJump(table, index) {
 #
 function buildJumpTable() {
 
+    #
+    # By default our array index-operations
+    # work on characters (i.e. 8-bit values).
+    #
+    # Here we mark the area of memory as being
+    # used to hold 16-bit values (i.e. two bytes).
+    #
+    # This then works for stack[x], or stack[x]=Y
+    #
+    # Of course we had to remember to double the size
+    # allocation manually.
+    #
     let stack = malloc(length * 2);
+    pragma stack size16
+
     let sp = 0;
     let i = 0;
 
@@ -276,7 +246,7 @@ function buildJumpTable() {
         switch (program[i]) {
 
             case '[' {
-               setStack(stack, sp, i);
+               stack[ sp ] = i;
                sp++;
             }
 
@@ -289,18 +259,18 @@ function buildJumpTable() {
 
                sp--
 
-               let open = getStack(stack, sp);
+               let open = stack[ sp ];
                let close = i;
 
                #
                # '[' jumps to instruction after ']'
                #
-               setJump(jumpOpen, open, close + 1);
+               jumpOpen[open] = close + 1;
 
                #
                # ']' jumps back to matching '['
                #
-               setJump(jumpClose, close, open);
+               jumpClose[close] = open;
             }
         }
         i++;
@@ -329,8 +299,7 @@ while(index < length) {
 
    # Process the next character.
    #
-   # NOTE: We use a switch-statement here so that we handle
-   # each known opcode.
+   # NOTE: We use a switch-statement here so that we handle each known opcode.
    #
    # Anything that isn't recognized as a valid instruction will be ignored.
    #
@@ -381,7 +350,7 @@ while(index < length) {
         # is the byte at the data pointer zero?
         let n = ram[cellptr];
         if (n == 0) {
-          let index = getJump(jumpOpen, index);
+          let index = jumpOpen[ index ];
           continue;
         }
      }
@@ -391,7 +360,7 @@ while(index < length) {
         # is the byte at the data pointer zero?
         let n = ram[cellptr];
         if (n != 0) {
-           let index = getJump(jumpClose, index);
+           let index = jumpClose[index];
            continue;
         }
      }

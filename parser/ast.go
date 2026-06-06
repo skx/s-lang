@@ -271,3 +271,13 @@ type Case struct {
 	// Statements holds the code to execute if there is a match.
 	Statements []Statement
 }
+
+// Pragma holds an arbitrary key=value entry.
+type Pragma struct {
+
+	// Key contains the key of the pragma entry.
+	Key string
+
+	// Value is the value stored with the specified key.
+	Value string
+}
