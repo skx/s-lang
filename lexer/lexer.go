@@ -30,6 +30,7 @@ const (
 	IF       = "IF"
 	INLINE   = "INLINE"
 	LET      = "LET"
+	PRAGMA   = "PRAGMA"
 	RETURN   = "RETURN"
 	SWITCH   = "SWITCH"
 	WHILE    = "WHILE"
@@ -156,6 +157,7 @@ func NewLexer(input string) *Lexer {
 	l.keywords["function"] = true
 	l.keywords["if"] = true
 	l.keywords["let"] = true
+	l.keywords["pragma"] = true
 	l.keywords["return"] = true
 	l.keywords["switch"] = true
 	l.keywords["while"] = true
