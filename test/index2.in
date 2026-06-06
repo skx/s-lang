@@ -1,0 +1,26 @@
+#
+# 8-bit index get/set
+# 
+let a = "Steve";
+
+if ( a[0] != 'S' ) { print("a[0] failed\n" ); }
+if ( a[1] != 't' ) { print("a[1] failed\n" ); }
+if ( a[2] != 'e' ) { print("a[2] failed\n" ); }
+if ( a[3] != 'v' ) { print("a[3] failed\n" ); }
+if ( a[4] != 'e' ) { print("a[4] failed\n" ); }
+
+a[0] = 'H';
+a[1] = 'e';
+a[2] = 'l';
+a[3] = 'l';
+a[4] = 'o';
+print(a, ", world!\n");
+
+#
+# Confirm we've got updated values
+#
+if ( a[0] != 'H' ) { print("a[0] failed\n" ); }
+if ( a[1] != 'e' ) { print("a[1] failed\n" ); }
+if ( a[2] != 'l' ) { print("a[2] failed\n" ); }
+if ( a[3] != 'l' ) { print("a[3] failed\n" ); }
+if ( a[4] != 'o' ) { print("a[4] failed\n" ); }
