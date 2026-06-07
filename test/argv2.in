@@ -1,0 +1,10 @@
+#
+# Print the first ten argument-values
+#
+
+let i = 0;
+
+while( i < 10 ) {
+   print("argv ", i, " " , argv(i) , "\n");
+   i++;
+}

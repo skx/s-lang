@@ -21,6 +21,10 @@ argv:
 
         sar  rax, 2                 # untag index
 
+        # compare against the count of values
+        cmp rax, [argument_count]
+        jge argv_too_big
+
         mov  rdi, [argument_base]   # start where our arguments do
         mov  rax, [rdi + rax * 8]   # rax = char *
 
@@ -73,6 +77,10 @@ argv:
         ret
 
 
+argv_too_big:
+        mov rax, offset argv_too_big_msg
+        or rax, 1
+        jmp .argv_cleanup
 argv_type_fail:
         mov rax, offset argv_type_fail_msg
         or rax, 1
@@ -83,4 +91,9 @@ argv_type_fail:
 .align 8
 argv_type_fail_msg:
         .ascii "argv: expected INT"
+        .byte 00
+
+.align 8
+argv_too_big_msg:
+        .ascii "argv: out of range"
         .byte 00
