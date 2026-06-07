@@ -19,6 +19,8 @@ In terms of features:
 * Support for integers, floats, and strings.
   * String literals are interned.
     * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
+* There is support for string/memory indexing.
+  * This is byte-based by default, but you can use a `pragma` to treat memory areas of 8, 16, 32, or 64 bit entries.  This is the closest we come to types.
 * The ability to include inline assembly via `inline { .. }`.
   * `inline` statements are generated as they are encountered.
   * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the assembly-generation.  So you can add "`.section blah .. ..`" without fear of breaking things.
@@ -42,7 +44,8 @@ Anti-features, or limitations:
     * You can see that done in this [test/jumptable1.in](test/jumptable1.in) where we use it to implement a simple dynamic dispatch routine.
     * [test/jumptable2.in](test/jumptable2.in) is cleaner approach where we directly get/set 64-bit values.
 * There are only a few functions in the standard library.
-
+* There is no general purpose support for types "u8 x = 8", "u16 y = 16384", etc.
+  * We can allocate memory with `malloc()` and index it with "m[n]" - by default the memory will be treated as arrays of bytes, but `pragma` can be used to reinterpret it as arrays of 16-bit values, 32-bit values, or even 64-bit values.  (See [test/jumptable2.in](test/jumptable2.in) for an example of that.
 That said the code is clean, commented/documented, and contains a fair number of test-cases (both of the internal golang packages, and the compilation and execution of programs).
 
 
