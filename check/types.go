@@ -46,19 +46,22 @@ func (tc *Types) RegisterStdLib() {
 
 	tc.known["argv"] = []Type{INTEGER}
 	tc.known["exit"] = []Type{INTEGER}
+	tc.known["filesize"] = []Type{STRING}
 	tc.known["float2int"] = []Type{FLOAT}
 	tc.known["getenv"] = []Type{STRING}
 	tc.known["int2float"] = []Type{INTEGER}
 	tc.known["malloc"] = []Type{INTEGER}
+	tc.known["panic"] = []Type{STRING}
 	tc.known["putc"] = []Type{INTEGER}
 	tc.known["rand"] = []Type{INTEGER}
+	tc.known["readfile"] = []Type{STRING}
 	tc.known["sleep"] = []Type{NUMBER}
 	tc.known["sqrt"] = []Type{NUMBER}
-	tc.known["strcat"] = []Type{STRING, STRING}
-	tc.known["strdup"] = []Type{STRING}
 	tc.known["str2float"] = []Type{STRING}
 	tc.known["str2int"] = []Type{STRING}
+	tc.known["strcat"] = []Type{STRING, STRING}
 	tc.known["strcmp"] = []Type{STRING, STRING}
+	tc.known["strdup"] = []Type{STRING}
 	tc.known["strlen"] = []Type{STRING}
 
 	// ignored standard library functons:
