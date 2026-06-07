@@ -1,0 +1,7 @@
+#
+# 8-bit index get/set
+#
+let a = "Steve";
+
+# This is out of bounds
+if ( a[15] != 00 ) { print("a[15] failed\n" ); }

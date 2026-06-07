@@ -1,0 +1,96 @@
+#
+# This is a bit of an advanced example.
+#
+# The idea is that we can define an array of function
+# pointers, each pointer points to a function.
+#
+# These can be looked up and dynamically invoked, to
+# give us a simple way to implement a scripting
+# language, or brainfuck interpreter, for example.
+#
+# This is an update to the previous example "jumptable1.in",
+# which was written at a time when we only had the ability to
+# index bytes within strings and arrays of memory as returned
+# by malloc().
+#
+# Now we allow "pragma $ident $size" we can get/set full values
+# inside memory arrays.
+#
+# In this example we pretend we have arrays of 64-bit values
+# via the use of "pragma jump size64".
+#
+#
+##
+
+
+
+##
+## handlers - functions which are dynamically invoked.
+##
+function jnop() {
+   # NOP
+   print("NOP\n");
+}
+function jstar() {
+   print("*\n");
+}
+function jplus() {
+   print("+\n");
+}
+function jminus() {
+   print("-\n");
+}
+
+
+
+#
+# We're going to assume our "program" is ASCII, which means
+# we need to have 255 possible handlers.
+#
+# As noted each address is four bytes so we multiply the
+# size appropriately and record the functions we know.
+#
+let jump = malloc(256 * 8);
+pragma jump size64
+
+#
+# Ensure every value has a handler
+#
+let i = 0;
+while( i < 256 ) {
+  jump[ i ] = jnop;
+  i++;
+}
+
+#
+# Now the real handlers
+#
+jump[ '*' ] = jstar;
+jump[ '+' ] = jplus;
+jump[ '-' ] = jminus;
+
+
+##
+## Define a "program" we'll execute
+##
+let program = "++x++*+-
+  -----**";
+pragma program size8
+#
+# Walk the program for each bit
+#
+let i = 0;
+while( i < strlen(program) ) {
+
+   # Get the character
+   let c = program[i];
+
+   # Get the address of the handler.
+   a = jump[ c ];
+
+   # Call it
+   inline {
+       call rax
+   }
+   i++;
+}

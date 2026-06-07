@@ -141,7 +141,7 @@ sigint_restorer:
 #     sigset_t sa_mask;
 # };
 #
-.section code
+.section .text
 
 #
 # Signal setup failed, panic.
@@ -150,7 +150,19 @@ sigint_fail:
         mov rax, offset int_fail     # Message to display
         call panic_raw               # NOTE: Doesn't return
 
+#
+# Called when bounds check fails
+#
+out_of_bounds:
+        mov rax, offset out_of_bounds_msg
+        call panic_raw
+
 .section .data
+
+.align 8
+out_of_bounds_msg:
+        .ascii "array index out of bounds\n"
+        .byte 0
 
 .align 8
 int_fail:
@@ -193,9 +205,11 @@ SIGINT_CAUGHT:
 .section .data
 
 {{range .StringTable }}
-        .align 4
-{{.Identifier }}:
-        .byte {{.Encoded}}, 0x00
+        .align 8
+        .quad {{.Length}}              # The size of the string is stored before the address.
+{{.Identifier }}:                      # The actual string, stored as hex-encoded bytes
+        .byte {{.Encoded}}
+        .byte 0x00                     # Ensure all strings are null-terminated.
 {{end}}
 {{end}}
 

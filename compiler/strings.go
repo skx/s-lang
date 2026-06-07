@@ -14,6 +14,10 @@ type StringEntry struct {
 	// Identifier is the ID we calculate for the given string.
 	Identifier string
 
+	// Length is the length of the string, not including the trailing
+	// null-terminator.
+	Length int
+
 	// Value is the literal value of the string.
 	Value string
 
@@ -73,6 +77,7 @@ func (st *StringTable) GetAll() []StringEntry {
 
 		res = append(res, StringEntry{
 			Identifier: k,
+			Length:     len(v),
 			Value:      v,
 			Encoded:    b.String(),
 		})

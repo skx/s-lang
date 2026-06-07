@@ -359,18 +359,33 @@ func (c *Compiler) emitLoadVariable(name string) error {
 // emitLoadIndex emits the code for "xx[N]".
 func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
-	size := "byte"
+	// defaults for 8-bit accesses
+	ins := "movzx rax, byte ptr [rbx]"
+	extra := ""
+	width := 1
 
 	// See if we got a size pragma
 	val, ok := c.pragmas[expr.Left.String()]
 	if ok {
+
 		switch val {
 		case "size8":
-			size = "byte"
+			ins = "movzx rax, byte ptr [rbx]"
 		case "size16":
-			size = "word"
+			// 2 x index
+			extra = "add rax, rax"
+			ins = "movzx rax, word ptr [rbx]"
+			width = 2
 		case "size32":
-			size = "quad"
+			// 4x index
+			extra = "add rax, rax\n  add rax, rax\n"
+			ins = "mov eax, dword ptr [rbx]"
+			width = 4
+		case "size64":
+			// 8 x index
+			extra = "add rax, rax\n  add rax, rax\n add rax, rax\n"
+			ins = "mov rax, qword ptr [rbx]"
+			width = 8
 		default:
 			return fmt.Errorf("unknown value in 'pragm %s %s'",
 				expr.Left.String(), val)
@@ -392,16 +407,6 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	_, err = c.compileExpr(expr.Index)
 	if err != nil {
 		return err
-	}
-
-	extra := ""
-	if size == "word" {
-		// 2 x index
-		extra = "add rax, rax"
-	}
-	if size == "quad" {
-		// 4 x index
-		extra = "add rax, rax\n  add rax, rax\n"
 	}
 
 	fmt.Fprintf(&c.buff, `
@@ -413,6 +418,21 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	pop rbx
 `, extra)
 
+	check := ""
+
+	if width == 1 {
+		check = `
+    cmp rax, rcx
+    jae out_of_bounds
+`
+	} else {
+		check = fmt.Sprintf(`
+    lea rdx, [rax+%d]
+    cmp rdx, rcx
+    ja out_of_bounds
+`, width)
+	}
+
 	//
 	// rbx = tagged string
 	// rax = integer index
@@ -422,16 +442,22 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	# untag string pointer
 	and rbx, -4
 
+	# load allocation size
+	mov rcx, [rbx-8]
+
+	# bounds check
+	%s
+
 	# compute address to read from
 	add rbx, rax
 
 	# load value
 	xor rax, rax
-	movzx rax, %s ptr [rbx]
+	%s
 
 	# mark as integer
 	sal rax, 2
-`, size)
+`, check, ins)
 
 	return nil
 }
@@ -439,7 +465,9 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 // emitStoreIndex generates the code for "x[N] = y"
 func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 
+	// defaults for 8-bit access
 	size := "byte"
+	width := 1
 
 	// See if we got a size pragma
 	val, ok := c.pragmas[expr.Left.String()]
@@ -447,10 +475,16 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		switch val {
 		case "size8":
 			size = "byte"
+			width = 1
 		case "size16":
 			size = "word"
+			width = 2
 		case "size32":
-			size = "quad"
+			size = "dword"
+			width = 4
+		case "size64":
+			size = "qword"
+			width = 8
 		default:
 			return fmt.Errorf("unknown value in 'pragm %s %s'",
 				expr.Left.String(), val)
@@ -474,6 +508,21 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		return err
 	}
 
+	check := ""
+
+	if width == 1 {
+		check = `
+	cmp rbx, rdx
+	jae out_of_bounds
+`
+	} else {
+		check = fmt.Sprintf(`
+	lea r8, [rbx+%d]
+	cmp r8, rdx
+	ja out_of_bounds
+`, width)
+	}
+
 	extra := ""
 	register := "al"
 
@@ -482,9 +531,14 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		extra = "add rax, rax"
 		register = "ax"
 	}
-	if size == "quad" {
+	if size == "dword" {
 		// 4 x index
 		extra = "add rax, rax\n  add rax, rax\n"
+		register = "eax"
+	}
+	if size == "qword" {
+		// 8 x index
+		extra = "add rax, rax\n  add rax, rax\n add rax, rax\n"
 		register = "rax"
 	}
 
@@ -511,6 +565,12 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 	and rcx, -4 # untag base
 	sar rax, 2  # untag value
 
+	# load allocation size
+	mov rdx, [rcx-8]
+
+	# bounds check
+	%s
+
 	# compute address to update
 	add rbx, rcx
 
@@ -519,7 +579,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 
 	# return the value
 	sal rax, 2
-`, size, register)
+`, check, size, register)
 
 	return nil
 }

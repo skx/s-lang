@@ -1,11 +1,11 @@
 # s-lang
 
-This repository contains a compiler for a minimal programming language, targeting linux/amd64 systems.
+This repository contains a compiler for a minimal programming language, targeting linux/amd64 systems.  It seems that languages are traditionally named after their creators, or have a single-letter name.  This has both of course - on the basis that it is being developed as a learning exercise I have no expectation that anyone other than myself will ever use it I can do that!
 
 The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 1k.
 
 * Written in Golang for portability, although the generated code is obviously Linux/AMD64-specific.
-* We have a real lexer, and parser, and internally generate an AST which is then walked to generate the assembly language representation of the program.
+* We have a real lexer, and parser.  Internally an AST is constructed which is then walked to generate the assembly language representation of the program.
 * We can automatically invoke the external `as` and `ld` binaries to compile and link if desired.
 
 In terms of features:
@@ -18,9 +18,11 @@ In terms of features:
   * Decrement/Increment support for variables ( `i++;`, or `index--;` for example).
 * Support for integers, floats, and strings.
   * String literals are interned.
-  * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
+    * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
+* There is support for string/memory indexing.
+  * This is byte-based by default, but you can use a `pragma` to treat memory areas of 8, 16, 32, or 64 bit entries.  This is the closest we come to types.
 * The ability to include inline assembly via `inline { .. }`.
-  * `inline` statements are generated inline as they are encountered.
+  * `inline` statements are generated as they are encountered.
   * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the assembly-generation.  So you can add "`.section blah .. ..`" without fear of breaking things.
 * Looping is available with the `while` statement, including standard support for `break` and `continue`.
 * Conditional support with `if` with `else` branch too.
@@ -39,10 +41,14 @@ Anti-features, or limitations:
 * The language is built around numbers (integers&floats), and strings.
   * We have no support for arrays, hashes, or structures.
   * That said you can _fake_ arrays via indexing into characters of strings, or `malloc`'d areas of memory.
-    * You can see that done in this [test/jumptable.in](test/jumptable.in) where we use it to implement a simple dynamic dispatch routine.
+    * You can see that done in this [test/jumptable1.in](test/jumptable1.in) where we use it to implement a simple dynamic dispatch routine.
+    * [test/jumptable2.in](test/jumptable2.in) is cleaner approach where we directly get/set 64-bit values.
 * There are only a few functions in the standard library.
+* There is no general purpose support for types "u8 x = 8", "u16 y = 16384", etc.
+  * We can allocate memory with `malloc()` and index it with "m[n]" - by default the memory will be treated as arrays of bytes.
+  * `pragma` can be used to reinterpret it as arrays of 16-bit values, 32-bit values, or even 64-bit values.  (See [test/jumptable2.in](test/jumptable2.in) for an example of that.)
 
-That said the code is clean, and hopefully readable, and we've got good test-case coverage of both the  golang packages, and the functional operation).
+That said the code is clean, commented/documented, and contains a fair number of test-cases (both of the internal golang packages, and the compilation and execution of programs).
 
 
 
@@ -173,7 +179,7 @@ The `compile` sub-command automates the process of generating source, compiling 
 
 ### compile
 
-This performs the same generation as in the `generate` sub-command, but also runs the assembler and linker for you:
+This performs the same generation as in the `generate` sub-command, but also runs the assembler and linker for you (the linking step is pretty agressive, we remove unused sections, and strip):
 
      s-lang compile [-output a.out] examples/example.in
 
