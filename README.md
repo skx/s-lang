@@ -39,7 +39,8 @@ Anti-features, or limitations:
 * The language is built around numbers (integers&floats), and strings.
   * We have no support for arrays, hashes, or structures.
   * That said you can _fake_ arrays via indexing into characters of strings, or `malloc`'d areas of memory.
-    * You can see that done in this [test/jumptable.in](test/jumptable.in) where we use it to implement a simple dynamic dispatch routine.
+    * You can see that done in this [test/jumptable1.in](test/jumptable1.in) where we use it to implement a simple dynamic dispatch routine.
+    * [test/jumptable2.in](test/jumptable2.in) is cleaner approach where we directly get/set 64-bit values.
 * There are only a few functions in the standard library.
 
 That said the code is clean, commented/documented, and contains a fair number of test-cases (both of the internal golang packages, and the compilation and execution of programs).
