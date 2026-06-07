@@ -1082,10 +1082,9 @@ over_function_%s:
 	# IF condition - value in RAX
 	call true
 	jz  if_%d_false  # non-zero jump to the else
-	jmp if_%d_true   # now we've tested we jump to the true block
 
-if_%d_true:
-`, n, n, n)
+	# now we've tested we fall-through
+`, n)
 
 		fmt.Fprint(&c.buff, txt)
 
