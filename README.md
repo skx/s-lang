@@ -45,7 +45,9 @@ Anti-features, or limitations:
     * [test/jumptable2.in](test/jumptable2.in) is cleaner approach where we directly get/set 64-bit values.
 * There are only a few functions in the standard library.
 * There is no general purpose support for types "u8 x = 8", "u16 y = 16384", etc.
-  * We can allocate memory with `malloc()` and index it with "m[n]" - by default the memory will be treated as arrays of bytes, but `pragma` can be used to reinterpret it as arrays of 16-bit values, 32-bit values, or even 64-bit values.  (See [test/jumptable2.in](test/jumptable2.in) for an example of that.
+  * We can allocate memory with `malloc()` and index it with "m[n]" - by default the memory will be treated as arrays of bytes.
+  * `pragma` can be used to reinterpret it as arrays of 16-bit values, 32-bit values, or even 64-bit values.  (See [test/jumptable2.in](test/jumptable2.in) for an example of that.)
+
 That said the code is clean, commented/documented, and contains a fair number of test-cases (both of the internal golang packages, and the compilation and execution of programs).
 
 
