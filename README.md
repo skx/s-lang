@@ -451,3 +451,20 @@ expr.in
 ```
 
 Running `make test` should run both of those things.
+
+
+
+## Lessons Learned
+
+* Not having types meant it was easy to get started, but in the long-run it complicated a lot of the code
+  * Storing type-data in the lower bits was a compromise decision which worked, but it becomes pervasive.
+* I should have started with a Pratt-style parser, rather than recursive descent.
+  * It's much easier to extend and manage precedence levels this way.
+* It's surprising how little of a standard-library you actually need to write complex programs.
+* Implementing a real AST was very useful, and a good decision.
+  * I had been tempted to start with a BASIC-style language and skip the use of an AST.
+  * You can see hints of that in my use of "`LET x = y`".
+* Just because it is assembly doesn't mean it is fast.
+  * The mandelbrot example takes two minutes to run, which is 1:58 too slow.
+* Using a real ABI would make functions faster and easier to manage.
+* Using a flexible register allocation would also have made things faster, but it was easy to just assume values were stored in RAX, etc.
