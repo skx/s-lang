@@ -21,6 +21,7 @@ In terms of features:
     * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
 * There is support for string/memory indexing.
   * This is byte-based by default, but you can use a `pragma` to treat memory areas of 8, 16, 32, or 64 bit entries.  This is the closest we come to types.
+  * Bounds checking is enabled and enforced.
 * The ability to include inline assembly via `inline { .. }`.
   * `inline` statements are generated as they are encountered.
   * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the assembly-generation.  So you can add "`.section blah .. ..`" without fear of breaking things.
