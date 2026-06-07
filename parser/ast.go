@@ -226,20 +226,20 @@ type Let struct {
 	Expression Expr
 }
 
-// Return behaves differently depending on the scope.
+// Return terminates execution of a function.
 //
-// In global scope it terminates the running program, with a specified exit-code.
-// Inside a function it breaks out of that function, allowing execution to continue
+// It is special because there might be an expression, or there might not be.
+// This means "return;" is valid, as is "return(3);" - if a value must be returned
+// it will require the brackets and trailing ";".
 // at the point the function was called from.
 type Return struct {
-	// Expression is used for the return value, or exit-code if
-	// the return statement is in the top-level, and not within
-	// the body of a function.
+
+	// Expression is used for the return value, if specified.
 	Expression Expr
 }
 
-// While is our looping operation which currently allows a block of code to
-// be repeated while a variable contains a non-zero value.
+// While is our looping operation which allows a block of code to
+// be repeated while a condition evaluates to a true-value.
 type While struct {
 	// Expression is the expression we evaluate each time through the loop.
 	Expression Expr
@@ -259,7 +259,10 @@ type Switch struct {
 	Choices []*Case
 }
 
-// Case handles the case within a switch statement
+// Case handles a specific case within a switch statement.
+//
+// We support a default-handler if no other case matches, but it is an error to
+// have more than one default case.
 type Case struct {
 
 	// Default branch?
@@ -273,6 +276,9 @@ type Case struct {
 }
 
 // Pragma holds an arbitrary key=value entry.
+//
+// We use this only to modify the "size" of index-operations against strings/memory
+// at the moment.  But it is possible we might do more in the future.
 type Pragma struct {
 
 	// Key contains the key of the pragma entry.
