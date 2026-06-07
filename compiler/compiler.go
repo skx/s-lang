@@ -359,22 +359,33 @@ func (c *Compiler) emitLoadVariable(name string) error {
 // emitLoadIndex emits the code for "xx[N]".
 func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
-	size := "byte"
+	// defaults for 8-bit accesses
+	ins := "movzx rax, byte ptr [rbx]"
+	extra := ""
 	width := 1
 
 	// See if we got a size pragma
 	val, ok := c.pragmas[expr.Left.String()]
 	if ok {
+
 		switch val {
 		case "size8":
-			size = "byte"
-			width = 1
+			ins = "movzx rax, byte ptr [rbx]"
 		case "size16":
-			size = "word"
+			// 2 x index
+			extra = "add rax, rax"
+			ins = "movzx rax, word ptr [rbx]"
 			width = 2
 		case "size32":
-			size = "dword"
+			// 4x index
+			extra = "add rax, rax\n  add rax, rax\n"
+			ins = "mov eax, dword ptr [rbx]"
 			width = 4
+		case "size64":
+			// 8 x index
+			extra = "add rax, rax\n  add rax, rax\n add rax, rax\n"
+			ins = "mov rax, qword ptr [rbx]"
+			width = 8
 		default:
 			return fmt.Errorf("unknown value in 'pragm %s %s'",
 				expr.Left.String(), val)
@@ -396,16 +407,6 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	_, err = c.compileExpr(expr.Index)
 	if err != nil {
 		return err
-	}
-
-	extra := ""
-	if size == "word" {
-		// 2 x index
-		extra = "add rax, rax"
-	}
-	if size == "quad" {
-		// 4 x index
-		extra = "add rax, rax\n  add rax, rax\n"
 	}
 
 	fmt.Fprintf(&c.buff, `
@@ -452,11 +453,11 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	# load value
 	xor rax, rax
-	movzx rax, %s ptr [rbx]
+	%s
 
 	# mark as integer
 	sal rax, 2
-`, check, size)
+`, check, ins)
 
 	return nil
 }
@@ -464,6 +465,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 // emitStoreIndex generates the code for "x[N] = y"
 func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 
+	// defaults for 8-bit access
 	size := "byte"
 	width := 1
 
@@ -477,11 +479,12 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		case "size16":
 			size = "word"
 			width = 2
-
 		case "size32":
-			size = "quad"
+			size = "dword"
 			width = 4
-
+		case "size64":
+			size = "qword"
+			width = 8
 		default:
 			return fmt.Errorf("unknown value in 'pragm %s %s'",
 				expr.Left.String(), val)
@@ -528,9 +531,14 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		extra = "add rax, rax"
 		register = "ax"
 	}
-	if size == "quad" {
+	if size == "dword" {
 		// 4 x index
 		extra = "add rax, rax\n  add rax, rax\n"
+		register = "eax"
+	}
+	if size == "qword" {
+		// 8 x index
+		extra = "add rax, rax\n  add rax, rax\n add rax, rax\n"
 		register = "rax"
 	}
 
