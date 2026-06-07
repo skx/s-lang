@@ -1,13 +1,44 @@
-###
-### This is a bit of an advanced example.
-###
-### The idea is that we can define an array of function
-### pointers, each pointer points to a function.
-###
-### These can be looked up and dynamically invoked, to
-### give us a simple way to implement a scripting
-### language, or brainfuck interpreter, for example.
-###
+#
+# This is a bit of an advanced example.
+#
+# The idea is that we can define an array of function
+# pointers, each pointer points to a function.
+#
+# These can be looked up and dynamically invoked, to
+# give us a simple way to implement a scripting
+# language, or brainfuck interpreter, for example.
+#
+# This example was written at a time when we only had
+# the ability to index bytes within strings and arrays
+# of memory as returned by malloc().
+#
+# Because we could only store eight bit values we had to
+# store larger offsets manually like so:
+#
+#    let index = index * 4;
+#
+#    stack[index] = value % 256;
+#    value = float2int(value / 256);
+#
+#    index++;
+#    stack[index] = value % 256;
+#    value = float2int(value / 256);
+#
+#    index++;
+#    stack[index] = value % 256;
+#    value = float2int(value / 256);
+#
+#    index++;
+#    stack[index] = value % 256;
+#
+# This is obviously manual and terrible, but it does
+# actually work.
+#
+# Nowadays we have support for indexing memory as if
+# it was storing 8, 16, 32, or 64 bit values so this
+# complexity has gone away - you can see the simpler
+# example in "jumptable2.in"
+#
 
 
 
