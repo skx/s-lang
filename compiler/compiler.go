@@ -373,7 +373,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 			size = "word"
 			width = 2
 		case "size32":
-			size = "quad"
+			size = "dword"
 			width = 4
 		default:
 			return fmt.Errorf("unknown value in 'pragm %s %s'",
@@ -443,7 +443,6 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	# load allocation size
 	mov rcx, [rbx-8]
-
 
 	# bounds check
 	%s
