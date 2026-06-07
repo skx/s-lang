@@ -4,8 +4,8 @@
 #
 
 
-# allocate memory for 3 entries.
-let a = malloc(3 * 2);
+# allocate memory for 4 entries.
+let a = malloc(4 * 2);
 
 #
 # Set the values as 8-bit
