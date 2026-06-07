@@ -89,11 +89,11 @@ The following is a tour of our language:
     let a = 3;
     print( a );
 
-    # Indexing works
+    # Indexing works - and is bound-checked at run-time.
     let a = "Steve";
     print(a[0],"\n");
 
-    # Updating too
+    # Updating too - again bounds checking is enforced.
     a[1] = 42;
     print(a,"\n");
 
@@ -121,9 +121,10 @@ The following is a tour of our language:
     }
 
     # Printing of integer and string literal works too.
+    # (Our print function is variadic.)
     print( "steve", " ", 21);
 
-    # Exit with the given status
+    # Exit with the given status (7)
     exit(1 + 2 * 3);
 
 Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
