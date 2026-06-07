@@ -360,6 +360,7 @@ func (c *Compiler) emitLoadVariable(name string) error {
 func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	size := "byte"
+	width := 1
 
 	// See if we got a size pragma
 	val, ok := c.pragmas[expr.Left.String()]
@@ -367,10 +368,13 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 		switch val {
 		case "size8":
 			size = "byte"
+			width = 1
 		case "size16":
 			size = "word"
+			width = 2
 		case "size32":
 			size = "quad"
+			width = 4
 		default:
 			return fmt.Errorf("unknown value in 'pragm %s %s'",
 				expr.Left.String(), val)
@@ -413,6 +417,21 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	pop rbx
 `, extra)
 
+	check := ""
+
+	if width == 1 {
+		check = `
+    cmp rax, rcx
+    jae out_of_bounds
+`
+	} else {
+		check = fmt.Sprintf(`
+    lea rdx, [rax+%d]
+    cmp rdx, rcx
+    ja out_of_bounds
+`, width)
+	}
+
 	//
 	// rbx = tagged string
 	// rax = integer index
@@ -421,6 +440,13 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	fmt.Fprintf(&c.buff, `
 	# untag string pointer
 	and rbx, -4
+
+	# load allocation size
+	mov rcx, [rbx-8]
+
+
+	# bounds check
+	%s
 
 	# compute address to read from
 	add rbx, rax
@@ -431,7 +457,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	# mark as integer
 	sal rax, 2
-`, size)
+`, check, size)
 
 	return nil
 }
