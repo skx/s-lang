@@ -11,11 +11,11 @@ The generated code contains no external dependencies, so when compiled they are 
 In terms of features:
 
 * Single-pass compiler which generates an assembly output for programs.
-* Parsing uses recursive descent with precedence layers:
+* Parsing uses a Pratt-style parser with precedence layers:
   * Maths operations: `+`, `-`, `*`, `/`, `%`, and `^`.
   * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`, for integers, floats, and mixtures of the two.
   * Logical operations: `&&` and `||`.
-  * Decrement/Increment support for variables ( `i++;`, or `index--;` for example).
+  * Postfix decrement/increment support for variables (`i++;`, or `index--;` for example).
 * Support for integers, floats, and strings.
   * String literals are interned.
     * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
