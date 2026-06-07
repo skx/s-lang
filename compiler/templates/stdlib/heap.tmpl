@@ -11,6 +11,17 @@
 # We need to call the init_heap function on startup, just in case
 # there is some memory allocation happening.
 #
+
+##
+## Note on malloc - each allocated region of memory is prefixed
+## with the size of the allocation.
+##
+## So malloc(10) becomes malloc(16) and the storage is:
+##
+##   ram:  size (10)
+##   ptr:  returned to caller
+##
+
 .section .text.heap,"ax",@progbits
 
 init_heap:
@@ -47,21 +58,27 @@ malloc:
     mov rbp, rsp
     push rbx
     push r12
+    push r13
 
     mov rbx, [rbp+16]
-    sar rbx, 2
+    sar rbx, 2                 # requested size
 
-    # align to 8 bytes
+    mov r13, rbx               # save original size
+
+    # add space for size header
+    add rbx, 8
+
+    # align total allocation to 8 bytes
     add rbx, 7
     and rbx, -8
 
-    mov r12, [rip + heap_ptr]    # allocation start
+    mov r12, [rip + heap_ptr]  # allocation start
 
     mov rcx, r12
-    add rcx, rbx           # desired new brk
+    add rcx, rbx               # desired new brk
 
     mov rdi, rcx
-    mov rax, 12
+    mov rax, 12                # sys_brk
     syscall
 
     # verify brk success
@@ -70,21 +87,27 @@ malloc:
 
     mov [rip + heap_ptr], rax
 
-    mov rax, r12
+    # store requested size at start of block
+    mov [r12], r13
+
+    # return pointer to user data
+    lea rax, [r12 + 8]
     or rax, 1
 
     jmp .malloc_done
 
 .malloc_fail:
-    mov rax, offset malloc_fail_msg    # Message to display
-    call panic_raw                     # NOTE: Doesn't return
+    mov rax, offset malloc_fail_msg
+    call panic_raw
 
 .malloc_done:
+    pop r13
     pop r12
     pop rbx
     mov rsp, rbp
     pop rbp
-    ret 8               # Discard stack entry
+    ret 8
+
 
 .section .data.heap,"aw",@progbits
 
