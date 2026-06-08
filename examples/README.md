@@ -30,6 +30,8 @@ If you'd like to see the generated assembly for each example as well as produce 
 * [num2hex.in](num2hex.in)
   * Convert a (decimal) number to hex, and return that result.
   * e.g. "255" -> "`0xFF`".
+* [pf.in](pf.in)
+  * Calculate prime factors of the given number.
 * [primes.in](primes.in)
   * Calculate the first 100 prime numbers.
 * [string.in](string.in)
@@ -43,4 +45,4 @@ If you'd like to see the generated assembly for each example as well as produce 
 Trivial ones:
 
 * [empty.in](empty.in) - Literally an empty source file.
-* [return.in](return.in) - Return a given status-code.
+* [ext.in](exit.in) - Exit with the given status-code.
