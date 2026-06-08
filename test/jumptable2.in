@@ -75,7 +75,7 @@ jump[ '-' ] = jminus;
 ##
 let program = "++x++*+-
   -----**";
-pragma program size8
+
 #
 # Walk the program for each bit
 #
