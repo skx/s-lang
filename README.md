@@ -422,6 +422,8 @@ You can see some tips on debugging with `gdb` in [DEBUGGING.md](DEBUGGING.md), i
 
 Development is nearing completion now.  There are a few small and obvious things to add, but at the same time the scripting language itself is pretty complete, the standard library is complex enough to write real programs, and I suspect my urge to add new things will diminish over time.
 
+* If any compiled program terminates with a segfault at runtime that's a bug I will definitely fix.
+
 Updates _should_ be contributed by pull-requests which address open issues, but sometimes I'm less strict with myself than I should be.
 
 I've written test-cases covering most of the implementation, which you can run in the standard manner:
