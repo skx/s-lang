@@ -842,9 +842,10 @@ func (c *Compiler) emitIf(s *parser.If) error {
 	fmt.Fprintf(&c.buff, `
 if_%d_false:
 `, n)
-	c.pushScope()
 
 	if len(s.False) > 0 {
+
+		c.pushScope()
 		// assemble the body
 		for _, st := range s.False {
 			err := c.generateStmt(st)
@@ -852,8 +853,9 @@ if_%d_false:
 				return err
 			}
 		}
+
+		c.popScope()
 	}
-	c.popScope()
 
 	fmt.Fprintf(&c.buff, `
 if_%d_end:
