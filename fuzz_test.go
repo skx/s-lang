@@ -62,9 +62,10 @@ func FuzzProject(f *testing.F) {
 		"expected case|default, got",                //
 		"only integer literals for CASE statements", //
 		"switch-statement should only have one default block",
-		"pragma key must be an ident",                // pragma
-		"pragma value must be an ident",              // pragma
-		"invalid self-referential function argument", // function call argument
+		"pragma key must be an ident",                         // pragma
+		"pragma value must be an ident",                       // pragma
+		"invalid self-referential function argument",          // function call argument
+		"non-literals prohibited for default argument values", // default values for functions are "simple"
 	}
 
 	//
