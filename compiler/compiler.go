@@ -699,6 +699,155 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 	return nil
 }
 
+// emitIf emits and if-statement.
+//
+// If the expression being tested is constant we optimize by only emitting the
+// appropriate branch - otherwise we generate code to run the conditional, and
+// then the two branches.
+func (c *Compiler) emitIf(s *parser.If) error {
+
+	// Convert simple expressions to their results
+	if c.constantFolding {
+		s.Expression = c.optimizeExpr(s.Expression)
+	}
+
+	// Before we compile an expression we'll see if we can optimize it away.
+	//
+	// If the expression being tested is a string, or a non-zero integer/float we
+	// know it will always be true.
+	//
+	// In that case we don't need to compile the expression, or the else-branch.
+	//
+	// We just compile the body and return.
+	//
+	isConstantTrue := false
+	isConstantFalse := false
+	switch v := s.Expression.(type) {
+	case *parser.IntegerLiteral:
+		if v.Value == 0 {
+			isConstantFalse = true
+		} else {
+			isConstantTrue = true
+		}
+	case *parser.FloatLiteral:
+		if v.Value == 0 {
+			isConstantFalse = true
+		} else {
+			isConstantTrue = true
+		}
+	}
+
+	// Okay we have a constant true-expression, just compile the body, and return.
+	//
+	// Since the expression is constant, and true, we can ignore the ELSE branch.
+	if isConstantTrue {
+		c.pushScope()
+
+		// assemble the body
+		for _, st := range s.True {
+			err := c.generateStmt(st)
+			if err != nil {
+				return err
+			}
+		}
+		c.popScope()
+
+		// early return
+		return nil
+	}
+
+	//
+	// Similar story here - the expression is always false.
+	//
+	// So we don't need to compile the comparison, just the ELSE block, if it is present.
+	//
+	if isConstantFalse {
+
+		if len(s.False) > 0 {
+
+			c.pushScope()
+
+			// assemble the body
+			for _, st := range s.False {
+				err := c.generateStmt(st)
+				if err != nil {
+					return err
+				}
+			}
+
+			c.popScope()
+		}
+		return nil
+	}
+
+	//
+	// Here we have the (most likely) non-constant
+	// conditional.
+	//
+	// So compile the test, the true block, and the
+	// optional false block.
+	//
+	// Generate a unique label
+	n := c.labelCount
+	c.labelCount++
+	// Compile the expression, masking off strings.
+	switch s.Expression.(type) {
+
+	case *parser.StringLiteral:
+		return fmt.Errorf("'if' only permits a numerical expression")
+	default:
+		_, err := c.compileExpr(s.Expression)
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Fprintf(&c.buff, `
+	# IF condition - value in RAX
+	call true
+	jz  if_%d_false  # non-zero jump to the else
+
+	# now we've tested we fall-through
+`, n)
+
+	c.pushScope()
+
+	// assemble the body
+	for _, st := range s.True {
+		err := c.generateStmt(st)
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Fprintf(&c.buff, `
+	jmp if_%d_end
+`, n)
+
+	c.popScope()
+
+	// else - might be empty
+	fmt.Fprintf(&c.buff, `
+if_%d_false:
+`, n)
+	c.pushScope()
+
+	if len(s.False) > 0 {
+		// assemble the body
+		for _, st := range s.False {
+			err := c.generateStmt(st)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	c.popScope()
+
+	fmt.Fprintf(&c.buff, `
+if_%d_end:
+`, n)
+	return nil
+}
+
 // newGlobalLabel returns a suitable label for the global
 // variable named "name".
 func (c *Compiler) newGlobalLabel(name string) string {
@@ -1073,69 +1222,8 @@ over_function_%s:
 
 	case *parser.If:
 
-		// Generate a unique label
-		n := c.labelCount
-		c.labelCount++
-
-		// Compile the expression, masking off strings.
-		switch s.Expression.(type) {
-
-		case *parser.StringLiteral:
-			return fmt.Errorf("'if' only permits a numerical expression")
-		default:
-			_, err := c.compileExpr(s.Expression)
-			if err != nil {
-				return err
-			}
-		}
-		txt := fmt.Sprintf(`
-	# IF condition - value in RAX
-	call true
-	jz  if_%d_false  # non-zero jump to the else
-
-	# now we've tested we fall-through
-`, n)
-
-		fmt.Fprint(&c.buff, txt)
-
-		c.pushScope()
-
-		// assemble the body
-		for _, st := range s.True {
-			err := c.generateStmt(st)
-			if err != nil {
-				return err
-			}
-		}
-		txt = fmt.Sprintf(`
-	jmp if_%d_end
-`, n)
-		fmt.Fprint(&c.buff, txt)
-
-		c.popScope()
-
-		// else - might be empty
-		txt = fmt.Sprintf(`
-if_%d_false:
-`, n)
-		fmt.Fprint(&c.buff, txt)
-		c.pushScope()
-
-		if len(s.False) > 0 {
-			// assemble the body
-			for _, st := range s.False {
-				err := c.generateStmt(st)
-				if err != nil {
-					return err
-				}
-			}
-		}
-		c.popScope()
-
-		txt = fmt.Sprintf(`
-if_%d_end:
-`, n)
-		fmt.Fprint(&c.buff, txt)
+		err := c.emitIf(s)
+		return err
 
 	case *parser.IndexAssign:
 		err := c.emitStoreIndex(s)

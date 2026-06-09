@@ -81,8 +81,7 @@ function foo() {
 	}
 }
 
-// TestConstantFolding folding attempts to ensure that constant
-// folding works.
+// TestConstantFolding attempts to ensure that constant folding works.
 func TestConstantFolding(t *testing.T) {
 
 	// Simple program
@@ -123,6 +122,93 @@ exit( 1 + 2 * 3);
 	}
 	if !strings.Contains(txt, "rax, 2") {
 		t.Fatalf("suspicious output - missing the literal 2")
+	}
+}
+
+// TestConstantIf attempts to ensure that constant IF tests avoid
+// generating all the code they might need to.
+func TestConstantIf(t *testing.T) {
+
+	// Simple program
+	c, err := New(WithSource(`
+function true() { }
+function false() { }
+
+if ( 1 + 2 * 3 ) {
+   true();
+} else {
+   false();
+}
+`))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err := c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if strings.Contains(txt, "call false") {
+		t.Fatalf("suspicious output")
+	}
+	// 7 -> 28 with our typing.
+	if strings.Contains(txt, ", 28") {
+		t.Fatalf("suspicious output")
+	}
+
+	// Same again, but this time the code will only contain the
+	// FALSE block.
+	c, err = New(WithSource(`
+function true() { }
+function false() { }
+
+if ( 0 ) {
+   true();
+} else {
+   false();
+}
+`))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err = c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if strings.Contains(txt, "call true") {
+		t.Fatalf("suspicious output")
+	}
+	if !strings.Contains(txt, "call false") {
+		t.Fatalf("suspicious output")
+	}
+
+	//
+	// Now disable the folding, which will disable
+	// the optimization.
+	//
+	// We should see both branches are present.
+	//
+	c, err = New(WithSource(`
+function true() { }
+function false() { }
+
+if ( 1 + 3 ) {
+   true();
+} else {
+   false();
+}
+`), WithConstantFolding(false))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err = c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if !strings.Contains(txt, "call true") {
+		t.Fatalf("suspicious output")
+	}
+	if !strings.Contains(txt, "call false") {
+		t.Fatalf("suspicious output")
 	}
 }
 
