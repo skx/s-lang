@@ -1008,7 +1008,7 @@ while_%d_end:
 // newGlobalLabel returns a suitable label for the global
 // variable named "name".
 func (c *Compiler) newGlobalLabel(name string) string {
-	lbl := fmt.Sprintf("global_%s_%d", name, len(c.globalVariables))
+	lbl := fmt.Sprintf("global_%s", name)
 	return lbl
 }
 
@@ -1456,13 +1456,12 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 					Label: label,
 				}
 
-				err = c.scope.Define(g)
+				err = c.scope.TopMost().Define(g)
 				if err != nil {
 					return err
 				}
 
 				c.globalVariables = append(c.globalVariables, g)
-
 			}
 		}
 
