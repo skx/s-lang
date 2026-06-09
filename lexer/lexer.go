@@ -489,6 +489,16 @@ func (l *Lexer) Next() *Token {
 			return &Token{Value: "unterminated inline", Type: ERROR}
 		}
 
+		// Special case true/false.  We could handle
+		// them as keywords, but this approach feels
+		// fine.
+		if strings.ToLower(token) == "true" {
+			return &Token{Value: float64(1), Type: INTEGER}
+		}
+		if strings.ToLower(token) == "false" {
+			return &Token{Value: float64(0), Type: INTEGER}
+		}
+
 		//
 		// Should we convert the token from an IDENT into a known
 		// keyword?  If so do it.

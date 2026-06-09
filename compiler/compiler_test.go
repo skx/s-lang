@@ -131,13 +131,13 @@ func TestConstantIf(t *testing.T) {
 
 	// Simple program
 	c, err := New(WithSource(`
-function true() { }
-function false() { }
+function ttrue() { }
+function ffalse() { }
 
 if ( 1 + 2 * 3 ) {
-   true();
+   ttrue();
 } else {
-   false();
+   ffalse();
 }
 `))
 	if err != nil {
@@ -147,7 +147,7 @@ if ( 1 + 2 * 3 ) {
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
 	}
-	if strings.Contains(txt, "call false") {
+	if strings.Contains(txt, "call ffalse") {
 		t.Fatalf("suspicious output")
 	}
 	// 7 -> 28 with our typing.
@@ -158,13 +158,13 @@ if ( 1 + 2 * 3 ) {
 	// Same again, but this time the code will only contain the
 	// FALSE block.
 	c, err = New(WithSource(`
-function true() { }
-function false() { }
+function ttrue() { }
+function ffalse() { }
 
 if ( 0 ) {
-   true();
+   ttrue();
 } else {
-   false();
+   ffalse();
 }
 `))
 	if err != nil {
@@ -174,10 +174,10 @@ if ( 0 ) {
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
 	}
-	if strings.Contains(txt, "call true") {
+	if strings.Contains(txt, "call ttrue") {
 		t.Fatalf("suspicious output")
 	}
-	if !strings.Contains(txt, "call false") {
+	if !strings.Contains(txt, "call ffalse") {
 		t.Fatalf("suspicious output")
 	}
 
@@ -188,13 +188,13 @@ if ( 0 ) {
 	// We should see both branches are present.
 	//
 	c, err = New(WithSource(`
-function true() { }
-function false() { }
+function ttrue() { }
+function ffalse() { }
 
 if ( 1 + 3 ) {
-   true();
+   ttrue();
 } else {
-   false();
+   ffalse();
 }
 `), WithConstantFolding(false))
 	if err != nil {
@@ -204,10 +204,10 @@ if ( 1 + 3 ) {
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
 	}
-	if !strings.Contains(txt, "call true") {
+	if !strings.Contains(txt, "call ttrue") {
 		t.Fatalf("suspicious output")
 	}
-	if !strings.Contains(txt, "call false") {
+	if !strings.Contains(txt, "call ffalse") {
 		t.Fatalf("suspicious output")
 	}
 }
