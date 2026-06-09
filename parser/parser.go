@@ -25,6 +25,8 @@ const (
 
 	PREC_MUL
 
+	PREC_PREFIX // prefix
+
 	PREC_POWER
 
 	PREC_POSTFIX
@@ -247,6 +249,18 @@ func (p *Parser) parseAtom() (Expr, error) {
 	tok := p.l.Next()
 
 	switch tok.Type {
+
+	// !X, +Y, or -Z
+	case lexer.EXCLAIM, lexer.MINUS, lexer.PLUS:
+		expr, err := p.parsePratt(PREC_PREFIX)
+		if err != nil {
+			return nil, err
+		}
+
+		return &PrefixExpr{
+			Op:   tok.Type,
+			Expr: expr,
+		}, nil
 
 	// float
 	case lexer.FLOAT:
