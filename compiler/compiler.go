@@ -211,10 +211,10 @@ func New(options ...Option) (*Compiler, error) {
 // emit writes output to our buffer, or our open function-buffer.
 func (c *Compiler) emit(txt string) {
 	if c.functionName != "" {
-		fmt.Fprintf(&c.functionBuffer, txt)
+		fmt.Fprintf(&c.functionBuffer, "%s", txt)
 		return
 	}
-	fmt.Fprintf(&c.buffer, txt)
+	fmt.Fprintf(&c.buffer, "%s", txt)
 }
 
 // Compile produces, and returns, an assembly language
@@ -1008,7 +1008,7 @@ while_%d_end:
 // newGlobalLabel returns a suitable label for the global
 // variable named "name".
 func (c *Compiler) newGlobalLabel(name string) string {
-	lbl := fmt.Sprintf("global_%s", name)
+	lbl := fmt.Sprintf("global_%s_%d", name, len(c.globalVariables))
 	return lbl
 }
 
