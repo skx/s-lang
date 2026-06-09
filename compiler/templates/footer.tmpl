@@ -157,6 +157,19 @@ out_of_bounds:
         mov rax, offset out_of_bounds_msg
         call panic_raw
 
+
+
+
+
+#####
+##### User-Defined Functions
+#####
+{{range .Functions }}
+.align 8
+{{.}}
+{{end}}
+
+
 .section .data
 
 .align 8
@@ -198,6 +211,7 @@ SIGINT_CAUGHT:
         .byte 0
 
 {{ if .StringTable }}
+
 
 #####
 ##### Storage for strings

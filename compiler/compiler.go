@@ -294,6 +294,9 @@ func (c *Compiler) Compile() (string, error) {
 		// Float data for the template rendering
 		FloatTable []FloatEntry
 
+		// All the functions we've encountered.
+		Functions []string
+
 		// GlobalVars has global variable storage
 		Globals []*GlobalVariable
 
@@ -305,10 +308,11 @@ func (c *Compiler) Compile() (string, error) {
 	// above, with things we've created/updated
 	// as we've parsed and compiled the user-program.
 	vars := &FooterData{
-		StringTable: c.stringTable.GetAll(),
-		FloatTable:  c.floatTable.GetAll(),
-		Globals:     c.globalVariables,
 		Data:        c.rawData,
+		FloatTable:  c.floatTable.GetAll(),
+		Functions:   c.functions,
+		Globals:     c.globalVariables,
+		StringTable: c.stringTable.GetAll(),
 	}
 
 	// Render the footer, which will also include
@@ -862,9 +866,9 @@ func (c *Compiler) emitIf(s *parser.If) error {
 	c.popScope()
 
 	// else - might be empty
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 if_%d_false:
-`, n)
+`, n))
 
 	if len(s.False) > 0 {
 
@@ -880,9 +884,9 @@ if_%d_false:
 		c.popScope()
 	}
 
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 if_%d_end:
-`, n)
+`, n))
 	return nil
 }
 
@@ -942,7 +946,7 @@ func (c *Compiler) emitWhile(s *parser.While) error {
 	txt := fmt.Sprintf(`
 while_%d_start:
 `, n)
-	fmt.Fprint(&c.buff, txt)
+	c.emit(txt)
 
 	if isConstantTrue {
 
@@ -952,7 +956,7 @@ while_%d_start:
 		txt = fmt.Sprintf(`
 while_%d_body:
 `, n)
-		fmt.Fprint(&c.buff, txt)
+		c.emit(txt)
 
 	} else {
 
@@ -975,7 +979,7 @@ while_%d_body:
 
 while_%d_body:
 `, n, n)
-		fmt.Fprint(&c.buff, txt)
+		c.emit(txt)
 	}
 
 	c.pushScope()
@@ -994,7 +998,7 @@ while_%d_body:
 	jmp while_%d_start
 while_%d_end:
 `, n, n)
-	fmt.Fprint(&c.buff, txt)
+	c.emit(txt)
 
 	// remove the number from the most recent while-list
 	c.whiles = c.whiles[:len(c.whiles)-1]
@@ -1106,7 +1110,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 			return check.UNKNOWN, err
 		}
 
-		fmt.Fprintln(&c.buff, `
+		c.emit(`
 	push rax`)
 
 		_, err = c.compileExpr(v.Right)
@@ -1114,53 +1118,53 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 			return check.UNKNOWN, err
 		}
 
-		fmt.Fprintln(&c.buff, `
+		c.emit(`
 	pop rbx`)
 
 		switch v.Op {
 
 		case lexer.PLUS:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call plus`)
 
 		case lexer.MINUS:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call minus`)
 
 		case lexer.MULTIPLY:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call multiply`)
 
 		case lexer.DIVIDE:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call divide`)
 
 		case lexer.EQUALS:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call equals`)
 
 		case lexer.NOTEQUALS:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call not_equals`)
 
 		case lexer.LT:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call less_than`)
 
 		case lexer.LTEQUALS:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call less_equals`)
 
 		case lexer.GT:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call greater_than`)
 
 		case lexer.GTEQUALS:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call greater_equals`)
 
 		case lexer.AND:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	# &&
 	sar rax, 2    # untag type
 	sar rbx, 2    # untag type
@@ -1170,7 +1174,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	movzx rax, al
 	sal rax, 2    # add type`)
 		case lexer.OR:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	# ||
 	sar rax, 2    # untag type
 	sar rbx, 2    # untag type
@@ -1180,10 +1184,10 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	movzx rax, al
 	sal rax, 2    # add type`)
 		case lexer.MODULUS:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call modulus`)
 		case lexer.POWER:
-			fmt.Fprintln(&c.buff, `
+			c.emit(`
 	call power`)
 
 		default:
@@ -1200,7 +1204,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 		id := c.floatTable.Add(v.Value)
 
-		fmt.Fprintf(&c.buff, `
+		c.emit(fmt.Sprintf(`
 	# Float literal %f
 
 	# allocate 8-byte boxed float
@@ -1214,7 +1218,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 	# tag pointer as float (10)
 	or rax, 2
-`, v.Value, id)
+`, v.Value, id))
 		return check.FLOAT, nil
 
 	// foo(..)
@@ -1235,8 +1239,8 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	// N
 	case *parser.IntegerLiteral:
 
-		fmt.Fprintf(&c.buff, `
-	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
+		c.emit(fmt.Sprintf(`
+	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value))
 
 		return check.INTEGER, nil
 
@@ -1249,17 +1253,17 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 
 		switch v.Op {
 		case "!":
-			fmt.Fprintf(&c.buff, `
+			c.emit(`
 	call unary_not
 `)
 		case "+":
 			// NOP
-			fmt.Fprintf(&c.buff, `
+			c.emit(`
 	call unary_plus
 `)
 		case "-":
 			// Negative
-			fmt.Fprintf(&c.buff, `
+			c.emit(`
 	call unary_neg
 `)
 		default:
@@ -1276,7 +1280,7 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	mov rax, offset %s
 	or rax, 1   # tagged as a string
 `, id)
-		fmt.Fprint(&c.buff, txt)
+		c.emit(txt)
 
 		return check.STRING, nil
 
@@ -1307,7 +1311,7 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 	# BREAK
 	jmp while_%d_end
 `, label)
-		fmt.Fprint(&c.buff, txt)
+		c.emit(txt)
 
 	case *parser.Continue:
 		if len(c.whiles) == 0 {
@@ -1319,7 +1323,7 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 	# CONTINUE
 	jmp while_%d_start
 `, label)
-		fmt.Fprint(&c.buff, txt)
+		c.emit(txt)
 
 	case *parser.Data:
 		c.rawData = append(c.rawData, s.Text)
@@ -1345,11 +1349,7 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		//
 		c.functionName = s.Name
 
-		fmt.Fprintf(&c.buff, `
-	# Skip inline function implementation
-	jmp over_function_%s
-.align 8
-%s:`, s.Name, s.Name)
+		c.emit(fmt.Sprintf("%s:", s.Name))
 
 		// new function scope
 		c.pushScope()
@@ -1367,7 +1367,7 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		c.typeCheck.AddUserFunction(s.Name, len(s.Parameters))
 
 		// crude stack reservation for now
-		fmt.Fprint(&c.buff, `
+		c.emit(`
 	push rbp
 	mov rbp, rsp
 	sub rsp, 8 * 64  # Space for local variables
@@ -1380,19 +1380,22 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 			}
 		}
 
-		fmt.Fprintf(&c.buff, `
+		c.emit(fmt.Sprintf(`
 %s_cleanup:
 	mov rsp, rbp
 	pop rbp
 	ret
-
-over_function_%s:
-`, s.Name, s.Name)
+`, s.Name))
 
 		c.popScope()
 
 		// we're no longer defining a function
 		c.functionName = ""
+
+		// We need to save the body of the function
+		// which we've compiled
+		c.functions = append(c.functions, c.functionBuffer.String())
+		c.functionBuffer.Reset()
 
 	case *parser.FunctionCallExpr:
 
@@ -1411,7 +1414,7 @@ over_function_%s:
 		}
 
 	case *parser.Inline:
-		fmt.Fprint(&c.buff, "\n"+s.Text+"\n")
+		c.emit("\n" + s.Text + "\n")
 
 	case *parser.Let:
 
@@ -1481,14 +1484,14 @@ over_function_%s:
 		// mutate
 		switch s.Op {
 		case "++":
-			fmt.Fprint(&c.buff, `
+			c.emit(`
 	# ++
 	sar rax, 2
 	inc rax
 	sal rax, 2`)
 
 		case "--":
-			fmt.Fprint(&c.buff, `
+			c.emit(`
 	# --
 	sar rax, 2
 	dec rax
@@ -1522,11 +1525,9 @@ over_function_%s:
 
 		// Within a function a return just becomes a jump
 		// to the cleanup/function exit.
-		txt := `
+		c.emit(fmt.Sprintf(`
 	# RETURN
-	jmp %s_cleanup
-`
-		fmt.Fprintf(&c.buff, txt, c.functionName)
+	jmp %s_cleanup`, c.functionName))
 
 	case *parser.While:
 
@@ -1552,7 +1553,7 @@ over_function_%s:
 		n := c.labelCount
 		c.labelCount++
 
-		fmt.Fprint(&c.buff, `
+		c.emit(`
 	# SWITCH `)
 
 		// Generate the expression
@@ -1562,7 +1563,7 @@ over_function_%s:
 		}
 
 		// Untag the value
-		fmt.Fprint(&c.buff, `
+		c.emit(`
 	sar rax, 2 `)
 
 		// Now we handle each of the case statements
@@ -1580,11 +1581,11 @@ over_function_%s:
 				return fmt.Errorf("only integer literals for CASE statements")
 			}
 
-			fmt.Fprintf(&c.buff, `
+			c.emit(fmt.Sprintf(`
 	# CASE %d
 	cmp rax, %d
 	jz switch_%d_case_%d
-`, val.Value, val.Value, n, i)
+`, val.Value, val.Value, n, i))
 
 		}
 
@@ -1598,7 +1599,7 @@ over_function_%s:
 				continue
 			}
 
-			fmt.Fprint(&c.buff, `
+			c.emit(`
 	# FALL-THROUGH DEFAULT
 `)
 			// assemble the body
@@ -1618,9 +1619,9 @@ over_function_%s:
 		// Either way we now need to skip over the implementations
 		// of the specific, non-default, handlers.
 		//
-		fmt.Fprintf(&c.buff, `
+		c.emit(fmt.Sprintf(`
 	jmp switch_%d_end
-`, n)
+`, n))
 
 		// OK now we include each body
 		// Now we handle each of the case statements
@@ -1632,9 +1633,9 @@ over_function_%s:
 				continue
 			}
 
-			fmt.Fprintf(&c.buff, `
+			c.emit(fmt.Sprintf(`
 switch_%d_case_%d:
-`, n, i)
+`, n, i))
 			for _, s := range cas.Statements {
 				err := c.generateStmt(s)
 				if err != nil {
@@ -1642,16 +1643,15 @@ switch_%d_case_%d:
 				}
 			}
 
-			fmt.Fprintf(&c.buff, `
+			c.emit(fmt.Sprintf(`
 	jmp switch_%d_end
-`, n)
-
+`, n))
 		}
 
 		// All over now
-		fmt.Fprintf(&c.buff, `
+		c.emit(fmt.Sprintf(`
 switch_%d_end:
-`, n)
+`, n))
 
 	default:
 		return fmt.Errorf("unhandled token in generateStmt %v", stmt)
