@@ -155,9 +155,6 @@ type Compiler struct {
 	// them at the very end of the program.
 	rawData []string
 
-	// globalCount stores the count of global variables.
-	globalCount int
-
 	// constantFolding determines whether we try to
 	// optimize our AST, folding constants, before we
 	// generate code
@@ -982,8 +979,7 @@ while_%d_end:
 // newGlobalLabel returns a suitable label for the global
 // variable named "name".
 func (c *Compiler) newGlobalLabel(name string) string {
-	lbl := fmt.Sprintf("global_%s_%d", name, c.globalCount)
-	c.globalCount++
+	lbl := fmt.Sprintf("global_%s", name)
 	return lbl
 }
 
