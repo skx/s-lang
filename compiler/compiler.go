@@ -64,13 +64,13 @@ type Compiler struct {
 	// Source holds the source program we'll work on.
 	Source string
 
-	// buff is the writer object we send all generated
+	// buffer is the writer object we send all generated
 	// assembly code to - as well as the static header,
 	// footer, and standard library code.
 	//
 	// We use a handle so we may easily have the output
 	// sent to an actual file, or STDOUT.
-	buff bytes.Buffer
+	buffer bytes.Buffer
 
 	// labelCount is used for generating unique labels,
 	// these are used when compiling "if" and "while"
@@ -135,6 +135,12 @@ type Compiler struct {
 	// generation of a "RETURN" statement.
 	functionName string
 
+	// functionBuffer is where we compile function bodies to.
+	// As nested functions are illegal when we start compiling the
+	// body of a function we write it here, and once it is over
+	// we append to the functions-array.
+	functionBuffer bytes.Buffer
+
 	// knownFunctions keeps track of user-defined functions we know
 	// about.  We need this so that we can handle any default arguments
 	// which they might have.
@@ -154,6 +160,14 @@ type Compiler struct {
 	// when all our compilation is complete we can insert
 	// them at the very end of the program.
 	rawData []string
+
+	// functions stores the bodies of each function we know
+	// about.
+	//
+	// We store them separately so that we can emit them at
+	// the end of our generated source, rather than inline.
+	//
+	functions []string
 
 	// constantFolding determines whether we try to
 	// optimize our AST, folding constants, before we
@@ -192,6 +206,15 @@ func New(options ...Option) (*Compiler, error) {
 	}
 
 	return tmp, nil
+}
+
+// emit writes output to our buffer, or our open function-buffer.
+func (c *Compiler) emit(txt string) {
+	if c.functionName != "" {
+		fmt.Fprintf(&c.functionBuffer, txt)
+		return
+	}
+	fmt.Fprintf(&c.buffer, txt)
 }
 
 // Compile produces, and returns, an assembly language
@@ -249,7 +272,7 @@ func (c *Compiler) Compile() (string, error) {
 	}
 
 	// Render the header into our output
-	err = tmpl.ExecuteTemplate(&c.buff, "header.tmpl", nil)
+	err = tmpl.ExecuteTemplate(&c.buffer, "header.tmpl", nil)
 	if err != nil {
 		return "", err
 	}
@@ -290,12 +313,12 @@ func (c *Compiler) Compile() (string, error) {
 
 	// Render the footer, which will also include
 	// our standard library.
-	err = tmpl.ExecuteTemplate(&c.buff, "footer.tmpl", vars)
+	err = tmpl.ExecuteTemplate(&c.buffer, "footer.tmpl", vars)
 	if err != nil {
 		return "", err
 	}
 
-	return c.buff.String(), nil
+	return c.buffer.String(), nil
 }
 
 // pushScope enters a new scope for compiling a function body.
@@ -315,9 +338,9 @@ func (c *Compiler) emitLoadVariable(name string) error {
 
 	_, ok1 := c.knownFunctions[name]
 	if ok1 {
-		fmt.Fprintf(&c.buff, `
+		c.emit(fmt.Sprintf(`
 	mov rax, offset %s
-`, name)
+`, name))
 		return nil
 	}
 
@@ -331,20 +354,20 @@ func (c *Compiler) emitLoadVariable(name string) error {
 	case *FunctionVariable:
 
 		if v.Offset < 0 {
-			fmt.Fprintf(&c.buff, `
+			c.emit(fmt.Sprintf(`
 	mov rax, [rbp-%d]
-`, -v.Offset)
+`, -v.Offset))
 		} else {
-			fmt.Fprintf(&c.buff, `
+			c.emit(fmt.Sprintf(`
 	mov rax, [rbp+%d]
-`, v.Offset)
+`, v.Offset))
 		}
 
 	case *GlobalVariable:
 
-		fmt.Fprintf(&c.buff, `
+		c.emit(fmt.Sprintf(`
 	mov rax, [%s]
-`, v.Label)
+`, v.Label))
 
 	default:
 		return fmt.Errorf("unknown symbol type")
@@ -395,7 +418,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 		return err
 	}
 
-	fmt.Fprint(&c.buff, `
+	c.emit(`
 	# save base object
 	push rax
 `)
@@ -406,14 +429,14 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 		return err
 	}
 
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 	# index object -> integer
 	sar rax, 2
 
 	%s
 	# restore base
 	pop rbx
-`, extra)
+`, extra))
 
 	check := ""
 
@@ -435,7 +458,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	// rax = integer index
 	//
 
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 	# untag string pointer
 	and rbx, -4
 
@@ -454,7 +477,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	# mark as integer
 	sal rax, 2
-`, check, ins)
+`, check, ins))
 
 	return nil
 }
@@ -494,7 +517,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		return err
 	}
 
-	fmt.Fprint(&c.buff, `
+	c.emit(`
 	# save base object
 	push rax
 `)
@@ -539,12 +562,12 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		register = "rax"
 	}
 
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 	# index object -> integer
 	sar rax, 2
 	%s
 	push rax
-`, extra)
+`, extra))
 
 	// compile value to set
 	_, err = c.compileExpr(expr.Expression)
@@ -556,7 +579,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 	// rbx == offset
 	// rcx == base
 
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 	pop rbx     # offset (already untagged)
 	pop rcx     # base
 	and rcx, -4 # untag base
@@ -576,7 +599,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 
 	# return the value
 	sal rax, 2
-`, check, size, register)
+`, check, size, register))
 
 	return nil
 }
@@ -594,20 +617,20 @@ func (c *Compiler) emitStoreVariable(name string) error {
 	case *FunctionVariable:
 
 		if v.Offset < 0 {
-			fmt.Fprintf(&c.buff, `
+			c.emit(fmt.Sprintf(`
 	mov [rbp-%d], rax
-`, -v.Offset)
+`, -v.Offset))
 		} else {
-			fmt.Fprintf(&c.buff, `
+			c.emit(fmt.Sprintf(`
 	mov [rbp+%d], rax
-`, v.Offset)
+`, v.Offset))
 		}
 
 	case *GlobalVariable:
 
-		fmt.Fprintf(&c.buff, `
+		c.emit(fmt.Sprintf(`
 	mov [%s], rax
-`, v.Label)
+`, v.Label))
 
 	default:
 		return fmt.Errorf("unknown symbol type")
@@ -687,7 +710,7 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 			return err
 		}
 		callTypes = append(callTypes, retType)
-		fmt.Fprintf(&c.buff, `
+		c.emit(`
 	push rax`)
 
 	}
@@ -698,16 +721,16 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 		return err
 	}
 
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 	mov rax, %d   # ABI: RAX contains argument count
 	call %s
-`, len(v.Arguments), v.Name)
+`, len(v.Arguments), v.Name))
 
 	if len(v.Arguments) > 0 {
-		fmt.Fprintf(&c.buff, `
+		c.emit(fmt.Sprintf(`
 	add rsp, %d
 `,
-			8*len(v.Arguments))
+			8*len(v.Arguments)))
 	}
 	return nil
 }
@@ -815,13 +838,13 @@ func (c *Compiler) emitIf(s *parser.If) error {
 		}
 	}
 
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 	# IF condition - value in RAX
 	call true
 	jz  if_%d_false  # non-zero jump to the else
 
 	# now we've tested we fall-through
-`, n)
+`, n))
 
 	c.pushScope()
 
@@ -832,9 +855,9 @@ func (c *Compiler) emitIf(s *parser.If) error {
 			return err
 		}
 	}
-	fmt.Fprintf(&c.buff, `
+	c.emit(fmt.Sprintf(`
 	jmp if_%d_end
-`, n)
+`, n))
 
 	c.popScope()
 
