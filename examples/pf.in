@@ -1,0 +1,57 @@
+#
+# Prime Factoring of numbers - if we're given a number then output
+# all the prime factors of that number..
+#
+# Otherwise show the first prime factors of the numbers from 1-1000.
+#
+
+function factor(n) {
+   let divisor = 2;
+
+   while ( divisor * divisor <= n ) {
+      while ( (n % divisor) == 0 ) {
+         print(divisor, " ");
+         n = float2int(n / divisor);
+      }
+
+      divisor++;
+   }
+
+   if ( n > 1 ) {
+      print(n);
+   }
+   newline();
+}
+
+
+#
+# If we don't have a single command-line just show the prime
+# factors of the first 1000 numbers.
+#
+if ( argc() != 2 ) {
+
+   let i = 1;
+   while( i <= 1000 ) {
+      print(i , ": ");
+      factor(i);
+      i++;
+   }
+   exit(0);
+}
+
+
+#
+# We got a single command-line argument.  Show the factors
+# of that number.
+#
+
+# Convert to an int
+n = str2int(argv(1));
+
+# Show what we're doing
+print( "Prime factors of ", n, ": " );
+
+# Now do the factoring
+factor(n);
+
+exit(0);

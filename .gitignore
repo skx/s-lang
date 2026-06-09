@@ -8,6 +8,7 @@ examples/factorial
 examples/fibonacci
 examples/fizzbuzz
 examples/functions
+examples/pf
 examples/string
 examples/while
 examples/*.s
