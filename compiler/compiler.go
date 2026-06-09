@@ -848,6 +848,121 @@ if_%d_end:
 	return nil
 }
 
+// emitWhile is used to emit a while statement, including the conditional
+// test - unless that is optimized out.
+func (c *Compiler) emitWhile(s *parser.While) error {
+
+	// Convert simple expressions to their results
+	if c.constantFolding {
+		s.Expression = c.optimizeExpr(s.Expression)
+	}
+
+	// Before we compile the WHILE we'll see if we can optimize it away.
+	//
+	// If the expression being tested is a zero integer/float we know the
+	// body will never execute even a single time.
+	//
+	// Similarly if the constant is true we know it will loop forever,
+	// unless a break; statement is involved.
+	//
+	isConstantTrue := false
+	isConstantFalse := false
+	switch v := s.Expression.(type) {
+	case *parser.IntegerLiteral:
+		if v.Value == 0 {
+			isConstantFalse = true
+		} else {
+			isConstantTrue = true
+		}
+	case *parser.FloatLiteral:
+		if v.Value == 0 {
+			isConstantFalse = true
+		} else {
+			isConstantTrue = true
+		}
+	}
+
+	//
+	// If the conditional is constant-false we don't execute
+	// the body.  So don't compile it.
+	//
+	if isConstantFalse {
+		return nil
+	}
+
+	//
+	// If the conditional is constant-true we don't need to
+	// compile the conditional at all.  We'll handle that soon
+	//
+
+	n := c.labelCount
+	c.labelCount++
+
+	// record the number of this while statement
+	c.whiles = append(c.whiles, n)
+
+	txt := fmt.Sprintf(`
+while_%d_start:
+`, n)
+	fmt.Fprint(&c.buff, txt)
+
+	if isConstantTrue {
+
+		// no need to compile the test.
+		//
+		// Just
+		txt = fmt.Sprintf(`
+while_%d_body:
+`, n)
+		fmt.Fprint(&c.buff, txt)
+
+	} else {
+
+		// Compile the expression, masking off strings.
+		switch s.Expression.(type) {
+
+		case *parser.StringLiteral:
+			return fmt.Errorf("'while' only permits a numerical expression")
+		default:
+			_, err := c.compileExpr(s.Expression)
+			if err != nil {
+				return err
+			}
+		}
+
+		txt = fmt.Sprintf(`
+	# WHILE condition - value in RAX
+	call true
+	jz while_%d_end      # zero?  Then we skip the body
+
+while_%d_body:
+`, n, n)
+		fmt.Fprint(&c.buff, txt)
+	}
+
+	c.pushScope()
+
+	// assemble the body
+	for _, s := range s.Statements {
+		err := c.generateStmt(s)
+		if err != nil {
+			return err
+		}
+	}
+
+	c.popScope()
+
+	txt = fmt.Sprintf(`
+	jmp while_%d_start
+while_%d_end:
+`, n, n)
+	fmt.Fprint(&c.buff, txt)
+
+	// remove the number from the most recent while-list
+	c.whiles = c.whiles[:len(c.whiles)-1]
+	return nil
+}
+
 // newGlobalLabel returns a suitable label for the global
 // variable named "name".
 func (c *Compiler) newGlobalLabel(name string) string {
@@ -1351,58 +1466,8 @@ over_function_%s:
 
 	case *parser.While:
 
-		n := c.labelCount
-		c.labelCount++
-
-		// record the number of this while statement
-		c.whiles = append(c.whiles, n)
-
-		txt := fmt.Sprintf(`
-while_%d_start:
-`, n)
-		fmt.Fprint(&c.buff, txt)
-
-		// Compile the expression, masking off strings.
-		switch s.Expression.(type) {
-
-		case *parser.StringLiteral:
-			return fmt.Errorf("'while' only permits a numerical expression")
-		default:
-			_, err := c.compileExpr(s.Expression)
-			if err != nil {
-				return err
-			}
-		}
-
-		txt = fmt.Sprintf(`
-	# WHILE condition - value in RAX
-	call true
-	jz while_%d_end      # zero?  Then we skip the body
-
-while_%d_body:
-`, n, n)
-		fmt.Fprint(&c.buff, txt)
-
-		c.pushScope()
-
-		// assemble the body
-		for _, s := range s.Statements {
-			err := c.generateStmt(s)
-			if err != nil {
-				return err
-			}
-		}
-
-		c.popScope()
-
-		txt = fmt.Sprintf(`
-	jmp while_%d_start
-while_%d_end:
-`, n, n)
-		fmt.Fprint(&c.buff, txt)
-
-		// remove the number from the most recent while-list
-		c.whiles = c.whiles[:len(c.whiles)-1]
+		err := c.emitWhile(s)
+		return err
 
 	case *parser.Switch:
 		//

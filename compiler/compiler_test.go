@@ -212,6 +212,86 @@ if ( 1 + 3 ) {
 	}
 }
 
+// TestConstantWhile attempts to ensure that constant WHILE tests
+// are optimized correctly.
+
+func TestConstantWhile(t *testing.T) {
+
+	// Simple program
+	c, err := New(WithSource(`
+function bogus() {  # can't happen
+}
+
+while( 0 ) {
+   bogus();
+}
+while( 1 - 1 ) {
+   bogus();
+}
+`))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err := c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if strings.Contains(txt, "call bogus") {
+		t.Fatalf("suspicious output")
+	}
+
+	// Same again, but this time the code will always run
+	c, err = New(WithSource(`
+function valid() { print("always\n"); }
+
+while( 1 ) {
+   valid();
+}
+while( 1.5 ) {
+   valid();
+}
+`))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err = c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if !strings.Contains(txt, "call valid") {
+		t.Fatalf("suspicious output")
+	}
+
+	//
+	// Now disable the folding, which will disable
+	// the optimization.
+	//
+	// We should see both branches are present.
+	//
+	c, err = New(WithSource(`
+function bogus() { }
+
+while( 1 ) {
+  bogus();
+  break;
+}
+while( 1.0 ) {
+  bogus();
+  break;
+}
+`), WithConstantFolding(false))
+	if err != nil {
+		t.Fatalf("failed to create compiler")
+	}
+	txt, err = c.Compile()
+	if err != nil {
+		t.Fatalf("unexpected error compiling empty program: %s", err)
+	}
+	if !strings.Contains(txt, "call bogus") {
+		t.Fatalf("suspicious output")
+	}
+}
+
 // TestAll tests generation of code for "all things"
 func TestAll(t *testing.T) {
 
