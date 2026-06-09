@@ -344,15 +344,134 @@ power:
 
 
 
+#
+# NOT
+#
+unary_not:
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je not_integer
+
+        cmp rcx, 2
+        je not_float
+
+        # fall-through to type error
+.not_type_error:
+        mov rax, offset not_type_fail_msg
+        or rax, 1
+        ret
+
+not_integer:
+       sar rax, 2       # Remove type
+       cmp     rax, 0   # Run the NOT
+       sete    al
+       movzx   rax, al
+       sal rax, 2       # Type result as int
+       ret
+
+not_float:
+        and rax, -4
+        movsd xmm0, [rax]    # Get the value in xmm0
+
+        xorpd   xmm1, xmm1   # Run the NOT
+        ucomisd xmm0, xmm1
+        setnp   dl
+        sete    al
+        and     al, dl
+        movzx   rax, al
+
+        sal rax, 2           # Return as integer
+        ret
 
 
-.section .data.modulus,"aw",@progbits
+
+#
+# -
+#
+unary_neg:
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je neg_integer
+
+        cmp rcx, 2
+        je neg_float
+
+        # fall-through to type error
+.neg_type_error:
+        mov rax, offset neg_type_fail_msg
+        or rax, 1
+        ret
+
+neg_integer:
+       sar rax, 2       # Remove type
+       neg rax          # negate
+       sal rax, 2       # Type result as int
+       ret
+
+neg_float:
+        and rax, -4
+        movsd xmm0, [rax]        # Get the value in xmm0
+        mulsd xmm0, [minus_one]  # multiply by -1.  slow.  fine.
+        movsd [rax], xmm0        # store the value
+        or rax, 2                # restore the type
+        ret
+
+
+#
+# +
+#
+unary_plus:
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je unary_plus_integer
+
+        cmp rcx, 2
+        je unary_plus_float
+
+        # fall-through to type error
+.unary_plus_type_error:
+        mov rax, offset unary_plus_type_fail_msg
+        or rax, 1
+unary_plus_integer:    # nop
+unary_plus_float:      # nop
+        ret
+
+
+
+
+.section .data.maths,"aw",@progbits
 
 .align 8
 modulus_type_fail_msg:
         .ascii "%: expected INTEGER"
         .byte 0
+
 .align 8
 power_type_fail_msg:
         .ascii "^: expected INTEGER"
         .byte 0
+
+.align 8
+not_type_fail_msg:
+        .ascii "!: expected NUMBER"
+        .byte 0
+
+.align 8
+unary_plus_type_fail_msg:
+        .ascii "+: expected NUMBER"
+        .byte 0
+
+.align 8
+neg_type_fail_msg:
+        .ascii "-: expected NUMBER"
+        .byte 0
+
+.align 8
+minus_one:
+        .double -1

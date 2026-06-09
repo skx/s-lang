@@ -39,6 +39,7 @@
     "argc"
     "argv"
     "exit"
+    "false"
     "getc"
     "getenv"
     "malloc"
@@ -54,6 +55,7 @@
     "strcmp"
     "strdup"
     "strlen"
+    "true"
     "type"
     ))
 

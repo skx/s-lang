@@ -16,6 +16,7 @@ In terms of features:
   * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`, for integers, floats, and mixtures of the two.
   * Logical operations: `&&` and `||`.
   * Postfix decrement/increment support for variables (`i++;`, or `index--;` for example).
+  * Unary operations `-`, `+`, and `!`.
 * Support for integers, floats, and strings.
   * String literals are interned.
     * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.

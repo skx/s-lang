@@ -49,12 +49,13 @@ const (
 	RINDEX = "]"
 
 	// Operations
-	PLUS     = "+"
-	MINUS    = "-"
-	MULTIPLY = "*"
 	DIVIDE   = "/"
-	POWER    = "^"
+	EXCLAIM  = "!"
+	MINUS    = "-"
 	MODULUS  = "%"
+	MULTIPLY = "*"
+	PLUS     = "+"
+	POWER    = "^"
 
 	// Comparisons
 	AND       = "&&"
@@ -134,19 +135,18 @@ func NewLexer(input string) *Lexer {
 	// might be present as the leading character.
 	//
 	l.known = make(map[string]string)
-	l.known["*"] = MULTIPLY
-	//	l.known["+"] = PLUS
-	l.known["/"] = DIVIDE
+	l.known["%"] = MODULUS
 	l.known["("] = LPAREN
 	l.known[")"] = RPAREN
-	l.known["{"] = LBRACE
-	l.known["}"] = RBRACE
+	l.known["*"] = MULTIPLY
+	l.known[","] = COMMA
+	l.known["/"] = DIVIDE
+	l.known[";"] = SEMICOLON
 	l.known["["] = LINDEX
 	l.known["]"] = RINDEX
-	l.known[";"] = SEMICOLON
-	l.known[","] = COMMA
 	l.known["^"] = POWER
-	l.known["%"] = MODULUS
+	l.known["{"] = LBRACE
+	l.known["}"] = RBRACE
 
 	l.keywords = make(map[string]bool)
 	l.keywords["break"] = true
@@ -257,7 +257,7 @@ func (l *Lexer) Next() *Token {
 				l.position++
 				return &Token{Type: NOTEQUALS, Value: "!="}
 			}
-			return &Token{Type: ERROR, Value: "invalid character '!'"}
+			return &Token{Type: EXCLAIM, Value: "!"}
 		case "&":
 			l.position++
 			if l.peekChar() == "&" {
@@ -280,6 +280,14 @@ func (l *Lexer) Next() *Token {
 				return &Token{Type: EQUALS, Value: "=="}
 			}
 			return &Token{Type: ASSIGN, Value: "="}
+
+		case "-":
+			l.position++
+			if l.peekChar() == "-" {
+				l.position++
+				return &Token{Type: MINUSMINUS, Value: "--"}
+			}
+			return &Token{Value: "-", Type: MINUS}
 
 		// Skip whitespace
 		case " ", "\n", "\r", "\t", ";":
@@ -349,8 +357,8 @@ func (l *Lexer) Next() *Token {
 
 			return &Token{Value: "unterminated string", Type: ERROR}
 
-			// Is it a potential number?
-		case "-", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".":
+		// Is it a potential number?
+		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".":
 
 			//
 			// Loop for more digits
@@ -366,7 +374,7 @@ func (l *Lexer) Next() *Token {
 			// out of our input.
 			for end < len(l.input) {
 
-				if !l.isNumberComponent(l.input[end], end == start) {
+				if !l.isNumberComponent(l.input[end]) {
 					break
 				}
 				end++
@@ -376,14 +384,6 @@ func (l *Lexer) Next() *Token {
 
 			// Here we have the number
 			token := l.input[start:end]
-
-			if token == "-" {
-				if l.peekChar() == "-" {
-					l.position++
-					return &Token{Value: "--", Type: MINUSMINUS}
-				}
-				return &Token{Value: "-", Type: MINUS}
-			}
 
 			// too many periods?
 			bits := strings.Split(token, ".")
@@ -398,10 +398,10 @@ func (l *Lexer) Next() *Token {
 			}
 
 			// Is this an int?  Or a float?
-			if float64(int64(number)) == number {
-				return &Token{Value: number, Type: INTEGER}
+			if strings.Contains(token, ".") {
+				return &Token{Value: number, Type: FLOAT}
 			}
-			return &Token{Value: number, Type: FLOAT}
+			return &Token{Value: number, Type: INTEGER}
 		}
 
 		//
@@ -489,6 +489,16 @@ func (l *Lexer) Next() *Token {
 			return &Token{Value: "unterminated inline", Type: ERROR}
 		}
 
+		// Special case true/false.  We could handle
+		// them as keywords, but this approach feels
+		// fine.
+		if strings.ToLower(token) == "true" {
+			return &Token{Value: float64(1), Type: INTEGER}
+		}
+		if strings.ToLower(token) == "false" {
+			return &Token{Value: float64(0), Type: INTEGER}
+		}
+
 		//
 		// Should we convert the token from an IDENT into a known
 		// keyword?  If so do it.
@@ -546,10 +556,8 @@ func (l *Lexer) isIdentifierCharacter(d byte) bool {
 	return false
 }
 
-// isNumberComponent looks for characters that can make up integers/floats
-//
-// We handle the first-character specially, which is why that's an argument
-func (l *Lexer) isNumberComponent(d byte, first bool) bool {
+// isNumberComponent looks for characters that can make up integers/floats.
+func (l *Lexer) isNumberComponent(d byte) bool {
 
 	// digits
 	if unicode.IsDigit(rune(d)) {
@@ -558,11 +566,6 @@ func (l *Lexer) isNumberComponent(d byte, first bool) bool {
 
 	// floating-point numbers require the use of "."
 	if d == '.' {
-		return true
-	}
-
-	// negative sign can only occur at the start of the input
-	if d == '-' && first {
 		return true
 	}
 
