@@ -3,11 +3,11 @@ a.out
 examples/brainfuck
 examples/empty
 examples/example
+examples/exit
 examples/factorial
 examples/fibonacci
 examples/fizzbuzz
 examples/functions
-examples/return
 examples/string
 examples/while
 examples/*.s

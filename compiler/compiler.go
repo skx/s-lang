@@ -658,6 +658,16 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 	// We have to loop over the arguments in reverse
 	for i := len(v.Arguments) - 1; i >= 0; i-- {
 
+		// check the argument - if it's a function call then this cannot be
+		// self-referential/recursive.
+		switch v.Arguments[i].(type) {
+		case *parser.FunctionCallExpr:
+			target := v.Arguments[i].(*parser.FunctionCallExpr).Name
+			if v.Name == target {
+				return fmt.Errorf("invalid self-referential function argument %s", target)
+			}
+		}
+
 		// push each argument to the stack
 		retType, err := c.compileExpr(v.Arguments[i])
 		if err != nil {
