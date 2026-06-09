@@ -9,10 +9,23 @@
 
 
 #####
+##### User-Defined Functions
+#####
+.section .text
+
+{{range .Functions }}
+.align 8
+{{.}}
+{{end}}
+
+
+#####
 #####  Standard Library
 #####
+.section .text
 
 {{template "stdlib" .}}
+
 
 
 #####
@@ -157,6 +170,11 @@ out_of_bounds:
         mov rax, offset out_of_bounds_msg
         call panic_raw
 
+
+
+
+
+
 .section .data
 
 .align 8
@@ -198,6 +216,7 @@ SIGINT_CAUGHT:
         .byte 0
 
 {{ if .StringTable }}
+
 
 #####
 ##### Storage for strings
