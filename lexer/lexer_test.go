@@ -412,5 +412,30 @@ func TestCharacterLiterals(t *testing.T) {
 	if !strings.Contains(tok.Value.(string), "expected close of character literal") {
 		t.Fatalf("got error, but wrong one: %s", tok.Value.(string))
 	}
+}
 
+func TestIntvsFloat(t *testing.T) {
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{FLOAT, "0"},
+		{FLOAT, "1"},
+		{INTEGER, "1"},
+		{INTEGER, "2"},
+		{INTEGER, "0"},
+		{EOF, ""},
+	}
+
+	l := NewLexer(`0.0 1.0 1 2 0`)
+
+	for i, tt := range tests {
+		tok := l.Next()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - tokentype wrong, expected=%q, got=%q", i, tt.expectedType, tok.Type)
+		}
+		if fmt.Sprintf("%v", tok.Value) != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - Literal wrong, expected=%q, got=%q", i, tt.expectedLiteral, tok.Value)
+		}
+	}
 }

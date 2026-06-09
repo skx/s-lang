@@ -398,10 +398,10 @@ func (l *Lexer) Next() *Token {
 			}
 
 			// Is this an int?  Or a float?
-			if float64(int64(number)) == number {
-				return &Token{Value: number, Type: INTEGER}
+			if strings.Contains(token, ".") {
+				return &Token{Value: number, Type: FLOAT}
 			}
-			return &Token{Value: number, Type: FLOAT}
+			return &Token{Value: number, Type: INTEGER}
 		}
 
 		//
@@ -489,9 +489,9 @@ func (l *Lexer) Next() *Token {
 			return &Token{Value: "unterminated inline", Type: ERROR}
 		}
 
-        // Special case true/false.  We could handle
-        // them as keywords, but this approach feels
-        // fine.
+		// Special case true/false.  We could handle
+		// them as keywords, but this approach feels
+		// fine.
 		if strings.ToLower(token) == "true" {
 			return &Token{Value: float64(1), Type: INTEGER}
 		}
