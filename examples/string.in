@@ -12,7 +12,6 @@ function show( a ) {
 let x = "steve";
 show(x);
 
-
 #
 # Print a string in upper-sace
 #
@@ -31,7 +30,45 @@ function upper(str) {
   }
 }
 
+
 upper("hello, I am a string in upper-case\n");
+
+
+
+#
+# Reverse a string - note that this works in-place
+# so the first thing we do is create a copy of the
+# string to work on.
+#
+function reverse(str) {
+    str = strdup(str);
+    let left  = 0;
+    let right = strlen(str) - 1;
+
+    while ( left < right ) {
+        let tmp = str[left];
+        str[left] = str[right];
+        str[right] = tmp;
+
+        left++;
+        right--;
+    }
+
+    return(str);
+}
+
+
+#
+# Use that to reverse the string.
+#
+# Print the original string again, afterwards, so we confirm
+# that was left unmutated.
+#
+a = "Hello, I am a string which can be rEvErSeD!";
+print("String forwards : ", a, "\n");
+print("String backwards: ", reverse(a), "\n");
+print("String forwards : ", a, "\n");
+
 
 
 #

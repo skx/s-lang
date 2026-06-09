@@ -1,5 +1,8 @@
 The string 'steve' is 5 bytes long
 HELLO, I AM A STRING IN UPPER-CASE
+String forwards : Hello, I am a string which can be rEvErSeD!
+String backwards: !DeSrEvEr eb nac hcihw gnirts a ma I ,olleH
+String forwards : Hello, I am a string which can be rEvErSeD!
 strcmp(steve,rteve) is 1
 strcmp(Steve,rteve) is -31
 strcmp(Steve,Tteve) is -1
