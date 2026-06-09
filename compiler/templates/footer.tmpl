@@ -9,10 +9,23 @@
 
 
 #####
+##### User-Defined Functions
+#####
+.section .text
+
+{{range .Functions }}
+.align 8
+{{.}}
+{{end}}
+
+
+#####
 #####  Standard Library
 #####
+.section .text
 
 {{template "stdlib" .}}
+
 
 
 #####
@@ -160,14 +173,6 @@ out_of_bounds:
 
 
 
-
-#####
-##### User-Defined Functions
-#####
-{{range .Functions }}
-.align 8
-{{.}}
-{{end}}
 
 
 .section .data
