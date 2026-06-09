@@ -650,6 +650,22 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 
 		// Set the default value for each missing argument.
 		for found < max {
+
+			// Note that default arguments may only be literals
+			switch expected[found].Default.(type) {
+			case *parser.FloatLiteral:
+				// fine.
+			case *parser.IntegerLiteral:
+				// fine.
+			case *parser.StringLiteral:
+				// fine.
+			case *parser.VariableExpr:
+				// fine.
+			default:
+				// Nothing more complex is allowed.
+				return fmt.Errorf("non-literals prohibited for default argument values")
+
+			}
 			v.Arguments = append(v.Arguments, expected[found].Default)
 			found++
 		}
@@ -1202,6 +1218,33 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 	mov rax, %d  # mov rax, %d + typing`, v.Value<<2, v.Value)
 
 		return check.INTEGER, nil
+
+	case *parser.PrefixExpr:
+		// compile the operation
+		_, err := c.compileExpr(v.Expr)
+		if err != nil {
+			return check.UNKNOWN, err
+		}
+
+		switch v.Op {
+		case "!":
+			fmt.Fprintf(&c.buff, `
+	call unary_not
+`)
+		case "+":
+			// NOP
+			fmt.Fprintf(&c.buff, `
+	call unary_plus
+`)
+		case "-":
+			// Negative
+			fmt.Fprintf(&c.buff, `
+	call unary_neg
+`)
+		default:
+			return check.UNKNOWN, fmt.Errorf("unknown prefix operation '%s'", v.Op)
+		}
+		return check.UNKNOWN, nil
 
 	// "str"
 	case *parser.StringLiteral:
