@@ -37,7 +37,7 @@ func TestLexer(t *testing.T) {
 		{GT, ">"},
 		{AND, "&&"},
 		{OR, "||"},
-		{ERROR, "invalid character '!'"},
+		{EXCLAIM, "!"},
 		{ERROR, "invalid character '&'"},
 		{ERROR, "invalid character '|'"},
 		{PLUSPLUS, "++"},
@@ -61,6 +61,37 @@ func TestLexer(t *testing.T) {
 		}
 	}
 
+}
+
+// Test we can parse binary literals correctly.  (i.e. As integers).
+func TestBinaryLiterals(t *testing.T) {
+	tests := []struct {
+		expectedType    TokenType
+		expectedLiteral string
+	}{
+		{INTEGER, "0"},
+		{INTEGER, "1"},
+
+		{INTEGER, "0"},
+		{INTEGER, "1"},
+
+		{INTEGER, "0"},
+		{INTEGER, "1"},
+
+		{EOF, ""},
+	}
+
+	l := NewLexer("false true FALSE TRUE falSE TRue")
+
+	for i, tt := range tests {
+		tok := l.Next()
+		if tok.Type != tt.expectedType {
+			t.Fatalf("tests[%d] - tokentype wrong, expected=%q, got=%q", i, tt.expectedType, tok.Type)
+		}
+		if fmt.Sprintf("%v", tok.Value) != tt.expectedLiteral {
+			t.Fatalf("tests[%d] - Literal wrong, expected=%q, got=%q", i, tt.expectedLiteral, tok.Value)
+		}
+	}
 }
 
 // Test we can parse numbers correctly
@@ -162,21 +193,6 @@ func TestIssue15(t *testing.T) {
 		if fmt.Sprintf("%v", tok.Value) != tt.expectedLiteral {
 			t.Fatalf("tests[%d] - Literal wrong, expected=%q, got=%q", i, tt.expectedLiteral, tok.Value)
 		}
-	}
-}
-
-func TestNumeric(t *testing.T) {
-
-	lexer := NewLexer("bogus stuff")
-
-	ok := lexer.isNumberComponent('-', true)
-	if !ok {
-		t.Fatalf("leading '-' wasn't handled")
-	}
-
-	ok = lexer.isNumberComponent('-', false)
-	if ok {
-		t.Fatalf("'-' isn't valid unless at the start of a number")
 	}
 }
 
