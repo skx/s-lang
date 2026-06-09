@@ -78,6 +78,21 @@ func NewScope(parent *Scope) *Scope {
 	return s
 }
 
+// TopMost returns the topmost scope.
+//
+// We use this specifically to define global-variables.  If we were to define
+// a global variable inside a child-scope it would go .. out of scope .. when
+// that frame was cleaned up and removed.  Breaking the very idea of a global
+// variable.
+func (s *Scope) TopMost() *Scope {
+	cur := s
+
+	for cur.Parent != nil {
+		cur = cur.Parent
+	}
+	return cur
+}
+
 // Define defines a new symbol within the current scope,
 // if this already exists it is denied.
 func (s *Scope) Define(sym Symbol) error {
