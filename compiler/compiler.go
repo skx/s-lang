@@ -149,10 +149,6 @@ type Compiler struct {
 	// scope stores stack-frames which are used to hold symbols.
 	scope *Scope
 
-	// globalVariables _should_ use the same stack frame,
-	// however for quickness they are here.
-	globalVariables []*GlobalVariable
-
 	// rawData stores raw data from `data { .. }` blocks
 	// inside the programs.
 	//
@@ -311,7 +307,7 @@ func (c *Compiler) Compile() (string, error) {
 		Data:        c.rawData,
 		FloatTable:  c.floatTable.GetAll(),
 		Functions:   c.functions,
-		Globals:     c.globalVariables,
+		Globals:     c.scope.GetAllGlobals(),
 		StringTable: c.stringTable.GetAll(),
 	}
 
@@ -1434,21 +1430,18 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 		_, exists := c.scope.Lookup(nm)
 
-		// Create a label for the value, if necessary
-		if c.functionName != "" {
+		// If it doesn't already exist
+		if !exists {
 
-			// define local only if it doesn't exist already
-			if !exists {
+			// define a local variable for a function
+			if c.functionName != "" {
+
 				_, err = c.scope.DefineLocal(nm)
 				if err != nil {
 					return err
 				}
-			}
-
-		} else {
-
-			if !exists {
-
+			} else {
+				// Or a new global variable
 				label := c.newGlobalLabel(nm)
 
 				g := &GlobalVariable{
@@ -1456,12 +1449,10 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 					Label: label,
 				}
 
-				err = c.scope.TopMost().Define(g)
+				err = c.scope.DefineGlobalVariable(g)
 				if err != nil {
 					return err
 				}
-
-				c.globalVariables = append(c.globalVariables, g)
 			}
 		}
 
