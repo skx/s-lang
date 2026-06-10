@@ -229,9 +229,15 @@ func (c *Compiler) Compile() (string, error) {
 
 	//
 	// Create a buffer which will be used to include
-	// all of our standard library files - in order
+	// all of our standard library files - in order.
 	//
-	// Which we can then include in our prologue.
+	// This is done as it is easier to edit the standard
+	// library functions if they are split into neatly
+	// named files.
+	//
+	// But we don't want to manually maintain their names,
+	// instead we just want to say "insert them all"
+	// in our master-template file, "template.tmpl".
 	//
 	var buf strings.Builder
 	fmt.Fprint(&buf, `{{define "stdlib"}}`)
@@ -245,7 +251,8 @@ func (c *Compiler) Compile() (string, error) {
 	fmt.Fprint(&buf, `{{end}}`)
 
 	//
-	// Load all our templates
+	// Load all our templates - the top-level one which is our primary
+	// file, and the actual standard-library files too.
 	//
 	tmpl := template.Must(
 		template.New("stdlib").
@@ -267,12 +274,6 @@ func (c *Compiler) Compile() (string, error) {
 		return "", err
 	}
 
-	// Render the header into our output
-	err = tmpl.ExecuteTemplate(&c.buffer, "header.tmpl", nil)
-	if err != nil {
-		return "", err
-	}
-
 	// compile each statement
 	for _, stmt := range program.Statements {
 		err = c.generateStmt(stmt)
@@ -282,38 +283,66 @@ func (c *Compiler) Compile() (string, error) {
 	}
 
 	// Helper struct to populate the footer-template.
+	//
+	// We're just defining an inline structure here
+	// to populate the text/template template file.
+	//
+	// There's no reason to expose this structure outside
+	// this function, it's just something that has to match
+	// the template usage.
+	//
 	type FooterData struct {
 
-		// String data for the template rendering
+		// String data for the template rendering.
 		StringTable []StringEntry
 
-		// Float data for the template rendering
+		// GeneratedCode contains the actual code
+		// the compiler has created for the users' program.
+		GeneratedCode string
+
+		// Float data for the template rendering.
 		FloatTable []FloatEntry
 
 		// All the functions we've encountered.
 		Functions []string
 
-		// GlobalVars has global variable storage
+		// GlobalVars has global variable storage.
 		Globals []*GlobalVariable
 
-		// Data holds raw data for the file footer
+		// Data holds raw data for the file footer.
 		Data []string
 	}
 
-	// Create a concrete instance of the structure
+	//
+	// Populate a concrete instance of the structure
 	// above, with things we've created/updated
 	// as we've parsed and compiled the user-program.
+	//
 	vars := &FooterData{
-		Data:        c.rawData,
-		FloatTable:  c.floatTable.GetAll(),
-		Functions:   c.functions,
-		Globals:     c.scope.GetAllGlobals(),
-		StringTable: c.stringTable.GetAll(),
+		Data:          c.rawData,
+		FloatTable:    c.floatTable.GetAll(),
+		Functions:     c.functions,
+		GeneratedCode: c.buffer.String(),
+		Globals:       c.scope.GetAllGlobals(),
+		StringTable:   c.stringTable.GetAll(),
 	}
 
-	// Render the footer, which will also include
-	// our standard library.
-	err = tmpl.ExecuteTemplate(&c.buffer, "footer.tmpl", vars)
+	//
+	// Now that we've got the data ready we're going to
+	// clear the buffer we generated the assembly language
+	// into.
+	//
+	// That way we can reuse the same buffer to render the
+	// template output into.
+	//
+	c.buffer.Reset()
+
+	//
+	// Render the actual output template, that will
+	// include all the sections above as well as the
+	// standard library routines.
+	//
+	err = tmpl.ExecuteTemplate(&c.buffer, "template.tmpl", vars)
 	if err != nil {
 		return "", err
 	}
