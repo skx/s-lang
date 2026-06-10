@@ -9,10 +9,6 @@ type Symbol interface {
 
 	// SymbolName returns the name of the symbol
 	SymbolName() string
-
-	// IsGlobal is true for global variables, and false
-	// for function-variables
-	IsGlobal() bool
 }
 
 // GlobalVariable holds global variables.
@@ -27,10 +23,6 @@ type GlobalVariable struct {
 // interface.
 func (g *GlobalVariable) SymbolName() string { return g.Name }
 
-// IsGlobal returns true, as global variables are global.  This is part
-// of the Symbol interface.
-func (g *GlobalVariable) IsGlobal() bool { return true }
-
 // FunctionVariable holds details of scoped/functional variables.
 type FunctionVariable struct {
 	// Name is the name of the variable
@@ -43,10 +35,6 @@ type FunctionVariable struct {
 // SymbolName returns the name of the symbol, and is part of the Symbol
 // interface.
 func (f *FunctionVariable) SymbolName() string { return f.Name }
-
-// IsGlobal returns false, as function variables are never global.  This is part
-// of the Symbol interface.
-func (f *FunctionVariable) IsGlobal() bool { return false }
 
 // Scope stores stack-frames, and allows us to create new frames for
 // functions.
@@ -78,21 +66,6 @@ func NewScope(parent *Scope) *Scope {
 	return s
 }
 
-// TopMost returns the topmost scope.
-//
-// We use this specifically to define global-variables.  If we were to define
-// a global variable inside a child-scope it would go .. out of scope .. when
-// that frame was cleaned up and removed.  Breaking the very idea of a global
-// variable.
-func (s *Scope) TopMost() *Scope {
-	cur := s
-
-	for cur.Parent != nil {
-		cur = cur.Parent
-	}
-	return cur
-}
-
 // Define defines a new symbol within the current scope,
 // if this already exists it is denied.
 func (s *Scope) Define(sym Symbol) error {
@@ -121,23 +94,6 @@ func (s *Scope) Lookup(name string) (Symbol, bool) {
 	return nil, false
 }
 
-// DefineLocal defines a local symbol, creating a suitable
-// offset for it.
-func (s *Scope) DefineLocal(name string) (*FunctionVariable, error) {
-	v := &FunctionVariable{
-		Name:   name,
-		Offset: s.nextLocalOffset,
-	}
-
-	s.nextLocalOffset -= 8
-
-	if err := s.Define(v); err != nil {
-		return nil, err
-	}
-
-	return v, nil
-}
-
 // DefineArgument defines a new argument for a function.
 func (s *Scope) DefineArgument(name string, argIndex int) (*FunctionVariable, error) {
 
@@ -159,4 +115,69 @@ func (s *Scope) DefineArgument(name string, argIndex int) (*FunctionVariable, er
 	}
 
 	return v, nil
+}
+
+// DefineLocal defines a local symbol, creating a suitable
+// offset for it.
+func (s *Scope) DefineLocal(name string) (*FunctionVariable, error) {
+	v := &FunctionVariable{
+		Name:   name,
+		Offset: s.nextLocalOffset,
+	}
+
+	s.nextLocalOffset -= 8
+
+	if err := s.Define(v); err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
+// DefineGlobalVariable declares a variable in the topmost scope.
+//
+// We use this specifically to define global-variables.  If we were to define
+// a global variable inside a child-scope it would go .. out of scope .. when
+// that frame was cleaned up and removed.  Breaking the very idea of a global
+// variable.
+func (s *Scope) DefineGlobalVariable(sym Symbol) error {
+	cur := s
+
+	// get the topmost scope
+	for cur.Parent != nil {
+		cur = cur.Parent
+	}
+
+	// ensure it doesn't already exist
+	name := sym.SymbolName()
+	if _, exists := cur.Symbols[name]; exists {
+		return fmt.Errorf("symbol already defined: %s", name)
+	}
+
+	// define
+	cur.Symbols[name] = sym
+	return nil
+}
+
+// GetAllGlobals is a helper method to get all known global
+// variables.  We use this to populate our rendered assembly
+// language template.
+func (s *Scope) GetAllGlobals() []*GlobalVariable {
+
+	res := []*GlobalVariable{}
+
+	// Get all globals
+	for _, ent := range s.Symbols {
+		switch s := ent.(type) {
+		case *GlobalVariable:
+			res = append(res, s)
+		}
+	}
+
+	// Add any the parent knows too.  Recursively.
+	if s.Parent != nil {
+		res = append(res, s.Parent.GetAllGlobals()...)
+	}
+
+	return res
 }
