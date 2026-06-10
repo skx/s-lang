@@ -5,6 +5,7 @@
         # Code
         #
         .section .text
+
 _start:
 
         #
@@ -66,6 +67,12 @@ _start:
         stmxcsr [mxcsr]
         and dword ptr [mxcsr], ~(1 << 9)
         ldmxcsr [mxcsr]
+
+        #
+        # The generated code
+        #
+        {{.GeneratedCode}}
+
         #
         # Exit explicitly, just in case the program was missing a
         # terminating RETURN statement.
