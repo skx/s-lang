@@ -100,6 +100,13 @@ func New(program string) *Parser {
 	return &Parser{l: lexer.NewLexer(program)}
 }
 
+// NewError wraps a message and returns an error, which
+// contains the line number of the current token.
+func (p *Parser) NewError(format string, args ...interface{}) error {
+	msg := fmt.Sprintf(format, args...)
+	return fmt.Errorf("line %d: %s", p.curToken.Line, msg)
+}
+
 // ParseProgram used to parse the whole program
 func (p *Parser) ParseProgram() (*Program, error) {
 	program := &Program{}
@@ -147,7 +154,7 @@ func (p *Parser) parsePratt(minPrec int) (Expr, error) {
 			}
 
 			if p.l.Next().Type != lexer.RINDEX {
-				return nil, fmt.Errorf("missing ]")
+				return nil, p.NewError("missing ]")
 			}
 
 			left = &IndexExpr{
@@ -185,7 +192,7 @@ func (p *Parser) parsePratt(minPrec int) (Expr, error) {
 
 			v, ok := left.(*VariableExpr)
 			if !ok {
-				return nil, fmt.Errorf("cannot call non-function")
+				return nil, p.NewError("cannot call non-function")
 			}
 
 			left = &FunctionCallExpr{
@@ -288,7 +295,7 @@ func (p *Parser) parseAtom() (Expr, error) {
 		}
 
 		if p.l.Next().Type != lexer.RPAREN {
-			return nil, fmt.Errorf("missing )")
+			return nil, p.NewError("missing )")
 		}
 
 		return expr, nil
@@ -301,7 +308,7 @@ func (p *Parser) parseAtom() (Expr, error) {
 
 	}
 
-	return nil, fmt.Errorf("unexpected token in parseAtom %v", tok)
+	return nil, p.NewError("unexpected token in parseAtom %v", tok)
 }
 
 // parseStatements is used to parse a collection of statements.
@@ -330,16 +337,16 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res, &Data{Text: p.curToken.Value.(string)})
 
 		case lexer.FLOAT:
-			return res, fmt.Errorf("bare literal is illegal: %s", p.curToken.String())
+			return res, p.NewError("bare literal is illegal: %s", p.curToken.String())
 
 		case lexer.FUNCTION:
 			name := p.l.Next()
 			if name.Type != lexer.IDENT {
-				return res, fmt.Errorf("function names must be identifiers")
+				return res, p.NewError("function names must be identifiers")
 			}
 			start := p.l.Next()
 			if start.Type != lexer.LPAREN {
-				return res, fmt.Errorf("missing '(' after function name %s", name)
+				return res, p.NewError("missing '(' after function name %s", name)
 			}
 
 			// If we've found parameters with default values then
@@ -361,7 +368,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			for {
 				tok := p.l.Next()
 				if tok.Type == lexer.EOF {
-					return res, fmt.Errorf("unexpected EOF in function definition")
+					return res, p.NewError("unexpected EOF in function definition")
 				}
 
 				// )?  Then we're at the end
@@ -394,20 +401,20 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 						continue
 					}
 					if defValue {
-						return nil, fmt.Errorf("function %s has parameter without default value after previously seen a default", name)
+						return nil, p.NewError("function %s has parameter without default value after previously seen a default", name)
 
 					}
 					params = append(params, &FunctionParameter{
 						Name: name})
 
 				} else {
-					return res, fmt.Errorf("function arguments must be identifiers")
+					return res, p.NewError("function arguments must be identifiers")
 				}
 			}
 
 			end := p.l.Next()
 			if end.Type != lexer.LBRACE {
-				return res, fmt.Errorf("missing '{' after function definition")
+				return res, p.NewError("missing '{' after function definition")
 			}
 
 			// Now parse the block
@@ -453,7 +460,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				}
 
 				if p.l.Next().Type != lexer.RINDEX {
-					return nil, fmt.Errorf("missing ]")
+					return nil, p.NewError("missing ]")
 				}
 
 				// consume '='
@@ -481,7 +488,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					t := p.l.Peek()
 
 					if t.Type == lexer.EOF {
-						return res, fmt.Errorf("unexpected EOF in function call")
+						return res, p.NewError("unexpected EOF in function call")
 					}
 
 					if t.Type == lexer.RPAREN {
@@ -530,7 +537,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 		case lexer.IF:
 			start := p.l.Next()
 			if start.Type != lexer.LPAREN {
-				return res, fmt.Errorf("missing '(' after if")
+				return res, p.NewError("missing '(' after if")
 			}
 
 			expr, err := p.parseExpr()
@@ -540,12 +547,12 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			start = p.l.Next()
 			if start.Type != lexer.RPAREN {
-				return res, fmt.Errorf("missing ')' after if")
+				return res, p.NewError("missing ')' after if")
 			}
 
 			end := p.l.Next()
 			if end.Type != lexer.LBRACE {
-				return res, fmt.Errorf("missing '{' after if")
+				return res, p.NewError("missing '{' after if")
 			}
 
 			// Now parse the block
@@ -564,7 +571,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 				end := p.l.Next()
 				if end.Type != lexer.LBRACE {
-					return res, fmt.Errorf("missing '{' after else")
+					return res, p.NewError("missing '{' after else")
 				}
 
 				False, err = p.parseStatements()
@@ -579,7 +586,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res, &Inline{Text: p.curToken.Value.(string)})
 
 		case lexer.INTEGER:
-			return res, fmt.Errorf("bare literal is illegal: %s", p.curToken.String())
+			return res, p.NewError("bare literal is illegal: %s", p.curToken.String())
 
 		case lexer.LET:
 			left, err := p.parseExpr()
@@ -589,7 +596,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			eq := p.l.Next()
 
 			if eq.Type != lexer.ASSIGN {
-				return res, fmt.Errorf("missing '=' after LET")
+				return res, p.NewError("missing '=' after LET")
 			}
 			vals, err := p.parseExpr()
 			if err != nil {
@@ -601,11 +608,11 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 		case lexer.PRAGMA:
 			k := p.l.Next()
 			if k.Type != lexer.IDENT {
-				return res, fmt.Errorf("pragma key must be an ident")
+				return res, p.NewError("pragma key must be an ident")
 			}
 			v := p.l.Next()
 			if v.Type != lexer.IDENT {
-				return res, fmt.Errorf("pragma value must be an ident")
+				return res, p.NewError("pragma value must be an ident")
 			}
 			res = append(res, &Pragma{
 				Key:   k.Value.(string),
@@ -619,7 +626,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				// "return;" with no value
 			} else {
 				if start.Type != lexer.LPAREN {
-					return res, fmt.Errorf("missing '(' after return")
+					return res, p.NewError("missing '(' after return")
 				}
 				expr, err = p.parseExpr()
 				if err != nil {
@@ -628,7 +635,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 				end := p.l.Next()
 				if end.Type != lexer.RPAREN {
-					return res, fmt.Errorf("missing ')' after return value")
+					return res, p.NewError("missing ')' after return value")
 				}
 			}
 			res = append(res, &Return{Expression: expr})
@@ -649,7 +656,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			start := p.l.Next()
 			if start.Type != lexer.LBRACE {
-				return res, fmt.Errorf("missing '{' after switch")
+				return res, p.NewError("missing '{' after switch")
 			}
 
 			// Process the block which we think will contain
@@ -657,7 +664,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			for {
 				tok := p.l.Next()
 				if tok.Type == lexer.EOF {
-					return res, fmt.Errorf("unexpected EOF in switch statement")
+					return res, p.NewError("unexpected EOF in switch statement")
 				}
 				if tok.Type == lexer.RBRACE {
 					break
@@ -689,12 +696,12 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					}
 				} else {
 					// error - unexpected token
-					return res, fmt.Errorf("expected case|default, got %s", tok)
+					return res, p.NewError("expected case|default, got %s", tok)
 				}
 
 				tok = p.l.Next()
 				if tok.Type != lexer.LBRACE {
-					return res, fmt.Errorf("missing '{' after case")
+					return res, p.NewError("missing '{' after case")
 				}
 
 				// parse the block
@@ -717,17 +724,17 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				}
 			}
 			if count > 1 {
-				return res, fmt.Errorf("A switch-statement should only have one default block")
+				return res, p.NewError("A switch-statement should only have one default block")
 			}
 
 			res = append(res, swtch)
 		case lexer.STRING:
-			return res, fmt.Errorf("bare literal is illegal: %s", p.curToken.String())
+			return res, p.NewError("bare literal is illegal: %s", p.curToken.String())
 
 		case lexer.WHILE:
 			start := p.l.Next()
 			if start.Type != lexer.LPAREN {
-				return res, fmt.Errorf("missing '(' after while")
+				return res, p.NewError("missing '(' after while")
 			}
 			val, err := p.parseExpr()
 			if err != nil {
@@ -735,11 +742,11 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			}
 			end := p.l.Next()
 			if end.Type != lexer.RPAREN {
-				return res, fmt.Errorf("missing ')' after while")
+				return res, p.NewError("missing ')' after while")
 			}
 			end = p.l.Next()
 			if end.Type != lexer.LBRACE {
-				return res, fmt.Errorf("missing '{' after while")
+				return res, p.NewError("missing '{' after while")
 			}
 
 			// Now parse the block
@@ -751,7 +758,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 			res = append(res, &While{Expression: val, Statements: stmts})
 
 		default:
-			return res, fmt.Errorf("unknown token type in parseStatements: %v", p.curToken)
+			return res, p.NewError("unknown token type in parseStatements: %v", p.curToken)
 		}
 
 		// repeat
