@@ -1,5 +1,5 @@
 function test(str) {
-  let a = strlen(str) + 1;  # Count the trailing newline.
+  let a = strlen(str) + 1;  # Count the trailing null byte.
   let b = memlen(str);
   if ( a == b ) {
      print("strlen and memlen agree for '", str, "'\n");
