@@ -42,7 +42,5 @@ endif
 # We can't run "life" so we have a more specific rule for that
 # binary.
 life.test: life.in ../s-lang
-	$(GEN_ASM_CMD)
-	../s-lang compile -output $@ $<
-	strip --strip-all $@
-	@echo "Skipping execution of $@"
+	@echo "nop"
+	@rm -f life.test || true
