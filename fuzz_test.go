@@ -21,6 +21,8 @@ func FuzzProject(f *testing.F) {
 		"unexpected token in parsePrimary",       // foo(123
 		"unterminated character literal",         // '
 		"unterminated string",                    // "foo
+		"unterminated inline",                    // inline { ..
+		"unterminated data",                      // data { ..
 		"undefined variable",                     // easy
 		"unknown character",                      // $
 		"missing ]",                              // a[1
@@ -76,6 +78,10 @@ func FuzzProject(f *testing.F) {
 		"print( 3 + 3 );",
 		"print( 3 / 3 );",
 		"print( 1 + 2 * 3 );",
+
+		// literal blocks,
+		"inline { .. }",
+		"data         { .. }",
 
 		// function call
 		"newline();",

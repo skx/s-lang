@@ -10,7 +10,7 @@ import (
 func TestSanity(t *testing.T) {
 
 	// Empty program
-	c, err := New()
+	c, err := New(WithCompileChecking(true))
 	if err != nil {
 		t.Fatalf("failed to create compiler")
 	}
@@ -139,6 +139,11 @@ if ( 1 + 2 * 3 ) {
 } else {
    ffalse();
 }
+if ( 2.3 + 3.2 ) {
+   ttrue();
+} else {
+   ffalse();
+}
 `))
 	if err != nil {
 		t.Fatalf("failed to create compiler")
@@ -162,6 +167,11 @@ function ttrue() { }
 function ffalse() { }
 
 if ( 0 ) {
+   ttrue();
+} else {
+   ffalse();
+}
+if ( 0.0 ) {
    ttrue();
 } else {
    ffalse();
@@ -223,6 +233,13 @@ function bogus() {  # can't happen
 }
 
 while( 0 ) {
+   bogus();
+}
+
+while( 0.0 ) {
+   bogus();
+}
+while( 3.0 - 3.0 ) {
    bogus();
 }
 while( 1 - 1 ) {
@@ -299,6 +316,7 @@ func TestAll(t *testing.T) {
 	c, err := New(WithSource(`
 function test (n) {
   let n = 10 - 4;
+
   return( n ) ;
 }
 function testing () {
@@ -314,9 +332,81 @@ if ( a ) {
   print("non-zero\n");
 }
 let s = "Steve";
+print(s[0], "\n");
+s[0] = 42;
+putc(s[0]);
+while( 1 ) {
+  break;
+}
+let a = 3;
+while( a ) {
+   a++;
+   x = !a;
+   y = -a;
+   z = +a;
+   continue;
+   a--;
+}
+
+c = 7;
+switch c {
+  case 3 {  print("three\n");
+  }
+  case 0 {
+	    print("zero\n");
+  }
+  default {
+	    print("default\n");
+  }
+}
 print( s );
 print( test(3));
 inline { }
+
+# maths
+a = 1;
+b = 3;
+
+# maths
+print( a + b, "\n");
+print( a - b, "\n");
+print( a * b, "\n");
+print( a / b, "\n");
+print( a % b, "\n");
+print( a ^ b, "\n");
+
+# comparison
+print( a <  b, "\n");
+print( a <= b, "\n");
+print( a >  b, "\n");
+print( a >=  b, "\n");
+print( a ==  b, "\n");
+print( a !=  b, "\n");
+print( a &&  b, "\n");
+print( a ||  b, "\n");
+
+# collapse constants
+print( 1 + 1 , "\n" );
+print( 1 - 1 , "\n" );
+print( 1 / 1 , "\n" );
+print( 1 * 1 , "\n" );
+print( 1 % 1 , "\n" );
+print( 1 ^ 1 , "\n" );
+
+print( 1.0 + 1.0 , "\n" );
+print( 1.0 - 1.0 , "\n" );
+print( 1.0 / 1.0 , "\n" );
+print( 1.0 * 1.0 , "\n" );
+
+data {
+}
+inline {
+}
+function greet(name = "Steve") { print("Hello, ", name , "\n");}
+greet();
+greet("World");
+greet(32.2);
+pragma foo bar
 `))
 	if err != nil {
 		t.Fatalf("failed to create compiler")
@@ -328,5 +418,38 @@ inline { }
 	if !strings.Contains(txt, "rax, 6") {
 		t.Fatalf("suspicious output")
 	}
+}
 
+// TestErrors compiles programs which contain errors, and ensures they are detected.
+func TestErrors(t *testing.T) {
+
+	cases := []string{
+		`break; `,
+		`continue; `,
+		`return; `,
+		`pragma "steve" 4`,
+		`pragma "name" "steve" `,
+		`if ("steve") { } `,
+		`if 17 { } `,
+		`let "steve" = "kemp"`,
+		`while ("steve" ) { } `,
+		`while false { } `,
+		`function steve() { return("steve"); } function bogus( x = steve() ) { print("ok\n"); }   bogus();`,
+		`function bogus( x = bogus() ) { print("ok\n"); }   bogus();`,
+		`print(x);`,
+		`let a = 3;  switch a { case 3 { } case "steve" { } } `,
+	}
+
+	for _, txt := range cases {
+
+		c, err := New(WithSource(txt))
+		if err != nil {
+			t.Fatalf("error creating program %s: %s", txt, err)
+		}
+
+		_, err2 := c.Compile()
+		if err2 == nil {
+			t.Fatalf("expected error, got none for source %s", txt)
+		}
+	}
 }

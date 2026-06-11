@@ -50,3 +50,32 @@ func TestGlobal(t *testing.T) {
 		t.Fatalf("only one variable should exist")
 	}
 }
+
+func TestLocal(t *testing.T) {
+
+	// Create a new scope
+	parent := NewScope(nil)
+
+	// define a variable
+	_, err := parent.DefineArgument("foo", 8)
+	if err != nil {
+		t.Fatalf("expected no error, got one %s", err)
+	}
+
+	// repeat the definition, which should fail
+	_, err = parent.DefineArgument("foo", 8)
+	if err == nil {
+		t.Fatalf("expected an error, but got none")
+	}
+
+	_, err = parent.DefineLocal("steve")
+	if err != nil {
+		t.Fatalf("expected no error, but got one %s", err)
+	}
+
+	// second time should fail
+	_, err = parent.DefineLocal("steve")
+	if err == nil {
+		t.Fatalf("expected an error, but got none")
+	}
+}
