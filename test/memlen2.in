@@ -1,0 +1,20 @@
+function test(str) {
+  let a = strlen(str) + 1;  # Count the trailing null byte.
+  let b = memlen(str);
+  if ( a == b ) {
+     print("strlen and memlen agree for '", str, "'\n");
+  } else {
+     print("strlen and memlen DISAGREE for '", str, "'\n");
+     print("strlen: ", a, " memlen:", b, "\n");
+  }
+}
+
+#
+# Literal string has the length you'd expect - including the trailing "0"
+#
+test("Steve");
+
+#
+# As does strdup
+#
+test(strdup("Hello, world!"));

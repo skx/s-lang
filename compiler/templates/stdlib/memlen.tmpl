@@ -1,0 +1,37 @@
+#
+# Return the length of the given string/pointer
+#
+
+.section .text.memlen,"ax",@progbits
+
+memlen:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]    # Get the string
+
+        mov rcx, rdi         # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne memlen_type_fail
+
+        and rdi, -4         # Remove typing
+        mov rax, [rdi-8]    # Get the size
+        sal rax, 2          # Add typing
+
+.memlen_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+memlen_type_fail:
+        mov rax, offset memlen_type_fail_msg
+        or rax, 1
+        jmp .memlen_cleanup
+
+.section .data.memlen,"aw",@progbits
+
+.align 8
+memlen_type_fail_msg:
+        .ascii "memlen: expected POINTER/STRING"
+        .byte 00
