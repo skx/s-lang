@@ -420,7 +420,7 @@ func TestCharacterLiterals(t *testing.T) {
 		t.Fatalf("expected error, got %s", tok)
 	}
 	if !strings.Contains(tok.Value.(string), "unterminated character literal") {
-		t.Fatalf("got error, but wrong one: %s", tok.Value.(string))
+		t.Fatalf("got error, but wrong one: '%s'", tok.Value.(string))
 	}
 
 	// error if unclosed generally
@@ -429,9 +429,39 @@ func TestCharacterLiterals(t *testing.T) {
 	if tok.Type != ERROR {
 		t.Fatalf("expected error, got %s", tok)
 	}
-	if !strings.Contains(tok.Value.(string), "expected close of character literal") {
+	if !strings.Contains(tok.Value.(string), "unterminated character literal") {
 		t.Fatalf("got error, but wrong one: %s", tok.Value.(string))
 	}
+
+	// Ensure we can cope with escape characters
+	esc := []string{
+		"'\\t'",
+		"'\\r'",
+		"'\\n'",
+		"'\\\\'"}
+	for _, tst := range esc {
+		l = NewLexer(tst)
+		tok := l.Next()
+		if tok.Type != INTEGER {
+			t.Fatalf("expected integer from %s, got %s", tst, tok)
+		}
+	}
+
+	// error to have other things
+	esc = []string{
+		"'\\a'",
+		"'\\b'",
+		"'\\p'",
+		"'\\",
+	}
+	for _, tst := range esc {
+		l = NewLexer(tst)
+		tok := l.Next()
+		if tok.Type != ERROR {
+			t.Fatalf("expected ERROR from %s, got %s", tst, tok)
+		}
+	}
+
 }
 
 func TestIntvsFloat(t *testing.T) {
