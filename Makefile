@@ -20,5 +20,5 @@ fuzz:
 .PHONY: test
 test:
 	go test ./...
-	cd test/ && make
-	cd examples/ && make
+	cd test/ && make test
+	cd examples/ && make test

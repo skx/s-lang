@@ -1,16 +1,21 @@
 PROGRAMS := $(basename $(wildcard *.in))
+TESTS := $(addsuffix .test,$(PROGRAMS))
 ASMFILES := $(addsuffix .s,$(PROGRAMS))
 
 .PHONY: all clean
 
 all: $(PROGRAMS)
 
+test: $(TESTS)
+
 clean:
 	@rm -f $(PROGRAMS) $(ASMFILES)
+
 
 # Ensure we have the compiler
 ../s-lang:
 	cd .. && go build .
+
 
 # Optional assembly generation
 ifeq ($(ASM),1)
@@ -26,17 +31,17 @@ endif
 	@# actually compile
 	../s-lang compile -output $@ $<
 	strip --strip-all $@
-	@echo "Executing $@"
-	@# execute
-	@./$@ > $@.out 2>&1 < $@ || true
-	@echo " comparing $@.out to $@.expected"
-	@cmp $@.out $@.expected || exit "program $< did not match"
-	@rm $@.out
+
+# Generic rule for testing each binary
+%.test: %
+	./$< > $<.out 2>&1 < $<.in || true
+	cmp $<.out $<.expected
+	rm -f $<.out
 
 
 # We can't run "life" so we have a more specific rule for that
 # binary.
-life: life.in ../s-lang
+life.test: life.in ../s-lang
 	$(GEN_ASM_CMD)
 	../s-lang compile -output $@ $<
 	strip --strip-all $@
