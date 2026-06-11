@@ -78,6 +78,9 @@ type TokenType string
 // Token holds a lexed token from our input.
 type Token struct {
 
+	// Line is the source-line upon which the token appears
+	Line int
+
 	// The type of the token.
 	Type TokenType
 
@@ -107,6 +110,9 @@ type Lexer struct {
 	// input is the string we're lexing.
 	input string
 
+	// line is our current line-number.
+	line int
+
 	// position is the current position within the input-string.
 	position int
 
@@ -124,7 +130,7 @@ type Lexer struct {
 func NewLexer(input string) *Lexer {
 
 	// Create the lexer object.
-	l := &Lexer{input: input, peek: nil}
+	l := &Lexer{input: input, peek: nil, line: 1}
 
 	// Populate the simple token-types in a map for later use.
 	//
@@ -202,12 +208,17 @@ func (l *Lexer) Next() *Token {
 		// Get the next character
 		char := string(l.input[l.position])
 
+		// bump the line count
+		if char == "\n" {
+			l.line++
+		}
+
 		// Is this a known character/token?
 		t, ok := l.known[char]
 		if ok {
 			// skip the character, and return the token
 			l.position++
-			return &Token{Value: char, Type: TokenType(t)}
+			return &Token{Value: char, Type: TokenType(t), Line: l.line}
 		}
 
 		// If we reach here it is something more complex.
@@ -217,77 +228,77 @@ func (l *Lexer) Next() *Token {
 		case "'":
 			l.position++
 			if l.position+2 >= len(l.input) {
-				return &Token{Value: "unterminated character literal", Type: ERROR}
+				return &Token{Value: "unterminated character literal", Type: ERROR, Line: l.line}
 			}
 
 			c := l.input[l.position]
 
 			l.position++
 			if l.peekChar() != "'" {
-				return &Token{Type: ERROR, Value: fmt.Sprintf("expected close of character literal, got %s", l.peekChar())}
+				return &Token{Type: ERROR, Value: fmt.Sprintf("expected close of character literal, got %s", l.peekChar()), Line: l.line}
 			}
 			l.position++
-			return &Token{Value: float64(c), Type: INTEGER}
+			return &Token{Value: float64(c), Type: INTEGER, Line: l.line}
 
 		case "+":
 			l.position++
 			if l.peekChar() == "+" {
 				l.position++
-				return &Token{Type: PLUSPLUS, Value: "++"}
+				return &Token{Type: PLUSPLUS, Value: "++", Line: l.line}
 			}
-			return &Token{Type: PLUS, Value: "+"}
+			return &Token{Type: PLUS, Value: "+", Line: l.line}
 
 		case "<":
 			l.position++
 			if l.peekChar() == "=" {
 				l.position++
-				return &Token{Type: LTEQUALS, Value: "<="}
+				return &Token{Type: LTEQUALS, Value: "<=", Line: l.line}
 			}
-			return &Token{Type: LT, Value: "<"}
+			return &Token{Type: LT, Value: "<", Line: l.line}
 		case ">":
 			l.position++
 			if l.peekChar() == "=" {
 				l.position++
-				return &Token{Type: GTEQUALS, Value: ">="}
+				return &Token{Type: GTEQUALS, Value: ">=", Line: l.line}
 			}
-			return &Token{Type: GT, Value: ">"}
+			return &Token{Type: GT, Value: ">", Line: l.line}
 		case "!":
 			l.position++
 			if l.peekChar() == "=" {
 				l.position++
-				return &Token{Type: NOTEQUALS, Value: "!="}
+				return &Token{Type: NOTEQUALS, Value: "!=", Line: l.line}
 			}
-			return &Token{Type: EXCLAIM, Value: "!"}
+			return &Token{Type: EXCLAIM, Value: "!", Line: l.line}
 		case "&":
 			l.position++
 			if l.peekChar() == "&" {
 				l.position++
-				return &Token{Type: AND, Value: "&&"}
+				return &Token{Type: AND, Value: "&&", Line: l.line}
 			}
-			return &Token{Type: ERROR, Value: "invalid character '&'"}
+			return &Token{Type: ERROR, Value: "invalid character '&'", Line: l.line}
 		case "|":
 			l.position++
 			if l.peekChar() == "|" {
 				l.position++
-				return &Token{Type: OR, Value: "||"}
+				return &Token{Type: OR, Value: "||", Line: l.line}
 			}
-			return &Token{Type: ERROR, Value: "invalid character '|'"}
+			return &Token{Type: ERROR, Value: "invalid character '|'", Line: l.line}
 
 		case "=":
 			l.position++
 			if l.peekChar() == "=" {
 				l.position++
-				return &Token{Type: EQUALS, Value: "=="}
+				return &Token{Type: EQUALS, Value: "==", Line: l.line}
 			}
-			return &Token{Type: ASSIGN, Value: "="}
+			return &Token{Type: ASSIGN, Value: "=", Line: l.line}
 
 		case "-":
 			l.position++
 			if l.peekChar() == "-" {
 				l.position++
-				return &Token{Type: MINUSMINUS, Value: "--"}
+				return &Token{Type: MINUSMINUS, Value: "--", Line: l.line}
 			}
-			return &Token{Value: "-", Type: MINUS}
+			return &Token{Value: "-", Type: MINUS, Line: l.line}
 
 		// Skip whitespace
 		case " ", "\n", "\r", "\t", ";":
@@ -317,12 +328,15 @@ func (l *Lexer) Next() *Token {
 			for l.position < len(l.input) {
 				c := l.input[l.position]
 				l.position++
+				if c == '\n' {
+					l.line++
+				}
 
 				// Handle escapes
 				if c == '\\' {
 					// Unterminated escape
 					if l.position >= len(l.input) {
-						return &Token{Value: "unterminated escape", Type: ERROR}
+						return &Token{Value: "unterminated escape", Type: ERROR, Line: l.line}
 					}
 
 					next := l.input[l.position]
@@ -349,13 +363,13 @@ func (l *Lexer) Next() *Token {
 
 				// End of string
 				if c == '"' {
-					return &Token{Value: str, Type: STRING}
+					return &Token{Value: str, Type: STRING, Line: l.line}
 				}
 
 				str += string(c)
 			}
 
-			return &Token{Value: "unterminated string", Type: ERROR}
+			return &Token{Value: "unterminated string", Type: ERROR, Line: l.line}
 
 		// Is it a potential number?
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".":
@@ -388,20 +402,20 @@ func (l *Lexer) Next() *Token {
 			// too many periods?
 			bits := strings.Split(token, ".")
 			if len(bits) > 2 {
-				return &Token{Type: ERROR, Value: fmt.Sprintf("too many periods in '%s'", token)}
+				return &Token{Type: ERROR, Value: fmt.Sprintf("too many periods in '%s'", token), Line: l.line}
 			}
 
 			// Convert to float64
 			number, err := strconv.ParseFloat(token, 64)
 			if err != nil {
-				return &Token{Value: fmt.Sprintf("failed to parse number: %s", err.Error()), Type: ERROR}
+				return &Token{Value: fmt.Sprintf("failed to parse number: %s", err.Error()), Type: ERROR, Line: l.line}
 			}
 
 			// Is this an int?  Or a float?
 			if strings.Contains(token, ".") {
-				return &Token{Value: number, Type: FLOAT}
+				return &Token{Value: number, Type: FLOAT, Line: l.line}
 			}
-			return &Token{Value: number, Type: INTEGER}
+			return &Token{Value: number, Type: INTEGER, Line: l.line}
 		}
 
 		//
@@ -458,10 +472,15 @@ func (l *Lexer) Next() *Token {
 			// So we have to return it here.
 			txt := ""
 
-			// skip over the opening block
+			// skip over the opening "{"
 			for l.position < len(l.input) {
 				c := l.input[l.position]
 				l.position++
+
+				if c == '\n' {
+					l.line++
+				}
+
 				if c == '{' {
 					break
 				}
@@ -473,30 +492,34 @@ func (l *Lexer) Next() *Token {
 				c := l.input[l.position]
 				l.position++
 
+				if c == '\n' {
+					l.line++
+				}
+
 				// end of the string?  We're done
 				// and we've already bumped ot the next
 				// character so all is okay.
 				if c == '}' {
 					if strings.ToLower(token) == "inline" {
-						return &Token{Value: txt, Type: INLINE}
+						return &Token{Value: txt, Type: INLINE, Line: l.line}
 					}
 					if strings.ToLower(token) == "data" {
-						return &Token{Value: txt, Type: DATA}
+						return &Token{Value: txt, Type: DATA, Line: l.line}
 					}
 				}
 				txt += string(c)
 			}
-			return &Token{Value: "unterminated inline", Type: ERROR}
+			return &Token{Value: fmt.Sprintf("unterminated %s", strings.ToLower(token)), Type: ERROR, Line: l.line}
 		}
 
 		// Special case true/false.  We could handle
 		// them as keywords, but this approach feels
 		// fine.
 		if strings.ToLower(token) == "true" {
-			return &Token{Value: float64(1), Type: INTEGER}
+			return &Token{Value: float64(1), Type: INTEGER, Line: l.line}
 		}
 		if strings.ToLower(token) == "false" {
-			return &Token{Value: float64(0), Type: INTEGER}
+			return &Token{Value: float64(0), Type: INTEGER, Line: l.line}
 		}
 
 		//
@@ -505,7 +528,7 @@ func (l *Lexer) Next() *Token {
 		//
 		_, ok = l.keywords[strings.ToLower(token)]
 		if ok {
-			return &Token{Value: strings.ToLower(token), Type: TokenType(strings.ToUpper(token))}
+			return &Token{Value: strings.ToLower(token), Type: TokenType(strings.ToUpper(token)), Line: l.line}
 		}
 
 		//
@@ -520,10 +543,10 @@ func (l *Lexer) Next() *Token {
 		//
 		if token == "" {
 			l.position++
-			return &Token{Value: fmt.Sprintf("unknown character %c", l.input[end]), Type: ERROR}
+			return &Token{Value: fmt.Sprintf("unknown character %c", l.input[end]), Type: ERROR, Line: l.line}
 		}
 
-		return &Token{Value: token, Type: IDENT}
+		return &Token{Value: token, Type: IDENT, Line: l.line}
 
 	}
 
@@ -531,7 +554,7 @@ func (l *Lexer) Next() *Token {
 	// If we get here then we've walked past the end of
 	// our input-string.
 	//
-	return &Token{Value: "", Type: EOF}
+	return &Token{Value: "", Type: EOF, Line: l.line}
 }
 
 // isIdentifierCharacter tests whether the given character is

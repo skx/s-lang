@@ -46,10 +46,11 @@ func TestLexer(t *testing.T) {
 		{MINUS, "-"},
 		{MODULUS, "%"},
 		{POWER, "^"},
+		{STRING, "\n"},
 		{EOF, ""},
 	}
 
-	l := NewLexer("LEt if, WHILE      retURN * = 3 + 4 * 5 - 1 / 2 == <= >= != < > && || ! & | +++ -- - % ^")
+	l := NewLexer("LEt if, WHILE      retURN * = 3 + 4 * 5 - 1 / 2 == <= >= != < > && || ! & | +++ -- - % ^ \"\n\"")
 
 	for i, tt := range tests {
 		tok := l.Next()
@@ -246,12 +247,31 @@ func TestInline(t *testing.T) {
 		t.Fatalf("got error, but wrong one")
 	}
 
-	lexer = NewLexer(`inline { # test "steve } `)
+	lexer = NewLexer(`inline { #
+
+ test "steve
+
+ }
+data
+
+{
+
+
+foo();
+
+} `)
 	out = lexer.Next()
 	if out.Type != INLINE {
-		t.Fatalf("expected string, got %v", out)
+		t.Fatalf("expected inline, got %v", out)
 	}
-	if !strings.Contains(out.Value.(string), "# test \"steve") {
+	if !strings.Contains(out.Value.(string), "\"steve\n") {
+		t.Fatalf("got value, but wrong one")
+	}
+	out = lexer.Next()
+	if out.Type != DATA {
+		t.Fatalf("expected DATA, got %v", out)
+	}
+	if !strings.Contains(out.Value.(string), "foo();") {
 		t.Fatalf("got value, but wrong one")
 	}
 }
