@@ -1,1 +1,16 @@
-ELF
+#
+# cat.in - A simple "cat" program which will echo input
+#
+# e.g. $ cat < /etc/motd
+#
+
+
+#
+# Return 0 on EOF, or a negative result on other errors.
+#
+let a = getc();
+
+while(a > 0) {
+   putc(a);
+   let a = getc();
+}
