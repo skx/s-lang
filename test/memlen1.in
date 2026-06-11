@@ -1,0 +1,15 @@
+let x = malloc(0);
+print( memlen(x) , "\n");
+
+let x = malloc(32);
+print( memlen(x) , "\n");
+
+let x = malloc(312);
+print( memlen(x) , "\n");
+
+let x = malloc(253);
+print( memlen(x) , "\n");
+
+# type failure
+print( memlen(3), "\n");
+print( memlen(1/3), "\n");

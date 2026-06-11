@@ -330,6 +330,8 @@ Here is a brief list of standard library functions, if the name matches a C-lang
 * `malloc(N)`
   * Allocate N bytes on the heap.
   * **NOTE**: We have no corresponding `free`.
+* `memlen(PTR|STR)`
+  * Return the length of the given string/pointer-allocation as an integer.
 * `newline`
   * Print a newline to STDOUT.
 * `panic(STR)`

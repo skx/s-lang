@@ -77,7 +77,7 @@ func (st *StringTable) GetAll() []StringEntry {
 
 		res = append(res, StringEntry{
 			Identifier: k,
-			Length:     len(v),
+			Length:     len(v) + 1,
 			Value:      v,
 			Encoded:    b.String(),
 		})
