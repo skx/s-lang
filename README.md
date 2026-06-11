@@ -56,7 +56,9 @@ That said the code is clean, commented/documented, and contains a fair number of
 
 ## Example Programs
 
-See [examples/](examples/) for _real_ programs.  A couple of highlights:
+There's one page [SUMMARY.md](SUMMARY.md) of the syntax, with all the details and links to the syntax and features within the repository, as well as a collection of [examples/](examples/) showing _real_ programs.
+
+A couple of highlights from the examples:
 
 * [examples/brainfuck.in](examples/brainfuck.in) - Brainfuck interpreter.
   * Contains three hardcoded programs inline:
@@ -66,23 +68,20 @@ See [examples/](examples/) for _real_ programs.  A couple of highlights:
   * If executed with the path to a file containing a brainfuck program it will read and execute that.
 * [examples/life.in](examples/life.in)
   * Conway's Game of Life.
-  * Randomly populate 20% of the arena, and evolve until bored!
+  * Randomly populate 20% of the arena, and evolves it until Ctrl-C is pressed.
 * Math examples:
   * [examples/factorial.in](examples/factorial.in) - Calculate factorials 1-20.
   * [examples/fibonacci.in](examples/fibonacci.in) - Calculate fibonacci sequence, using recursion.
   * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
   * [examples/primes.in](examples/primes.in) - Calculate first 100 prime numbers.
   * [examples/num2hex.in](examples/num2hex.in) - Convert a decimal number to a hex string.
-
-Syntax is covered pretty well in our "misc example" file:
-
-* [examples/example.in](examples/example.in) - Misc. Examples.
+* [examples/example.in](examples/example.in) - Misc. examples to demonstrate some of the facilities.
 
 
 
 ## Syntax
 
-The following is a tour of our language:
+The following is a tour of our language, again check [SUMMARY.md](SUMMARY.md) for a concrete list of examples, syntax, and caveats:
 
     # Comments are prefixed with "#" and last until the end of the line.
 
@@ -91,12 +90,13 @@ The following is a tour of our language:
     print( a );
 
     # Indexing works - and is bound-checked at run-time.
-    let a = "Steve";
-    print(a[0],"\n");
+    # LET is not required to declare/update a variable.
+    s = "Steve";
+    print(s[0],"\n");
 
     # Updating too - again bounds checking is enforced.
-    a[1] = 42;
-    print(a,"\n");
+    s[1] = 42;
+    print(s,"\n");
 
     # Printing a newline is common.
     newline();
