@@ -41,7 +41,7 @@ func (l *lexCommand) lexFile(path string) error {
 
 	tok := lex.Next()
 	for tok.Type != lexer.EOF {
-		fmt.Fprintf(output, "%s\n", tok.String())
+		fmt.Fprintf(output, "% 6d: %s\n", tok.Line, tok.String())
 		tok = lex.Next()
 	}
 	return nil
