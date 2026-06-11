@@ -13,7 +13,7 @@ func TestGlobal(t *testing.T) {
 	child := NewScope(parent)
 
 	// There should be no global variables
-	if len(child.GetAllGlobals()) != 0 {
+	if len(child.GetAllGlobals()) > 0 {
 		t.Fatalf("unexpected global count")
 	}
 

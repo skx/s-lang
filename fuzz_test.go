@@ -17,9 +17,10 @@ func FuzzProject(f *testing.F) {
 		"bare literal is illegal",
 		"unhandled token in", // Input is just A
 		"unexpected token in",
-		"unknown token type in parseStatements",  // blah
-		"unexpected token in parsePrimary",       // foo(123
-		"unterminated character literal",         // '
+		"unknown token type in parseStatements", // blah
+		"unexpected token in parsePrimary",      // foo(123
+		"unterminated character literal",        // '
+		"unrecognized escape character in character literal",
 		"unterminated string",                    // "foo
 		"unterminated inline",                    // inline { ..
 		"unterminated data",                      // data { ..
@@ -128,6 +129,11 @@ func FuzzProject(f *testing.F) {
 		// misc
 		"pragma foo bar",
 		"let foo = malloc(2); pragma foo bar; ",
+
+		// character literals
+		"let x = 'x';",
+		"let x = '\\",
+		"let x = '\n';",
 	}
 
 	//

@@ -184,7 +184,7 @@ The `compile` sub-command automates the process of generating source, compiling 
 
 ### compile
 
-This performs the same generation as in the `generate` sub-command, but also runs the assembler and linker for you (the linking step is pretty agressive, we remove unused sections, and strip):
+This performs the same generation as in the `generate` sub-command, but also runs the assembler and linker for you (the linking step is pretty aggressive, we remove unused sections, and strip):
 
      s-lang compile [-output a.out] examples/example.in
 

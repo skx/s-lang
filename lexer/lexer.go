@@ -229,7 +229,7 @@ func (l *Lexer) Next() *Token {
 			// skip over the character literal
 			l.position++
 
-			chr := 'x'
+			var chr rune
 
 			// get the first character
 			if l.position < len(l.input) {
@@ -257,7 +257,7 @@ func (l *Lexer) Next() *Token {
 					} else {
 						return &Token{Type: ERROR, Value: fmt.Sprintf("unterminated character literal, got %s", l.peekChar()), Line: l.line}
 					}
-					break
+
 				default:
 					break
 				}

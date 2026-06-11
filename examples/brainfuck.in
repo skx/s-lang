@@ -289,7 +289,7 @@ function buildJumpTable() {
 # loop indexes.
 #
 if ( buildJumpTable() != 0 ) {
-   print("failed to succesfully build our jump table!\n");
+   print("failed to successfully build our jump table!\n");
    exit(0);
 }
 

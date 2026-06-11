@@ -1,7 +1,7 @@
 #
 # Test sorting.
 #
-# In order to ensure that we're reproducable we sort random numbers
+# In order to ensure that we're reproducible we sort random numbers
 # when invoked with zero arguments, and a fixed set otherwise.
 #
 
