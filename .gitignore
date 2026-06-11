@@ -14,7 +14,7 @@ examples/while
 examples/*.s
 examples/types
 examples/cat
-
+examples/sort
 examples/primes
 examples/life
 examples/num2hex

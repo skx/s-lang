@@ -261,6 +261,8 @@ func (l *Lexer) Next() *Token {
 				default:
 					break
 				}
+			} else {
+				return &Token{Type: ERROR, Value: fmt.Sprintf("unterminated character literal, got %s", l.peekChar()), Line: l.line}
 			}
 
 			if l.peekChar() != "'" {
