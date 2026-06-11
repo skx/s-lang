@@ -27,7 +27,7 @@ memlen:
 memlen_type_fail:
         mov rax, offset memlen_type_fail_msg
         or rax, 1
-        jmp .strlen_cleanup
+        jmp .memlen_cleanup
 
 .section .data.memlen,"aw",@progbits
 
