@@ -710,6 +710,10 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 				// fine.
 			case *parser.VariableExpr:
 				// fine.
+			case nil:
+				// missing argument
+				// our type-checker will catch that later.
+				break
 			default:
 				// Nothing more complex is allowed.
 				return fmt.Errorf("non-literals prohibited for default argument values")
@@ -734,14 +738,24 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 		}
 
 		// push each argument to the stack
-		retType, err := c.compileExpr(v.Arguments[i])
-		if err != nil {
-			return err
-		}
-		callTypes = append(callTypes, retType)
-		c.emit(`
+		//
+		// If the argument is nil that means that we didn't
+		// receive enough arguments AND there are no defaults
+		// to make up the difference.
+		//
+		// we ignore that for the moment, and just skip the
+		// compilation - we assume the type-checking will catch
+		// that just a little while lower down.
+		//
+		if v.Arguments[i] != nil {
+			retType, err := c.compileExpr(v.Arguments[i])
+			if err != nil {
+				return err
+			}
+			callTypes = append(callTypes, retType)
+			c.emit(`
 	push rax`)
-
+		}
 	}
 
 	// Type checking
