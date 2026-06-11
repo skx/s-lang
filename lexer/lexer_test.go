@@ -453,6 +453,7 @@ func TestCharacterLiterals(t *testing.T) {
 		"'\\b'",
 		"'\\p'",
 		"'\\",
+		"'",
 	}
 	for _, tst := range esc {
 		l = NewLexer(tst)

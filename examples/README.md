@@ -34,6 +34,9 @@ If you'd like to see the generated assembly for each example as well as produce 
   * Calculate prime factors of the given number.
 * [primes.in](primes.in)
   * Calculate the first 100 prime numbers.
+* [sort.in](sort.in)
+  * Sorting the values of an array.
+  * And characters in a string.
 * [string.in](string.in)
   * Demonstrate iterating over strings, setting their contents, etc.
   * Also shows some conversion and comparison results.

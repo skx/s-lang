@@ -75,7 +75,9 @@ A couple of highlights from the examples:
   * [examples/fizzbuzz.in](examples/fizzbuzz.in) - Calculate fizzbuzz 0-100.
   * [examples/primes.in](examples/primes.in) - Calculate first 100 prime numbers.
   * [examples/num2hex.in](examples/num2hex.in) - Convert a decimal number to a hex string.
-* [examples/example.in](examples/example.in) - Misc. examples to demonstrate some of the facilities.
+* Misc examples
+  * [examples/example.in](examples/example.in) - Misc. examples to demonstrate some of the facilities.
+  * [examples/sort.in](examples/sort.in) - Sort arrays of characters, or characters in strings.
 
 
 
