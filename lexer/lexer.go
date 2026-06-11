@@ -226,19 +226,48 @@ func (l *Lexer) Next() *Token {
 
 		// Look for the more annoying cases
 		case "'":
+			// skip over the character literal
 			l.position++
-			if l.position+2 >= len(l.input) {
-				return &Token{Value: "unterminated character literal", Type: ERROR, Line: l.line}
+
+			chr := 'x'
+
+			// get the first character
+			if l.position < len(l.input) {
+				chr = rune(l.input[l.position])
+				l.position++
+
+				// If it's an escape read the next character
+				switch chr {
+				case '\\':
+					if l.position < len(l.input) {
+						c := l.input[l.position]
+						l.position++
+						switch c {
+						case 'n':
+							chr = '\n'
+						case 'r':
+							chr = '\r'
+						case 't':
+							chr = '\t'
+						case '\\':
+							chr = '\\'
+						default:
+							return &Token{Type: ERROR, Value: fmt.Sprintf("unrecognized escape character in character literal %c", c), Line: l.line}
+						}
+					} else {
+						return &Token{Type: ERROR, Value: fmt.Sprintf("unterminated character literal, got %s", l.peekChar()), Line: l.line}
+					}
+					break
+				default:
+					break
+				}
 			}
 
-			c := l.input[l.position]
-
-			l.position++
 			if l.peekChar() != "'" {
-				return &Token{Type: ERROR, Value: fmt.Sprintf("expected close of character literal, got %s", l.peekChar()), Line: l.line}
+				return &Token{Type: ERROR, Value: fmt.Sprintf("unterminated character literal, got %s", l.peekChar()), Line: l.line}
 			}
 			l.position++
-			return &Token{Value: float64(c), Type: INTEGER, Line: l.line}
+			return &Token{Value: float64(chr), Type: INTEGER, Line: l.line}
 
 		case "+":
 			l.position++
