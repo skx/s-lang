@@ -129,6 +129,13 @@ type Compiler struct {
 	// we append to the functions-array.
 	functionBuffer bytes.Buffer
 
+	// functionLocals counts any local variables used within the
+	// body of a function.
+	//
+	// Specifically it counts any variables which were assigned within
+	// new scopes created by while/if/switch statements.
+	functionLocals int
+
 	// functionName stores the name of functions we're compiling
 	//
 	// We should only be compiling one function at a time,
@@ -357,6 +364,14 @@ func (c *Compiler) pushScope() {
 
 // popScope returns to the parent scope, when compiling a function body is complete.
 func (c *Compiler) popScope() {
+
+	//
+	// Count locals used, if we're compling a function
+	//
+	if c.functionName != "" {
+		c.functionLocals += len(c.scope.Symbols)
+	}
+
 	c.scope = c.scope.Parent
 }
 
@@ -771,8 +786,8 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 
 	if len(v.Arguments) > 0 {
 		c.emit(fmt.Sprintf(`
-	add rsp, %d
-`,
+		add rsp, %d
+	`,
 			8*len(v.Arguments)))
 	}
 	return nil
@@ -1431,35 +1446,44 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 	ret
 `, s.Name))
 
+		// Get the function body
+		body := c.functionBuffer.String()
+
+		// discard the scope
+		c.popScope()
+
 		//
 		// We've compiled the function now:
 		//  1.  Prologue
 		//  2.  Actual body
 		//  3.  Epilogue
 		//
-		// We needed to reserve some space for function locals
-		// and arguments.
+		// We needed to reserve some space for function locals.
 		//
 		// We didn't count the variables and parameters manually,
 		// but since we created a new scope we can say the number
 		// of arguments is equal to the number of entries within
 		// the scope.
 		//
-		locals := len(c.scope.Symbols)
-
-		// Get the function body
-		body := c.functionBuffer.String()
+		// However scopes are nested, so we rely upon the fact
+		// that popScope increases the count every time it removes
+		// a nested scope.
+		//
+		// That means when a while-block is terminated as well as
+		// the function itself.
+		//
+		// tldr; pushScope does nothing.
+		//       popScope always increases the count of arguments we've seen
+		//       when a function body is being compiled
 
 		// Replace the dummy count
-		body = strings.Replace(body, "\"!LOCALS!\"", fmt.Sprintf("%d", locals), -1)
+		body = strings.Replace(body, "\"!LOCALS!\"", fmt.Sprintf("%d", c.functionLocals), -1)
 
-		fmt.Printf("Function %s - locals %d\n", c.functionName, locals)
-
-		// discard the scope
-		c.popScope()
+		fmt.Printf("Function %s - locals %d\n", c.functionName, c.functionLocals)
 
 		// we're no longer defining a function
 		c.functionName = ""
+		c.functionLocals = 0
 
 		// We need to save the body of the function
 		// which we've compiled
