@@ -1479,8 +1479,6 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		// Replace the dummy count
 		body = strings.Replace(body, "\"!LOCALS!\"", fmt.Sprintf("%d", c.functionLocals), -1)
 
-		fmt.Printf("Function %s - locals %d\n", c.functionName, c.functionLocals)
-
 		// we're no longer defining a function
 		c.functionName = ""
 		c.functionLocals = 0
