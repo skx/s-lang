@@ -47,6 +47,7 @@ alloc8:
         sal rax, 2     # shift left to add typing
         push rax
         call malloc    # Allocate the memory
+        add rsp, 8
         and rax, -4    # Remove typing
         ret
 
@@ -106,7 +107,7 @@ malloc:
     pop rbx
     mov rsp, rbp
     pop rbp
-    ret 8
+    ret
 
 
 .section .data.heap,"aw",@progbits

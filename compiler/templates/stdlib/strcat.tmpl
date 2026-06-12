@@ -60,6 +60,7 @@ strcat:
         push rax        # stack argument
         mov rax, 1      # one argument
         call malloc
+        add rsp, 8
         and  rax, -4
 
         pop  rsi
