@@ -90,3 +90,36 @@ func TestUserFunctions(t *testing.T) {
 		t.Fatalf("unexpected failure with two args")
 	}
 }
+
+// TestStdlibTypes does some minimal checking of stdlib types - this caught the issue
+// with FLOAT handling actually comparing against an integer.
+func TestStdlibTypes(t *testing.T) {
+	x := New()
+	x.RegisterStdLib()
+
+	// check each registered type works as expected when given an argument
+	// of the same type.
+	for fun, arg := range x.known {
+
+		switch arg[0] {
+		case NUMBER:
+			// If arg is a number try with both int and float.
+			//
+			// This works because we have zero functions that take a number
+			// as a second argument - functions either take a single number-arg,
+			// or arguments of other types.
+			if x.Check(fun, []Type{INTEGER}) != nil {
+				t.Fatalf("unexpected result for function %s with integer argument", fun)
+			}
+			if x.Check(fun, []Type{FLOAT}) != nil {
+				t.Fatalf("unexpected result for function %s with float argument", fun)
+			}
+
+		default:
+			// Otherwise just use the same argument type
+			if x.Check(fun, arg) != nil {
+				t.Fatalf("unexpected result for function %s", fun)
+			}
+		}
+	}
+}
