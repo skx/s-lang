@@ -123,6 +123,12 @@ type Compiler struct {
 	// and then run "mov rax, [float_name]".
 	floatTable *FloatTable
 
+	// functionBuffer is where we compile function bodies to.
+	// As nested functions are illegal when we start compiling the
+	// body of a function we write it here, and once it is over
+	// we append to the functions-array.
+	functionBuffer bytes.Buffer
+
 	// functionName stores the name of functions we're compiling
 	//
 	// We should only be compiling one function at a time,
@@ -134,12 +140,6 @@ type Compiler struct {
 	// body of a function so we can handle the correct
 	// generation of a "RETURN" statement.
 	functionName string
-
-	// functionBuffer is where we compile function bodies to.
-	// As nested functions are illegal when we start compiling the
-	// body of a function we write it here, and once it is over
-	// we append to the functions-array.
-	functionBuffer bytes.Buffer
 
 	// knownFunctions keeps track of user-defined functions we know
 	// about.  We need this so that we can handle any default arguments
@@ -1405,11 +1405,16 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		// here, to allow later checking.
 		c.typeCheck.AddUserFunction(s.Name, len(s.Parameters))
 
-		// crude stack reservation for now
+		//
+		// Reserve some space for local arguments
+		//
+		// NOTE: The amount of space reserved is unknown until
+		// we've compiled the function body.
+		//
 		c.emit(`
 	push rbp
 	mov rbp, rsp
-	sub rsp, 8 * 64  # Space for local variables
+	sub rsp, 8 * "!LOCALS!"  # Space for local variables
 `)
 
 		for _, stm := range s.Statements {
@@ -1426,6 +1431,31 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 	ret
 `, s.Name))
 
+		//
+		// We've compiled the function now:
+		//  1.  Prologue
+		//  2.  Actual body
+		//  3.  Epilogue
+		//
+		// We needed to reserve some space for function locals
+		// and arguments.
+		//
+		// We didn't count the variables and parameters manually,
+		// but since we created a new scope we can say the number
+		// of arguments is equal to the number of entries within
+		// the scope.
+		//
+		locals := len(c.scope.Symbols)
+
+		// Get the function body
+		body := c.functionBuffer.String()
+
+		// Replace the dummy count
+		body = strings.Replace(body, "\"!LOCALS!\"", fmt.Sprintf("%d", locals), -1)
+
+		fmt.Printf("Function %s - locals %d\n", c.functionName, locals)
+
+		// discard the scope
 		c.popScope()
 
 		// we're no longer defining a function
@@ -1433,7 +1463,7 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 
 		// We need to save the body of the function
 		// which we've compiled
-		c.functions = append(c.functions, c.functionBuffer.String())
+		c.functions = append(c.functions, body)
 		c.functionBuffer.Reset()
 
 	case *parser.FunctionCallExpr:
