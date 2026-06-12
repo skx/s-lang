@@ -1,4 +1,5 @@
 let a = 17.25;
+let c = 21;
 let b = float2int(a);
 
 # show the type changed

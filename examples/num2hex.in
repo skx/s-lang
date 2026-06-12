@@ -75,7 +75,7 @@ function num2hex(n) {
 # Show a table
 #
 let n = 0;
-while( n < 257 ) {
+while( n < 65535 ) {
    print( n , "\t", num2hex(n ), "\n" );
    n++;
 }
