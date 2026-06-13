@@ -33,6 +33,7 @@ strdup:
         push rax      # store as stack-arg
         mov rax, 1    # one argument
         call malloc
+        add rsp, 8
         and rax, -4   # untype the result
 
         pop rdi          # Pointer to start of the string

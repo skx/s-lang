@@ -92,6 +92,7 @@ readfile:
         push rax        # stack-argument
         mov rax, 1      # one argument
         call malloc
+        add rsp, 8
 
         #
         # Save untagged buffer pointer

@@ -132,7 +132,7 @@ func (tc *Types) Check(name string, supplied []Type) error {
 				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
 			}
 		case FLOAT:
-			if got != INTEGER && got != UNKNOWN {
+			if got != FLOAT && got != UNKNOWN {
 				return fmt.Errorf("type mismatch for %s argument %d %s != %s", name, i+1, tc.Type2String(s), tc.Type2String(got))
 			}
 		case NUMBER:
