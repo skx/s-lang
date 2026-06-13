@@ -36,6 +36,73 @@ print( a + b );
 
 
 
+## Type Encoding
+
+As noted we support three different variable types (integer, float, and string/pointer).  We use the lower two bits of values to store their types:
+
+* integers have their lower two bits set to `00`
+* pointers have their lower two bits set to `01`.
+* floats are allocated on the heap, and the pointer has the lower two bits set to `10`.
+
+There is space left for one more type, if the lower two bits are `11` which might be used in the future.
+
+
+### Type Encoding Examples
+
+You should be able to work this out from the "Type Encoding" section above, but here are examples of getting values for each of our types:
+
+Getting an integer from RAX:
+
+        sar rax, 2  # Shift right, removing lower two bits.
+
+Getting a float from RAX into XMM0 where it can be operated upon:
+
+        and rax, -4       # Clear the type bits
+        movsd xmm0, [rax] # Load the heap-allocated float.
+
+Getting a string/pointer from RAX:
+
+        mov rdi, rax  # Get the string
+        and rdi, -4   # Remove typing bits
+
+Returning a number from a function:
+
+        mov rax, 42   # Load the value
+        sal rax, 2    # Shift left, so the lower two bits are now 00
+
+Returning a float from a function:
+
+        call alloc8         # allocate 8-byte boxed float
+        movsd [rax], xmm0   # store XMM0 in that new pointer.
+        or rax, 2           # tag pointer as float (10)
+
+Returning a (static) string from a function:
+
+        mov rax, offset str_ptr  # Load the string
+        or rax, 1                # Mark the type
+
+Finally here's how to do type-checking of the parameter in RAX:
+
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je print_integer
+
+        cmp rcx, 1
+        je print_string
+
+        cmp rcx, 2
+        je print_float
+
+        cmp rcx, 3
+        je print_reserved
+        ret
+
+**NOTE**  Our `alloc8` and `malloc` functions will do their own error-checking, if allocation fails they will print a message and terminate execution.  That means there is no need to check the result of calls to allocation routines.
+
+
+
 ## Variables
 
 Variables are created and assigned like so:
@@ -99,6 +166,30 @@ greet("Steve");
 ```
 
 The return value may be ignored, and it is valid to have a function body end without a "return" statement.
+
+
+
+## Function Call ABI
+
+We define a simple ABI for function invocation:
+
+* All function parameters are passed on the stack.
+* The _number_ of parameters is passed in the RAX register.
+
+Do remember that variables have types!  So for example if you wanted to print the integer 17 using inline assembly you would run:
+
+```text
+mov rax, 17  # store value in register.
+sal rax, 2   # Shift to ensure the bottom two bits are "00".
+push rax     # parameters are passed on the stack
+
+mov rax, 1   # one argument is being passed
+call print   # call the stdlib function
+
+
+xor rax, rax   # Newline function takes no arguments
+call newline   # Call it
+```
 
 
 
@@ -375,7 +466,7 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * **NOTE**: We have no corresponding `free`.
 * `memlen(PTR|STR)`
   * Return the length of the given string/pointer-allocation as an integer.
-* `newline`
+* `newline()`
   * Print a newline to STDOUT.
 * `panic(STR)`
   * Print the given message, and exit.
