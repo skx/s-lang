@@ -284,8 +284,16 @@ func TestComment(t *testing.T) {
 	}
 
 	lexer = NewLexer(`#bogus stuff
-
 `)
+	out = lexer.Next()
+	if out.Type != EOF {
+		t.Fatalf("expected EOF, got none")
+	}
+
+	lexer = NewLexer(`/* This is
+a multi-line
+comment.
+*/`)
 	out = lexer.Next()
 	if out.Type != EOF {
 		t.Fatalf("expected EOF, got none")
