@@ -144,6 +144,11 @@ if ( 2.3 + 3.2 ) {
 } else {
    ffalse();
 }
+if ( 1 <= 10 ) {
+   ttrue();
+} else {
+   ffalse();
+}
 `))
 	if err != nil {
 		t.Fatalf("failed to create compiler")
@@ -166,6 +171,11 @@ if ( 2.3 + 3.2 ) {
 function ttrue() { }
 function ffalse() { }
 
+if ( 1 > 3 ) {
+   ttrue();
+} else {
+   ffalse();
+}
 if ( 0 ) {
    ttrue();
 } else {
