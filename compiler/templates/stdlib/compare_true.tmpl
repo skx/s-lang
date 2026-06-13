@@ -1,0 +1,42 @@
+.section .text.compare_true,"ax",@progbits
+
+##
+true:
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je true_integer
+
+        cmp rcx, 1      # strings are always true
+        jz true_true
+
+        cmp rcx, 2
+        je true_float
+
+        # RESERVED should never appear
+        jmp true_false
+
+true_integer:
+        sar rax, 2       # Remove type bits
+        test rax, rax    # compare
+        jnz true_true
+        jmp true_false
+
+true_float:
+        and rax, -4          # Get value
+        movsd xmm0, [rax]
+
+        xorpd xmm1, xmm1     # compare against 0.0
+        ucomisd xmm0, xmm1
+
+        jne true_true
+        jmp true_false
+
+true_true:
+        mov rax, 1
+        ret
+
+true_false:
+        xor rax, rax
+        ret

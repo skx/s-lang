@@ -1,0 +1,72 @@
+#
+# Implementation of our mathematical comparison operations
+#
+# These have to cope with different operand types:
+#
+#    INT   op INT
+#    INT   op FLOAT
+#    FLOAT op INT
+#    FLOAT op FLOAT
+#
+# In all cases the arguments will be stored in RAX and RBX.
+#
+
+
+.section .text.compare_gt_equals,"ax",@progbits
+
+
+## >=
+greater_equals:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .greater_equals_float
+
+        # integer fast path
+        sar rax, 2
+        sar rbx, 2
+
+        cmp rbx, rax  # compute
+        setge al
+        movzx rax, al
+        sal rax, 2
+        jmp .greater_equals_done
+
+.greater_equals_float:
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .greater_equals_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .greater_equals_rbx_done
+
+.greater_equals_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm0, rbx
+
+.greater_equals_rbx_done:
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .greater_equals_rax_int
+
+        and rax, -4
+        movsd xmm1, [rax]
+        jmp .greater_equals_rax_done
+
+.greater_equals_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm1, rax
+
+.greater_equals_rax_done:
+        ucomisd xmm0, xmm1
+        setnb al
+        movzx rax, al
+        sal rax, 2
+
+.greater_equals_done:
+        ret
