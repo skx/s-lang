@@ -286,13 +286,23 @@ Arithmetic:
 Comparison:
 
 ```text
-==
-!=
 <
 <=
 >
 >=
 ```
+
+Equality:
+
+The equality and inequality operators are unlike the other comparison operators, as they may be applied to strings too.  You may compare integers with integers, floats with floats, or strings with strings.
+
+Mixed-type equality/inequality tests are limited to integer/floats.  (So it is valid to compare `1.5 == 1`, or `3 != 1.5`.  But it is illegal to compare `"Steve" == 1.2`.)
+
+```text
+==
+!=
+```
+
 
 Logical:
 
@@ -316,7 +326,7 @@ x++;
 x--;
 ```
 
-As we have no dynamic typing the comparisons, prefix, suffix, and arithmetic operations may only be applied to floats and integers.  For strings you must use "strcmp" to test for equality.
+As we have no dynamic typing the comparisons, prefix, suffix, and arithmetic operations may generally only be applied to floats and integers.
 
 
 
@@ -487,6 +497,7 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Concatenate the two strings, and return the new string result.
 * `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
+  * You can use `if ( str == str ) { ..` to directly test for equality now, but this was not previously possible.  Similarly `!=` works for inequality testing.
 * `strdup(STR)`
   * Allocate a copy of the given string, and return it.
 * `strlen(STR)`
