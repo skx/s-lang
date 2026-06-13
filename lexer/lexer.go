@@ -146,7 +146,6 @@ func NewLexer(input string) *Lexer {
 	l.known[")"] = RPAREN
 	l.known["*"] = MULTIPLY
 	l.known[","] = COMMA
-	l.known["/"] = DIVIDE
 	l.known[";"] = SEMICOLON
 	l.known["["] = LINDEX
 	l.known["]"] = RINDEX
@@ -278,6 +277,56 @@ func (l *Lexer) Next() *Token {
 				return &Token{Type: PLUSPLUS, Value: "++", Line: l.line}
 			}
 			return &Token{Type: PLUS, Value: "+", Line: l.line}
+
+		case "/":
+			// skip over "/"
+			l.position++
+
+			// single-line comment: // until the end of the line
+			if l.peekChar() == "/" {
+				// skip the second "/"
+				l.position++
+
+				// skip everything until the end of the line
+				for l.position < len(l.input) {
+					c := l.input[l.position]
+					if c == '\n' {
+						break
+					}
+					l.position++
+				}
+				continue
+			}
+
+			// multi-line comment: /* ... */
+			if l.peekChar() == "*" {
+				// skip over the  "*"
+				l.position++
+
+				// now look for "*/" - bump line number when
+				// we see a newline though.
+				for l.position < len(l.input) {
+
+					// get the next character
+					c := l.input[l.position]
+					l.position++
+
+					// increase line number if we need to
+					if c == '\n' {
+						l.line++
+					}
+
+					// is this "*"?  Followed by "/"?
+					if c == '*' && l.peekChar() == "/" {
+
+						// skip over the "/"
+						l.position++
+						break
+					}
+				}
+				continue
+			}
+			return &Token{Type: DIVIDE, Value: "/", Line: l.line}
 
 		case "<":
 			l.position++
