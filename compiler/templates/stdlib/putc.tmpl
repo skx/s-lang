@@ -32,10 +32,8 @@ putc:
         mov     edx, 1
         syscall
 
-        mov rax, 23
-        sal rax, 2
-
 .putc_cleanup:
+        xor rax, rax  # Return value is zero
         mov rsp, rbp
         pop rbp
         ret
