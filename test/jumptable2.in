@@ -85,12 +85,8 @@ while( i < strlen(program) ) {
    # Get the character
    let c = program[i];
 
-   # Get the address of the handler.
-   a = jump[ c ];
+   # Call the handler stored in the given offset.
+   call( jump[ c ] );
 
-   # Call it
-   inline {
-       call rax
-   }
    i++;
 }

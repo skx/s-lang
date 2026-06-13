@@ -342,6 +342,8 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Return the count of supplied command-line arguments, as an integer.
 * `argv(N)`
   * Return the Nth command-line argument, as a string.
+* `call(N)`
+  * Call the given address.  Expected to be used for jumptables, etc.
 * `exit(N)`
   * Terminate execution with the given exit-code.
 * `filesize(STR)`

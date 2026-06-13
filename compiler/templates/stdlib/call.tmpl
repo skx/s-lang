@@ -1,0 +1,36 @@
+#
+# Call an address.  This is going to be dangerous,
+# but assuming you store the address of a function
+# in a variable/array this will let you call it.
+#
+
+.section .text.call,"ax",@progbits
+
+call:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]    # Get the parameter
+        mov rcx, rdi         # type checking
+        and rcx, 3
+        cmp rcx, 0           # we need an integer
+        jne call_type_fail
+        and rdi, -4          # Remove typing
+        call rdi             # Call the address
+
+.call_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+call_type_fail:
+        mov rax, offset call_type_fail_msg
+        or rax, 1
+        jmp .call_cleanup
+
+.section .data.call,"aw",@progbits
+
+.align 8
+call_type_fail_msg:
+        .ascii "call: expected INTEGER"
+        .byte 00

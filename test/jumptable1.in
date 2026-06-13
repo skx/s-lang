@@ -154,8 +154,7 @@ while( i < strlen(program) ) {
    a = getStack(jump, program[i] );
 
    # Call it
-   inline {
-       call rax
-   }
+   call(a);
+
    i++;
 }
