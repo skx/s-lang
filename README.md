@@ -86,10 +86,18 @@ A couple of highlights from the examples:
 The following is a tour of our language, again check [SUMMARY.md](SUMMARY.md) for a concrete list of examples, syntax, and caveats:
 
     # Comments are prefixed with "#" and last until the end of the line.
+    // You can use C-style comments if you prefer.
 
     # Set a variable and print it.
     let a = 3;
     print( a );
+
+    /* Multi-
+       line
+       comments
+       work
+       too
+     */
 
     # Indexing works - and is bound-checked at run-time.
     # LET is not required to declare/update a variable.

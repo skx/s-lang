@@ -330,7 +330,21 @@ function fast() {
 
 ## Comments
 
-Comments begin with `#` and continue to end of line.
+We have two forms of comments:
+
+* Single-line comments are prefixed with either `#` or `//`.
+* Multi-line comments are sandwiched between `/*` and `*/`.
+
+Here you can see both types demonstrated:
+
+```text
+/*
+ * This function does stuff.
+ */
+function life() {
+   return 42;     // The only answer.
+}
+```
 
 
 
