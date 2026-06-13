@@ -1,0 +1,73 @@
+#
+# Implementation of our mathematical comparison operations
+#
+# These have to cope with different operand types:
+#
+#    INT   op INT
+#    INT   op FLOAT
+#    FLOAT op INT
+#    FLOAT op FLOAT
+#
+# In all cases the arguments will be stored in RAX and RBX.
+#
+
+
+.section .text.compare_lt_equals,"ax",@progbits
+
+## <=
+less_equals:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .less_equals_float
+
+        # integer fast path
+        sar rax, 2
+        sar rbx, 2
+
+        cmp rbx, rax  # compute
+        setle al
+        movzx rax, al
+        sal rax, 2
+        jmp .less_equals_done
+
+.less_equals_float:
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .less_equals_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .less_equals_rbx_done
+
+.less_equals_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm0, rbx
+
+.less_equals_rbx_done:
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .less_equals_rax_int
+
+        and rax, -4
+        movsd xmm1, [rax]
+        jmp .less_equals_rax_done
+
+.less_equals_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm1, rax
+
+.less_equals_rax_done:
+
+        ucomisd xmm0, xmm1
+        setbe al
+
+        movzx rax, al
+        sal rax, 2
+
+.less_equals_done:
+        ret

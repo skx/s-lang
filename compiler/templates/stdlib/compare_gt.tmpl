@@ -1,0 +1,22 @@
+#
+# Implementation of our mathematical comparison operations
+#
+# These have to cope with different operand types:
+#
+#    INT   op INT
+#    INT   op FLOAT
+#    FLOAT op INT
+#    FLOAT op FLOAT
+#
+# In all cases the arguments will be stored in RAX and RBX.
+#
+
+
+.section .text.compare_gt,"ax",@progbits
+
+## >
+
+greater_than:
+        call less_equals
+        xor rax, 4
+        ret
