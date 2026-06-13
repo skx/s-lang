@@ -173,15 +173,15 @@ if ( argc() != 2 ) {
    exit(1);
 }
 
-if (strcmp(argv(1),"cat") == 0 ) {
+if (argv(1) == "cat") {
   let program = cat;
 }
 
-if (strcmp(argv(1),"hello") == 0 ) {
+if (argv(1) == "hello") {
   let program = hello;
 }
 
-if (strcmp(argv(1),"mandelbrot") == 0 ) {
+if (argv(1) == "mandelbrot") {
   let program = mandel;
 }
 

@@ -6,6 +6,13 @@ OK
 OK
 OK
 OK
+string != 1
+string != 1
+string != 1.5
+string != 1.5
+OK
+OK
+comparing works even on copies
 OK
 OK
 OK
