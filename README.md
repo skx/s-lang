@@ -211,6 +211,8 @@ We embed a small number of functions within the generated programs, our so-calle
   * Return the count of supplied command-line arguments.
 * `argv(N)`
   * Return the Nth command-line argument, as a string.
+* `call(N)`
+  * Call the given address.
 * `exit(N)`
   * Terminate execution with the given exit-code.
 * `filesize(STR)`
