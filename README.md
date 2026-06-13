@@ -395,8 +395,8 @@ Running `make test` should run both of those things.
 
 ## Lessons Learned
 
-* Not having types meant it was easy to get started, but in the long-run it complicated a lot of the code
-  * Storing type-data in the lower bits was a compromise decision which worked, but it becomes pervasive.
+* Not having (strong) types meant it was easy to get started, but in the long-run it made several things very limited.
+  * Storing type-data in the lower bits was a decision which worked, but it becomes pervasive.
 * I should have started with a Pratt-style parser, rather than recursive descent.
   * It's much easier to extend and manage precedence levels this way.
 * It's surprising how small a standard-library you actually need to write complex, or "useful", programs.
@@ -410,3 +410,7 @@ Running `make test` should run both of those things.
 * There's a lot of value to be obtained by writing functional tests, not just implementation tests.
   * These genuinely caught regressions.
   * Especially when I updated parts of the standard-library and forgot where parts call each other.
+* Putting functions in separate sections allows the linker to optimize very effectively.
+* It wasn't immediately obvious that I didn't need to write code for **both** `==` (equality-checking) and the reverse (`!=`/inequality checking).
+  * Instead I needed to only write one routine and invert the result for the other operation.
+  * Similarly ">" is the same as "not <=", and "<" is the same as "not >=".
