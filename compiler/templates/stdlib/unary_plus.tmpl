@@ -1,0 +1,31 @@
+.section .text.unary_plus,"ax",@progbits
+
+
+#
+# +
+#
+unary_plus:
+        mov rcx, rax
+        and rcx, 3
+
+        cmp rcx, 0
+        je unary_plus_integer
+
+        cmp rcx, 2
+        je unary_plus_float
+
+        # fall-through to type error
+.unary_plus_type_error:
+        mov rax, offset unary_plus_type_fail_msg
+        or rax, 1
+unary_plus_integer:    # nop
+unary_plus_float:      # nop
+        ret
+
+
+.section .data.unary_plus,"aw",@progbits
+
+.align 8
+unary_plus_type_fail_msg:
+        .ascii "+: expected NUMBER"
+        .byte 0

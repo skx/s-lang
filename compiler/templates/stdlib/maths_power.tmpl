@@ -1,0 +1,58 @@
+#
+# Implementation of our mathematical operations: power
+#
+# In all cases the arguments will be stored in RAX and RBX
+#
+
+
+.section .text.power,"ax",@progbits
+
+power:
+        # Check tags
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .power_type_error
+
+        # integer fast path
+        sar rax, 2                  # dividend
+        sar rbx, 2                  # divisor
+
+        xchg rax, rbx               # swap registers
+
+        # result = 1
+        mov rcx, 1
+
+.power_loop:
+        test rbx, rbx
+        jz .power_done
+
+        test rbx, 1
+        jz .power_skip_mul
+
+        imul rcx, rax               # result *= base
+
+.power_skip_mul:
+
+        imul rax, rax               # base *= base
+        shr rbx, 1                  # exponent >>= 1
+        jmp .power_loop
+
+.power_done:
+
+        mov rax, rcx
+        sal rax, 2                  # retag
+        ret
+
+.power_type_error:
+        mov  rax, offset power_type_fail_msg
+        or   rax, 1
+        ret
+
+.section .data.power,"aw",@progbits
+
+.align 8
+power_type_fail_msg:
+        .ascii "^: expected INTEGER"
+        .byte 0
