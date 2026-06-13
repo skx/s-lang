@@ -104,6 +104,9 @@ a[2] = 'l';
 a[3] = 'l';
 a[4] = 'o';
 print(a, ", world!\n");
+if (a == "Hello" ) {
+   print("Compared successfully!\n");
+}
 
 #
 # Convert a string to an int

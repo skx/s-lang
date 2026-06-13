@@ -9,5 +9,6 @@ strcmp(Steve,Tteve) is -1
 strcmp(Steve,Steve) is 0
 strcmp(Steve,Steve*) is -42
 Hello, world!
+Compared successfully!
 string '3.98' -> 3.98000
 STRING -> FLOAT

@@ -15,7 +15,10 @@ In terms of features:
 * Single-pass compiler which generates an assembly output for programs.
 * Parsing uses a Pratt-style parser with precedence layers:
   * Maths operations: `+`, `-`, `*`, `/`, `%`, and `^`.
-  * Comparison operations: `<`, `<=`, `==`, `!=`, `>`, `>=`, for integers, floats, and mixtures of the two.
+  * Comparison operations: `<`, `<=`, `>`, `>=`, for integers, floats, and mixtures of the two.
+  * Equality operations `==`, `!=` work for integers, floats, and even strings.
+    * You can compare integer with integer, float with float, string with string, and mixed operations where you compare either a float or an integer.
+    * You cannot compare a string with anything other than a string.
   * Logical operations: `&&` and `||`.
   * Postfix decrement/increment support for variables (`i++;`, or `index--;` for example).
   * Unary operations `-`, `+`, and `!`.
@@ -266,6 +269,7 @@ We embed a small number of functions within the generated programs, our so-calle
   * Combine the two strings, and return the new string.
 * `strcmp(STR, STR)`
   * Compare two strings for equality, return `0` if equal.
+  * You can use `if ( str == str ) { ..` to directly test for equality now, but this was not previously possible.  Similarly `!=` works for inequality testing.
 * `strdup(STR)`
   * Allocate a copy of the given string, and return it.
 * `strlen(STR)`

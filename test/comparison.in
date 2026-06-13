@@ -31,6 +31,29 @@ if ( 1 == 3.0 )   {  print("Failed\n"); } else { print( "OK\n"); }
 if ( 2.5 == 3.5 ) {  print("Failed\n"); } else { print( "OK\n"); }
 
 
+##
+## Other types
+##
+if ( "Steve" == 1 )   { print("FAILED\n"); } else {print("string != 1\n");}
+if ( 1 == "Steve"  )  { print("FAILED\n"); } else {print("string != 1\n");}
+if ( 1.5 == "Steve" ) { print("FAILED\n"); } else {print("string != 1.5\n");}
+if ( "Test" == 1.5 )  { print("FAILED\n"); } else {print("string != 1.5\n");}
+
+#
+# String comparisons
+#
+a = "Me";
+b = "Me";
+if ( "Steve" == "Steve") { print("OK\n"); } else { print("string != string\n"); }
+if ( a == b ) { print("OK\n"); } else { print("string != string\n"); }
+
+#
+# Ensure we have different pointer addresses
+#
+a = strdup("Me");
+b = strdup("Me");
+if ( a == b ) { print("comparing works even on copies\n"); } else { print("failed\n"); }
+
 
 ##
 ## !=

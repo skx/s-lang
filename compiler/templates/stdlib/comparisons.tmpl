@@ -64,116 +64,171 @@ true_false:
 
 
 ## ==
+#
+# RAX = lhs
+# RBX = rhs
+#
+# Returns tagged integer:
+#   0 << 2  (false)
+#   1 << 2  (true)
+#
 equals:
-        # Check tags
-        mov rcx, rax
-        or rcx, rbx
-        and rcx, 3
-        cmp rcx, 0
-        jne .equals_float
 
-        # integer fast path
+        # Extract tags
+        mov rcx, rax
+        and rcx, 3              # lhs tag
+
+        mov rdx, rbx
+        and rdx, 3              # rhs tag
+
+        cmp rcx, rdx
+        jne .equals_mixed_types
+
+#
+# Same type
+#
+.equals_same_type:
+
+        cmp rcx, 0
+        je .equals_int_compare
+
+        cmp rcx, 1
+        je .equals_string_compare
+
+        cmp rcx, 2
+        je .equals_float_compare
+
+        # Reserved type (11)
+        xor rax, rax
+        ret
+
+#
+# Integer == Integer
+#
+.equals_int_compare:
         sar rax, 2
         sar rbx, 2
 
-        cmp rbx, rax  # compute
+        cmp rax, rbx
         sete al
         movzx rax, al
         sal rax, 2
-        jmp .equals_done
+        ret
 
-.equals_float:
-        mov rcx, rax
-        and rcx, 3
-        cmp rcx, 0
-        je .equals_rax_int
+#
+# String == String
+#
+.equals_string_compare:
+        #
+        # If the two pointers are equal we can exit-early
+        #
+        cmp rax, rbx
+        je .equals_true
 
+        push rbx         # Push arg for strcmp; leave typing in-place
+        push rax         # Push arg for strcmp; leave typing in-place
+        mov rax, 2       # Two arguments
+        call strcmp      # Call into stdlib.
+        add rsp, 16      # fixup the stack
+
+        # strcmp returns:
+        # 0 if equal
+        test rax, rax
+        sete al
+        movzx rax, al
+        sal rax, 2
+        ret
+
+#
+# Float == Float
+#
+.equals_float_compare:
         and rax, -4
         movsd xmm0, [rax]
-        jmp .equals_rax_done
-
-.equals_rax_int:
-        sar rax, 2
-        cvtsi2sd xmm0, rax
-
-.equals_rax_done:
-        mov rcx, rbx
-        and rcx, 3
-        cmp rcx, 0
-        je .equals_rbx_int
 
         and rbx, -4
         movsd xmm1, [rbx]
-        jmp .equals_rbx_done
 
-.equals_rbx_int:
-        sar rbx, 2
-        cvtsi2sd xmm1, rbx
-
-.equals_rbx_done:
         ucomisd xmm0, xmm1
         sete al
         movzx rax, al
         sal rax, 2
+        ret
 
-.equals_done:
+#
+# Mixed types
+#
+.equals_mixed_types:
+
+        #
+        # Any string involved => false
+        #
+        cmp rcx, 1
+        je .equals_false
+
+        cmp rdx, 1
+        je .equals_false
+
+        #
+        # Remaining possibilities:
+        # int/float or float/int
+        #
+        cmp rcx, 0
+        je .equals_lhs_int
+
+        # lhs float
+        and rax, -4
+        movsd xmm0, [rax]
+        jmp .equals_lhs_done
+
+.equals_lhs_int:
+        sar rax, 2
+        cvtsi2sd xmm0, rax
+
+.equals_lhs_done:
+
+        cmp rdx, 0
+        je .equals_rhs_int
+
+        # rhs float
+        and rbx, -4
+        movsd xmm1, [rbx]
+        jmp .equals_rhs_done
+
+.equals_rhs_int:
+        sar rbx, 2
+        cvtsi2sd xmm1, rbx
+
+.equals_rhs_done:
+
+        ucomisd xmm0, xmm1
+        sete al
+        movzx rax, al
+        sal rax, 2
+        ret
+
+.equals_true:
+        mov rax, 1
+        sal rax, 2
+        ret
+
+.equals_false:
+        xor rax, rax
         ret
 
 
 ## !=
+##
+## Call equals and invert the result.  Simple.
+##
 not_equals:
-        # Check tags
-        mov rcx, rax
-        or rcx, rbx
-        and rcx, 3
-        cmp rcx, 0
-        jne .not_equals_float
+        call equals
 
-        # integer fast path
-        sar rax, 2
-        sar rbx, 2
+        test rax, rax
+        setz al         # equal -> 0, not equal -> 1
 
-        cmp rbx, rax  # compute
-        setne al
         movzx rax, al
         sal rax, 2
-        jmp .not_equals_done
-
-.not_equals_float:
-        mov rcx, rax
-        and rcx, 3
-        cmp rcx, 0
-        je .not_equals_rax_int
-
-        and rax, -4
-        movsd xmm0, [rax]
-        jmp .not_equals_rax_done
-
-.not_equals_rax_int:
-        sar rax, 2
-        cvtsi2sd xmm0, rax
-
-.not_equals_rax_done:
-        mov rcx, rbx
-        and rcx, 3
-        cmp rcx, 0
-        je .not_equals_rbx_int
-
-        and rbx, -4
-        movsd xmm1, [rbx]
-        jmp .not_equals_rbx_done
-
-.not_equals_rbx_int:
-        sar rbx, 2
-        cvtsi2sd xmm1, rbx
-
-.not_equals_rbx_done:
-        ucomisd xmm0, xmm1
-        setne al
-        movzx rax, al
-        sal rax, 2
-
-.not_equals_done:
         ret
 
 
