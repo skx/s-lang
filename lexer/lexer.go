@@ -281,6 +281,24 @@ func (l *Lexer) Next() *Token {
 		case "/":
 			// skip over "/"
 			l.position++
+
+			// single-line comment: // until the end of the line
+			if l.peekChar() == "/" {
+				// skip the second "/"
+				l.position++
+
+				// skip everything until the end of the line
+				for l.position < len(l.input) {
+					c := l.input[l.position]
+					if c == '\n' {
+						break
+					}
+					l.position++
+				}
+				continue
+			}
+
+			// multi-line comment: /* ... */
 			if l.peekChar() == "*" {
 				// skip over the  "*"
 				l.position++
