@@ -1208,7 +1208,7 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 					Value: lF.Value / rF.Value,
 				}
 			case lexer.LT:
-				if lI.Value < rI.Value {
+				if lF.Value < rF.Value {
 					val = 1
 				} else {
 					val = 0
@@ -1218,7 +1218,7 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 
 			case lexer.GT:
-				if lI.Value > rI.Value {
+				if lF.Value > rF.Value {
 					val = 1
 				} else {
 					val = 0
@@ -1228,7 +1228,7 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 
 			case lexer.LTEQUALS:
-				if lI.Value <= rI.Value {
+				if lF.Value <= rF.Value {
 					val = 1
 				} else {
 					val = 0
@@ -1238,7 +1238,7 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 
 			case lexer.GTEQUALS:
-				if lI.Value >= rI.Value {
+				if lF.Value >= rF.Value {
 					val = 1
 				} else {
 					val = 0
@@ -1248,7 +1248,7 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 
 			case lexer.EQUALS:
-				if lI.Value == rI.Value {
+				if lF.Value == rF.Value {
 					val = 1
 				} else {
 					val = 0
@@ -1258,7 +1258,7 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 
 			case lexer.NOTEQUALS:
-				if lI.Value != rI.Value {
+				if lF.Value != rF.Value {
 					val = 1
 				} else {
 					val = 0
