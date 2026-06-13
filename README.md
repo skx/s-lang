@@ -2,11 +2,13 @@
 
 This repository contains a compiler for a minimal programming language, targeting linux/amd64 systems.  It seems that languages are traditionally named after their creators, or have a single-letter name.  This has both of course - on the basis that it is being developed as a learning exercise I have no expectation that anyone other than myself will ever use it I can do that!
 
-The generated code contains no external dependencies, so when compiled they are static binaries and do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start around 1k.
+The generated code contains no external dependencies, so when compiled static binaries are produced which do not depend upon libC, etc.   The standard library routines which are not used may be removed by the linker, reducing size, and generated binaries start at around 2k in size.
 
-* Written in Golang for portability, although the generated code is obviously Linux/AMD64-specific.
-* We have a real lexer, and parser.  Internally an AST is constructed which is then walked to generate the assembly language representation of the program.
-* We can automatically invoke the external `as` and `ld` binaries to compile and link if desired.
+* Written in Golang for portability.
+  * Although the generated code is obviously Linux/AMD64-specific.
+* We have a real lexer, and parser.
+  * Internally an AST is constructed which is then walked to generate the assembly language representation of the program.
+* The compiler may automatically invoke the external `as` and `ld` binaries to compile and link if desired.
 
 In terms of features:
 
@@ -48,15 +50,18 @@ Anti-features, or limitations:
 * There are only a few functions in the standard library.
 * There is no general purpose support for types "u8 x = 8", "u16 y = 16384", etc.
   * We can allocate memory with `malloc()` and index it with "m[n]" - by default the memory will be treated as arrays of bytes.
-  * `pragma` can be used to reinterpret it as arrays of 16-bit values, 32-bit values, or even 64-bit values.  (See [test/jumptable2.in](test/jumptable2.in) for an example of that.)
+    * `pragma` can be used to reinterpret a pointer as an arrays of 8, 16, 32, or 64-byte entries
+    * (See [test/jumptable2.in](test/jumptable2.in) for an example of that.)
 
 That said the code is clean, commented/documented, and contains a fair number of test-cases (both of the internal golang packages, and the compilation and execution of programs).
+
+The intent behind this project was to learn, and increase my knowledge of low-level stuff.  So everything here works, and everything is commented, but this is not a production-grade general-purpose language by any means.
 
 
 
 ## Example Programs
 
-There's one page [SUMMARY.md](SUMMARY.md) of the syntax, with all the details and links to the syntax and features within the repository, as well as a collection of [examples/](examples/) showing _real_ programs.
+There's a good [SUMMARY.md](SUMMARY.md) of the syntax, and implementation details, which documents all supported features and syntax, as well as a collection of [examples/](examples/) showing _real_ programs.
 
 A couple of highlights from the examples:
 
@@ -64,8 +69,8 @@ A couple of highlights from the examples:
   * Contains three hardcoded programs inline:
     * The classic "Hello World" program.
     * A simple "cat", which copies STDIN to STDOUT.
-    * The impressive mandelbrot generation program!
-  * If executed with the path to a file containing a brainfuck program it will read and execute that.
+    * The impressive mandelbrot generation program.
+  * If executed with the path to a file containing a brainfuck program it will read and execute that instead of any of the inline programs.
 * [examples/life.in](examples/life.in)
   * Conway's Game of Life.
   * Randomly populate 20% of the arena, and evolves it until Ctrl-C is pressed.
@@ -83,7 +88,7 @@ A couple of highlights from the examples:
 
 ## Syntax
 
-The following is a tour of our language, again check [SUMMARY.md](SUMMARY.md) for a concrete list of examples, syntax, and caveats:
+The following is a tour of our language, again check [SUMMARY.md](SUMMARY.md) for a concrete list of examples, syntax, and caveats along with implementation notes:
 
     # Comments are prefixed with "#" and last until the end of the line.
     // You can use C-style comments if you prefer.
@@ -138,7 +143,7 @@ The following is a tour of our language, again check [SUMMARY.md](SUMMARY.md) fo
     # Exit with the given status (7)
     exit(1 + 2 * 3);
 
-Trailing semicolons are mandatory (because that simplifies the parser. Sorry!)
+Trailing semicolons are mandatory, and brackets around the `if`/`while` tests, because that simplifies the parser!
 
 There is an emacs lisp mode, [s-lang.el](s-lang.el) providing syntax highlighting for our language, although there are no other features beyond that.
 
@@ -238,7 +243,7 @@ We embed a small number of functions within the generated programs, our so-calle
   * **NOTE**: We have no corresponding `free`.
 * `memlen(PTR|STR)`
   * Return the length of the given string/pointer-allocation as an integer.
-* `newline`
+* `newline()`
   * Print a newline to STDOUT.
 * `panic(STR)`
   * Print the given message, and exit.
@@ -275,9 +280,9 @@ You can find the implementation of our standard library routines beneath the [co
 
 ### Adding to the standard library
 
-If you wish to add a new function which will be available to all compiled programs you need to add it to a new file beneath `compiler/templates/stdlib`, then rebuild the compiler.
+If you wish to add a new function which will be available to all compiled programs you need to add it to a new file beneath `compiler/templates/stdlib`, then rebuild the compiler.  Template files beneath `compiler/templates` are embedded within the compiler - there is need to configure load-paths, or similar.
 
-For example if you want to define the new function `foo`:
+As an example if you wished to define the new function `foo`:
 
 * Create `compiler/templates/stdlib/foo.tmpl`
 * Inside there define a new function, with the label `foo:`.
@@ -317,95 +322,6 @@ However this is permitted:
 **NOTE**: Compile-time type checking of standard-library functions requires an explicit definition within our [check/](check) package.  If you add a new function please do add an entry there.
 
 Run-time checking of types is deferred to our standard library routines, and they _should_ all check their argument types are valid before they execute their jobs.  They will return an error string "strlen: expected STRING", or similar, instead of their normal result.
-
-
-
-## Types
-
-As noted we support three different variable types (integer, float, and string/pointer).  We use the lower two bits of values to store their types:
-
-* integers have their lower two bits set to `00`
-* pointers have their lower two bits set to `01`.
-* floats are allocated on the heap, and the pointer has the lower two bits set to `10`.
-
-There is space left for one more type, if the lower two bits are `11`, in the future.
-
-
-### Type Examples
-
-You should be able to work this out from the "Types" section above, or from looking at the code, but here are examples of getting values for each of our types:
-
-Getting an integer from RAX:
-
-        sar rax, 2  # Shift right, removing lower two bits.
-
-Getting the float from RAX:
-
-        and rax, -4       # Clear the type bits
-        movsd xmm0, [rax] # Load the heap-allocated float.
-
-Getting a string/pointer from RAX:
-
-        mov rdi, rax  # Get the string
-        and rdi, -4   # Remove typing bits
-
-Returning a number from a function:
-
-        mov rax, 42   # Load the value
-        sal rax, 2    # Lower two bits are now 00
-
-Returning a float from a function:
-
-        call alloc8         # allocate 8-byte boxed float
-        movsd [rax], xmm0   # store payload
-        or rax, 2           # tag pointer as float (10)
-
-Returning a string from a function:
-
-        mov rax, offset str_ptr  # Load the string
-        or rax, 1                # Mark the type
-
-Finally here's how to do type-checking of the parameter in RAX:
-
-        mov rcx, rax
-        and rcx, 3
-
-        cmp rcx, 0
-        je print_integer
-
-        cmp rcx, 1
-        je print_string
-
-        cmp rcx, 2
-        je print_float
-
-        cmp rcx, 3
-        je print_reserved
-        ret
-
-You can see some tips on debugging with `gdb` in [DEBUGGING.md](DEBUGGING.md).
-
-**NOTE**  Our `alloc8` and `malloc` functions will do their own error-checking, if allocation fails they will print a message and terminate execution.  That means there is no need to check the result of calls to allocation routines.
-
-
-
-## ABI
-
-We define a simple ABI for function invocation:
-
-* All function parameters are passed on the stack.
-* The _number_ of parameters is passed in the RAX register.
-
-You can see how this is handled in [our standard-library functions](compiler/templates/stdlib) for reference, but do remember that variables have types.   As an example if you want to print the integer 17  using inline assembly you would run:
-
-     inline {
-        mov rax, 17  # store payload
-        sal rax, 2   # Bottom two bits should be "00".
-        push rax     # parameters are passed on the stack
-
-        mov rax, 1   # one argument is being passed
-        call print   # call the stdlib function
-     }
 
 
 
@@ -479,7 +395,7 @@ Running `make test` should run both of those things.
   * Storing type-data in the lower bits was a compromise decision which worked, but it becomes pervasive.
 * I should have started with a Pratt-style parser, rather than recursive descent.
   * It's much easier to extend and manage precedence levels this way.
-* It's surprising how little of a standard-library you actually need to write complex programs.
+* It's surprising how small a standard-library you actually need to write complex, or "useful", programs.
 * Implementing a real AST was very useful, and a good decision.
   * I had been tempted to start with a BASIC-style language and skip the use of an AST.
   * You can see hints of that in my use of "`LET x = y`".
@@ -487,3 +403,6 @@ Running `make test` should run both of those things.
   * The mandelbrot example takes two minutes to run, which is 1:58 too slow.
 * Using a real ABI would make functions faster and easier to manage.
 * Using a flexible register allocation would also have made things faster, but it was easy to just assume values were stored in RAX, etc.
+* There's a lot of value to be obtained by writing functional tests, not just implementation tests.
+  * These genuinely caught regressions.
+  * Especially when I updated parts of the standard-library and forgot where parts call each other.
