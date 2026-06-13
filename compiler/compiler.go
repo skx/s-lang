@@ -1080,6 +1080,8 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 		lI, okI1 := v.Left.(*parser.IntegerLiteral)
 		rI, okI2 := v.Right.(*parser.IntegerLiteral)
 
+		var val int64
+
 		if okI1 && okI2 {
 			switch v.Op {
 
@@ -1093,6 +1095,16 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 					Value: lI.Value - rI.Value,
 				}
 
+			case lexer.MODULUS:
+				return &parser.IntegerLiteral{
+					Value: lI.Value % rI.Value,
+				}
+
+			case lexer.POWER:
+				return &parser.IntegerLiteral{
+					Value: lI.Value ^ rI.Value,
+				}
+
 			case lexer.MULTIPLY:
 				return &parser.IntegerLiteral{
 					Value: lI.Value * rI.Value,
@@ -1103,6 +1115,67 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				return &parser.FloatLiteral{
 					Value: float64(lI.Value) / float64(rI.Value),
 				}
+
+			case lexer.LT:
+				if lI.Value < rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.GT:
+				if lI.Value > rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.LTEQUALS:
+				if lI.Value <= rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.GTEQUALS:
+				if lI.Value >= rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.EQUALS:
+				if lI.Value == rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.NOTEQUALS:
+				if lI.Value != rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
 			}
 
 			return v
@@ -1134,7 +1207,67 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				return &parser.FloatLiteral{
 					Value: lF.Value / rF.Value,
 				}
+			case lexer.LT:
+				if lI.Value < rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.GT:
+				if lI.Value > rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.LTEQUALS:
+				if lI.Value <= rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.GTEQUALS:
+				if lI.Value >= rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.EQUALS:
+				if lI.Value == rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
+
+			case lexer.NOTEQUALS:
+				if lI.Value != rI.Value {
+					val = 1
+				} else {
+					val = 0
+				}
+				return &parser.IntegerLiteral{
+					Value: val,
+				}
 			}
+
 			return v
 		}
 	}
