@@ -1,6 +1,6 @@
 # Language Summary
 
-This is a small scripting language which compiles to Linux/amd64 assembly language.
+`s-lang` is a small scripting language which compiles to Linux/amd64 assembly language.
 
 
 
@@ -26,6 +26,14 @@ f = str2float("3.15");
 i = float2int(f);
 ```
 
+There is no dynamic typing so this program is invalid:
+
+```text
+a = "17.4";
+b = 3.5
+print( a + b );
+```
+
 
 
 ## Variables
@@ -36,9 +44,7 @@ Variables are created and assigned like so:
 let x = value;
 ```
 
-If the variable is new it is created, otherwise the existing value in the current scope, or higher scope, is updated.
-
-Examples:
+If the variable is new it is created, otherwise the existing value in the current scope, or higher scope, is updated.  Examples:
 
 ```text
 let count = 10;
@@ -46,7 +52,7 @@ let count = count + 1;
 count++;
 ```
 
-LET is optional so these are identical:
+LET is optional so these work in the same way:
 
 ```text
 count = 10;
@@ -92,7 +98,7 @@ greet();
 greet("Steve");
 ```
 
-The return value may be ignored.
+The return value may be ignored, and it is valid to have a function body end without a "return" statement.
 
 
 
@@ -101,9 +107,9 @@ The return value may be ignored.
 New scopes are created by:
 
 * functions
-* if blocks
-* while blocks
-* case blocks inside switch statements
+* "if" blocks
+* "while" blocks
+*" case" blocks inside switch statements
 
 Inner scopes may access variables from outer scopes.
 
@@ -126,7 +132,7 @@ while (condition) {
 }
 ```
 
-Truthiness is supported:
+Truthiness is supported integers and floats are always true unless their value is zero:
 
 ```text
 if (x) {
@@ -136,7 +142,7 @@ while (x) {
 }
 ```
 
-While loops may have their execution flow changed with:
+"while" loops may have their execution flow changed with:
 
 ```text
 break;
@@ -219,6 +225,8 @@ x++;
 x--;
 ```
 
+As we have no dynamic typing the comparisons, prefix, suffix, and arithmetic operations may only be applied to floats and integers.  For strings you must use "strcmp" to test for equality.
+
 
 
 ## Booleans
@@ -229,6 +237,8 @@ The two words `false` and `true` are recognized, but they are converted into int
 print( true );   # prints 1
 print( false );  # prints 0
 ```
+
+So we do not have true support for booleans.
 
 
 
@@ -242,7 +252,12 @@ Character literals use single quotes:
 '\n'
 ```
 
-A character literal is converted to an integer byte value (0-255) as the input program is lexed, and before it is compiled.
+A character literal is converted to an integer byte value (0-255) as the input program is lexed, and before it is compiled.   Escape codes are recognized, as they are in strings, only for the following cases:
+
+* `\\` - A single slash
+* `\n` - A newline
+* `\r` - A linefeed
+* `\t` - A tab
 
 
 
@@ -253,6 +268,12 @@ String literals use double quotes:
 ```text
 "hello"
 "world\n"
+```
+
+The escape characters recognized within character literals are supported, and additionally `\"` allows including an inline quote:
+
+```text
+let str = "My name is \"Bob\".";
 ```
 
 
@@ -281,7 +302,13 @@ Pragmas may change element size:
 pragma table size16
 ```
 
-After this, indexed accesses use 16-bit elements instead of bytes.
+After this, indexed accesses use 16-bit elements instead of bytes.  Valid sizes are:
+
+* size8 - Byte access
+* size16 - Word access
+* size32 - Double-word access
+* size64 - Quad-word access.
+* Other values are illegal.
 
 
 
