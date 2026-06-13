@@ -1,0 +1,75 @@
+#
+# Implementation of our mathematical operations: divide
+#
+# This has to cope with different operand types:
+#
+#    INT   op INT
+#    INT   op FLOAT
+#    FLOAT op INT
+#    FLOAT op FLOAT
+#
+# In all cases the arguments will be stored in RAX and RBX
+#
+
+
+.section .text.divide,"ax",@progbits
+
+
+divide:
+
+        #
+        # LEFT operand (RBX) -> XMM0
+        #
+
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .divide_rbx_int
+
+        # float
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .divide_rbx_done
+
+.divide_rbx_int:
+        sar rbx, 2
+        cvtsi2sd xmm0, rbx
+
+.divide_rbx_done:
+
+        #
+        # RIGHT operand (RAX) -> XMM1
+        #
+
+        mov rcx, rax
+        and rcx, 3
+        cmp rcx, 0
+        je .divide_rax_int
+
+        # float
+        and rax, -4
+        movsd xmm1, [rax]
+        jmp .divide_rax_done
+
+.divide_rax_int:
+        sar rax, 2
+        cvtsi2sd xmm1, rax
+
+.divide_rax_done:
+
+        #
+        # left / right
+        #
+
+        divsd xmm0, xmm1
+
+        #
+        # Allocate boxed float result
+        #
+
+        call alloc8
+        movsd [rax], xmm0
+        or rax, 2
+
+.divide_done:
+        ret

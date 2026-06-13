@@ -1,0 +1,79 @@
+#
+# Implementation of our mathematical operations: minus
+#
+# This has to cope with different operand types:
+#
+#    INT   op INT
+#    INT   op FLOAT
+#    FLOAT op INT
+#    FLOAT op FLOAT
+#
+# In all cases the arguments will be stored in RAX and RBX
+#
+
+
+.section .text.minus,"ax",@progbits
+
+minus:
+        # Fast int path
+        mov rcx, rax
+        or rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        jne .minus_float
+
+        # fast path, two ints
+        sar rax, 2
+        sar rbx, 2
+
+        sub rbx, rax
+        mov rax, rbx
+
+        sal rax, 2
+        jmp .minus_done
+
+.minus_float:
+
+        # Convert operands
+        # xmm0 = rbx
+        # xmm1 = rax
+
+        # RBX -> xmm0
+        mov rcx, rbx
+        and rcx, 3
+        cmp rcx, 0
+        je .minus_rbx_int
+
+        and rbx, -4
+        movsd xmm0, [rbx]
+        jmp .minus_rbx_done
+
+.minus_rbx_int:
+       sar rbx, 2
+       cvtsi2sd xmm0, rbx
+
+.minus_rbx_done:
+
+       # RAX -> xmm1
+       mov rcx, rax
+       and rcx, 3
+       cmp rcx, 0
+       je .minus_rax_int
+
+       and rax, -4
+       movsd xmm1, [rax]
+       jmp .minus_rax_done
+
+.minus_rax_int:
+       sar rax, 2
+       cvtsi2sd xmm1, rax
+
+.minus_rax_done:
+       subsd xmm0, xmm1
+
+       call alloc8
+       movsd [rax], xmm0
+       or rax, 2
+
+.minus_done:
+       ret
