@@ -10,28 +10,22 @@ import (
 func TestSanity(t *testing.T) {
 
 	// Empty program
-	c, err := New(WithCompileChecking(true))
+	c := New(WithCompileChecking(true))
+	txt, err := c.Compile()
 	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
-	txt, err2 := c.Compile()
-	if err2 != nil {
-		t.Fatalf("unexpected error compiling empty program: %s", err2)
+		t.Fatalf("unexpected error compiling empty program: %s", err)
 	}
 	if !strings.Contains(txt, "rax") {
 		t.Fatalf("suspicious output")
 	}
 
 	// Simple program
-	c, err = New(WithSource(`
+	c = New(WithSource(`
 print("Hello, world!\n");
 
 let a = 3;
 print(a);
 `))
-	if err != nil {
-		t.Fatalf("unexpected error compiling empty program: %s", err)
-	}
 
 	txt, err = c.Compile()
 	if err != nil {
@@ -46,35 +40,27 @@ print(a);
 func TestBroken(t *testing.T) {
 
 	// "return" cannot handle strings
-	c, err := New(WithSource(`return "Steve";`))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
-	_, err = c.Compile()
+	c := New(WithSource(`return "Steve";`))
+	_, err := c.Compile()
 	if err == nil {
 		t.Fatalf("expected error, got none.")
 	}
 
 	// "if" doesn't like strings
-	c, err = New(WithSource(`if ( "Steve" ) { print( 1 ); } `))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
+	c = New(WithSource(`if ( "Steve" ) { print( 1 ); } `))
+
 	_, err = c.Compile()
 	if err == nil {
 		t.Fatalf("expected error, got none.")
 	}
 
 	// nested functions are illegal
-	c, err = New(WithSource(`
+	c = New(WithSource(`
 function foo() {
    function bar() {
    }
 }
 `))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	_, err = c.Compile()
 	if err == nil {
 		t.Fatalf("expected error, got none.")
@@ -85,13 +71,10 @@ function foo() {
 func TestConstantFolding(t *testing.T) {
 
 	// Simple program
-	c, err := New(WithSource(`
+	c := New(WithSource(`
 # 7 is the magic number
 exit( 1 + 2 * 3);
 `))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	txt, err := c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
@@ -103,13 +86,11 @@ exit( 1 + 2 * 3);
 	// Now do it again, but this time disable constant
 	// folding
 	// Simple program
-	c, err = New(WithSource(`
+	c = New(WithSource(`
 # 7 is the magic number
 exit( 1 + 2 * 3);
 `), WithConstantFolding(false))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
+
 	txt, err = c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
@@ -130,7 +111,7 @@ exit( 1 + 2 * 3);
 func TestConstantIf(t *testing.T) {
 
 	// Simple program
-	c, err := New(WithSource(`
+	c := New(WithSource(`
 function ttrue() { }
 function ffalse() { }
 
@@ -150,9 +131,6 @@ if ( 1 <= 10 ) {
    ffalse();
 }
 `))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	txt, err := c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
@@ -167,7 +145,7 @@ if ( 1 <= 10 ) {
 
 	// Same again, but this time the code will only contain the
 	// FALSE block.
-	c, err = New(WithSource(`
+	c = New(WithSource(`
 function ttrue() { }
 function ffalse() { }
 
@@ -207,7 +185,7 @@ if ( 0.0 ) {
 	//
 	// We should see both branches are present.
 	//
-	c, err = New(WithSource(`
+	c = New(WithSource(`
 function ttrue() { }
 function ffalse() { }
 
@@ -238,7 +216,7 @@ if ( 1 + 3 ) {
 func TestConstantWhile(t *testing.T) {
 
 	// Simple program
-	c, err := New(WithSource(`
+	c := New(WithSource(`
 function bogus() {  # can't happen
 }
 
@@ -256,9 +234,6 @@ while( 1 - 1 ) {
    bogus();
 }
 `))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	txt, err := c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
@@ -268,7 +243,7 @@ while( 1 - 1 ) {
 	}
 
 	// Same again, but this time the code will always run
-	c, err = New(WithSource(`
+	c = New(WithSource(`
 function valid() { print("always\n"); }
 
 while( 1 ) {
@@ -295,7 +270,7 @@ while( 1.5 ) {
 	//
 	// We should see both branches are present.
 	//
-	c, err = New(WithSource(`
+	c = New(WithSource(`
 function bogus() { }
 
 while( 1 ) {
@@ -307,9 +282,6 @@ while( 1.0 ) {
   break;
 }
 `), WithConstantFolding(false))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	txt, err = c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
@@ -323,7 +295,7 @@ while( 1.0 ) {
 func TestAll(t *testing.T) {
 
 	// Simple program
-	c, err := New(WithSource(`
+	c := New(WithSource(`
 function test (n) {
   let n = 10 - 4;
 
@@ -418,9 +390,6 @@ greet("World");
 greet(32.2);
 pragma foo bar
 `))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	txt, err := c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling program: %s", err)
@@ -452,13 +421,10 @@ func TestErrors(t *testing.T) {
 
 	for _, txt := range cases {
 
-		c, err := New(WithSource(txt))
-		if err != nil {
-			t.Fatalf("error creating program %s: %s", txt, err)
-		}
+		c := New(WithSource(txt))
 
-		_, err2 := c.Compile()
-		if err2 == nil {
+		_, err := c.Compile()
+		if err == nil {
 			t.Fatalf("expected error, got none for source %s", txt)
 		}
 	}

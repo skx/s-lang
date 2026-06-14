@@ -29,32 +29,29 @@ var templateFS embed.FS
 //
 // We use the decorator-pattern to allow flexible updates for the
 // configuration values we allow.
-type Option func(*Compiler) error
+type Option func(*Compiler)
 
 // WithConstantFolding allows specifying whether constant folding
 // is applied after the compiler parses the program, and before it
 // generates the assembly language for it.
 func WithConstantFolding(enable bool) Option {
-	return func(c *Compiler) error {
+	return func(c *Compiler) {
 		c.constantFolding = enable
-		return nil
 	}
 }
 
 // WithSource allows specifying the source code to compile.
 func WithSource(source string) Option {
-	return func(c *Compiler) error {
+	return func(c *Compiler) {
 		c.Source = source
-		return nil
 	}
 }
 
 // WithCompileChecking allows compile-time type-checking to
 // be disabled.
 func WithCompileChecking(enable bool) Option {
-	return func(c *Compiler) error {
+	return func(c *Compiler) {
 		c.checkTypes = enable
-		return nil
 	}
 }
 
@@ -189,7 +186,7 @@ type Compiler struct {
 //
 // Using one of our Option methods source can be passed into the compiler,
 // and options set.
-func New(options ...Option) (*Compiler, error) {
+func New(options ...Option) *Compiler {
 	tmp := &Compiler{
 		constantFolding: true,
 		floatTable:      NewFloatTable(),
@@ -202,13 +199,10 @@ func New(options ...Option) (*Compiler, error) {
 
 	// Allow options to override our defaults
 	for _, option := range options {
-		err := option(tmp)
-		if err != nil {
-			return tmp, err
-		}
+		option(tmp)
 	}
 
-	return tmp, nil
+	return tmp
 }
 
 // emit writes output to our buffer, or our open function-buffer.

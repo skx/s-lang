@@ -152,10 +152,7 @@ func FuzzProject(f *testing.F) {
 		//
 		// create a compiler object with our source
 		//
-		c, err := compiler.New(compiler.WithSource(string(input)))
-		if err != nil {
-			t.Fatalf("failed to create compiler with source %v %s", input, err)
-		}
+		c := compiler.New(compiler.WithSource(string(input)))
 
 		//
 		// Try to generate some assembly - this runs the lexer, the parser, and the generator.
@@ -163,7 +160,7 @@ func FuzzProject(f *testing.F) {
 		// We mostly expect errors from the lexer and parser, the generator is going to
 		// produce output if it has some valid AST.
 		//
-		_, err = c.Compile()
+		_, err := c.Compile()
 		if err != nil {
 
 			//
