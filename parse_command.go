@@ -66,12 +66,8 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 			s = append(s, a.String())
 		}
 		fmt.Fprintf(output, "%s(%s);\n", stmt.Name, strings.Join(s, ","))
-	case *parser.IntegerLiteral:
-		fmt.Fprintf(output, "Integer Literal %d;\n", stmt.Value)
 	case *parser.IndexAssign:
 		fmt.Fprintf(output, "%s[%s] = %s\n", stmt.Left, stmt.Index, stmt.Expression)
-	case *parser.FloatLiteral:
-		fmt.Fprintf(output, "Float Literal %f;\n", stmt.Value)
 	case *parser.Let:
 		fmt.Fprintf(output, "LET %s = %v;\n", stmt.Left.String(), stmt.Expression)
 	case *parser.Inline:
@@ -82,8 +78,6 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "%s%s\n", stmt.Expr, stmt.Op)
 	case *parser.Pragma:
 		fmt.Fprintf(output, "pragma %s = %s;\n", stmt.Key, stmt.Value)
-	case *parser.StringLiteral:
-		fmt.Fprintf(output, "String Literal %s;\n", stmt.Value)
 	case *parser.Switch:
 		fmt.Fprintf(output, "switch( %s ) {\n", stmt.Value)
 		for _, x := range stmt.Choices {
@@ -102,8 +96,6 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 			fmt.Fprintf(output, "\t}\n")
 		}
 		fmt.Fprintf(output, "}\n")
-	case *parser.VariableExpr:
-		fmt.Fprintf(output, "%s\n", stmt.Name)
 	case *parser.While:
 		fmt.Fprintf(output, "while(%s) {\n", stmt.Expression.String())
 		for _, x := range stmt.Statements {
