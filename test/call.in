@@ -1,0 +1,31 @@
+let a = mmap(10);
+print("Allocated ", memlen(a), " bytes of executable RAM\n");
+print("The pointer has type ", type(a), "\n");
+
+
+#
+# mov rax, 32
+# ret
+#
+print("Injecting code..\n");
+a[0] = 72;
+a[1] = 199;
+a[2] = 192
+a[3] = 32
+a[4] = 0
+a[5] = 0
+a[6] = 0
+a[7] = 195
+
+
+# Call the routine
+print("Calling code..\n");
+call(a);
+
+# Call the routine and print the result.
+# The assembly we configured sets RAX to 32.
+# But that will be shifted to the right two
+# bits so the result should be 8.
+print("Calling again, printing result..\n");
+print(call(a));
+newline();

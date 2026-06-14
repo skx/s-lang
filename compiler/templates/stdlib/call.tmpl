@@ -13,24 +13,36 @@ call:
         mov rdi, [rbp+16]    # Get the parameter
         mov rcx, rdi         # type checking
         and rcx, 3
-        cmp rcx, 0           # we need an integer
-        jne call_type_fail
+
+        cmp rcx, 0           # integer is an address
+        je call_integer      # NOTE: No typing
+
+        cmp rcx, 1           # string is just a pointer, so the same!
+        je call_ptr          # BUT TYPING IS PRESENT
+
+        # fall through to type-fail
+        mov rax, offset call_type_fail_msg
+        or rax, 1
+        jmp .call_cleanup
+
+
+call_integer:
+        call rdi
+        jmp .call_cleanup
+
+call_ptr:
         and rdi, -4          # Remove typing
         call rdi             # Call the address
+        # fall-through
 
 .call_cleanup:
         mov rsp, rbp
         pop rbp
         ret
 
-call_type_fail:
-        mov rax, offset call_type_fail_msg
-        or rax, 1
-        jmp .call_cleanup
-
 .section .data.call,"aw",@progbits
 
 .align 8
 call_type_fail_msg:
-        .ascii "call: expected INTEGER"
+        .ascii "call: expected INTEGER|POINTER"
         .byte 00
