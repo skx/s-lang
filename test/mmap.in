@@ -1,0 +1,13 @@
+#
+# Allocate memory and confirm it worked
+#
+#
+function alloc(size) {
+   let ptr = mmap(size);
+   print("Allocated ", memlen(ptr), " bytes of executable RAM\n");
+}
+
+alloc(2);
+alloc(0);
+alloc(256);
+alloc(4096);
