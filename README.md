@@ -248,9 +248,12 @@ We embed a small number of functions within the generated programs, our so-calle
   * Convert the given integer to a floating point.
 * `malloc(N)`
   * Allocate N bytes on the heap.
+  * Note memory is not executable; use mmap() if you need that.
   * **NOTE**: We have no corresponding `free`.
 * `memlen(PTR|STR)`
   * Return the length of the given string/pointer-allocation as an integer.
+* `mmap(N)`
+  * Allocate N bytes of readable/writable/executable memory via MMAP.
 * `newline()`
   * Print a newline to STDOUT.
 * `panic(STR)`

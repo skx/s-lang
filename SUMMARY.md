@@ -381,7 +381,7 @@ let str = "My name is \"Bob\".";
 
 ## Arrays and Memory
 
-Pointers returned from `malloc()` may be indexed:
+Pointers returned from `malloc()` or `mmap()` may be indexed:
 
 ```text
 let ram = malloc(4096);
@@ -473,9 +473,12 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Convert the given integer to a floating point.
 * `malloc(N)`
   * Allocate N bytes on the heap.
+  * Note memory is not executable; use mmap() if you need that.
   * **NOTE**: We have no corresponding `free`.
 * `memlen(PTR|STR)`
   * Return the length of the given string/pointer-allocation as an integer.
+* `mmap(N)`
+  * Allocate N bytes of readable/writable/executable memory via MMAP.
 * `newline()`
   * Print a newline to STDOUT.
 * `panic(STR)`

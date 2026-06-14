@@ -1,0 +1,100 @@
+##
+## This function is almost the same as our malloc
+## implementation - except instead of using
+## brk to allocate the memory we use MMAP, which allows
+## it to be readable/writeable/executable.
+##
+## As with our malloc implementation all allocations are
+## prefixed with the size of the allocation.
+##
+## So malloc(10) becomes malloc(16) and the storage is:
+##
+##   ram:  size (10)
+##   ptr:  returned to caller
+##
+
+
+.section .text.mmap,"ax",@progbits
+
+
+mmap:
+    push rbp
+    mov rbp, rsp
+
+    mov rbx, [rbp+16]
+    sar rbx, 2                 # requested size
+
+    mov r13, rbx               # preserve original size
+
+    #
+    # Add space for allocation header
+    #
+    add rbx, 8
+
+    #
+    # Align to 8 bytes
+    #
+    add rbx, 7
+    and rbx, -8
+
+    #
+    # mmap(
+    #   NULL,
+    #   rbx,
+    #   PROT_READ|PROT_WRITE|PROT_EXEC,
+    #   MAP_PRIVATE|MAP_ANONYMOUS,
+    #   -1,
+    #   0
+    # )
+    #
+
+    xor rdi, rdi              # addr = NULL
+    mov rsi, rbx              # length
+
+    mov rdx, 7                # PROT_READ|WRITE|EXEC
+
+    mov r10, 0x22             # MAP_PRIVATE|MAP_ANONYMOUS
+
+    mov r8, -1                # fd = -1
+    xor r9, r9                # offset = 0
+
+    mov rax, 9                # sys_mmap
+    syscall
+
+    #
+    # Linux returns negative errno on failure
+    #
+    test rax, rax
+    js .mmap_fail
+
+    mov r12, rax
+
+    #
+    # Store allocation size
+    #
+    mov [r12], r13
+
+    #
+    # Return pointer after header
+    #
+    lea rax, [r12 + 8]
+    or rax, 1
+
+    jmp .mmap_done
+
+.mmap_fail:
+    mov rax, offset mmap_fail_msg
+    call panic_raw
+
+.mmap_done:
+    mov rsp, rbp
+    pop rbp
+    ret
+
+
+.section .data.mmap,"aw",@progbits
+
+.align 8
+mmap_fail_msg:
+    .ascii "mmap failed!\nTerminating!\n"
+    .byte 0
