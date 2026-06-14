@@ -153,7 +153,37 @@ func TestNumbers(t *testing.T) {
 			}
 		}
 	}
+}
 
+// TestHexNumbers tests parsing numbers like 0x1234
+func TestHexNumbers(t *testing.T) {
+
+	// easy
+	l := NewLexer("0xFFff")
+
+	tok := l.Next()
+	if tok.Type != INTEGER {
+		t.Fatal("expected integer")
+	}
+	if tok.Value.(int64) != 65535 {
+		t.Fatalf("got wrong number, '%d'", tok.Value)
+	}
+
+	// bogus number
+	l = NewLexer("0xff.ff")
+
+	tok = l.Next()
+	if tok.Type != ERROR {
+		t.Fatal("expected error")
+	}
+
+	// too large
+	l = NewLexer("0xfffffffffffffffffffffffffffffffffffff")
+
+	tok = l.Next()
+	if tok.Type != ERROR {
+		t.Fatal("expected error")
+	}
 }
 
 // TestIssue15 confirms https://github.com/skx/sysbox/issues/15 is closed.
