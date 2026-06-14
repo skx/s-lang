@@ -349,7 +349,7 @@ while(index < length) {
      case '[' {
         # is the byte at the data pointer zero?
         let n = ram[cellptr];
-        if (n == 0) {
+        if (!n) {
           let index = jumpOpen[ index ];
           continue;
         }
@@ -359,7 +359,7 @@ while(index < length) {
      case ']' {
         # is the byte at the data pointer zero?
         let n = ram[cellptr];
-        if (n != 0) {
+        if (n) {
            let index = jumpClose[index];
            continue;
         }
