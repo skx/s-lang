@@ -38,6 +38,7 @@ func main() {
 	subcommands.Register(&generateCommand{})
 	subcommands.Register(&compileCommand{})
 	subcommands.Register(&executeCommand{})
+	subcommands.Register(&versionCommand{})
 
 	//
 	// Execute the one the user chose.
