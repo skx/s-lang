@@ -83,30 +83,37 @@ func TestParseBroken(t *testing.T) {
 		t.Fatalf("error making temporary file")
 	}
 
-	src := `
-# This is an error
-return("Steve
-`
-	// The program we'll compile
-	_, err = f.Write([]byte(src))
-	if err != nil {
-		t.Fatalf("error writing %s", err)
-	}
-
 	// cleanup once done
 	defer os.Remove(f.Name())
 
-	x := parseCommand{}
-	err = x.parseFile(f.Name())
-	if err == nil {
-		t.Fatalf("expected error parsing program, got none.")
+	// The tests that each have a broken program
+	tests := []string{
+		`
+# This is an error
+return("Steve
+`,
+		`if ( true ) { return( "S `,
+		`if ( true ) { return ; } else { return( "S `,
+		`function foo() { return( "...`,
+		`switch a { case 1 { return 1; } case 2 { return "S } } `,
 	}
 
-	// Remove the file and try again
-	os.Remove(f.Name())
+	for _, src := range tests {
+
+		_, err = f.Write([]byte(src))
+		if err != nil {
+			t.Fatalf("error writing %s", err)
+		}
+
+		x := parseCommand{}
+		err = x.parseFile(f.Name())
+		if err == nil {
+			t.Fatalf("expected error parsing program, got none.")
+		}
+	}
 
 	// This will fail as the file is unreadable / non-existent.
-	x = parseCommand{}
+	x := parseCommand{}
 	err = x.parseFile(f.Name())
 	if err == nil {
 		t.Fatalf("expected error parsing program, got none.")
@@ -188,5 +195,140 @@ return("Steve
 	p.Execute([]string{f.Name()})
 	p.Execute([]string{})
 	p.Execute([]string{"/file/not/found"})
+
+}
+
+func TestParseAll(t *testing.T) {
+
+	// Create a temporary file for a fake source
+	f, err := os.CreateTemp("", "sample")
+	if err != nil {
+		t.Fatalf("error making temporary file")
+	}
+
+	// Simple program
+	src := `
+function test (n) {
+  let n = 10 - 4;
+
+  return( n ) ;
+}
+function defaults (a, b = "steve", c=442) {
+}
+function testing () {
+   return( 1 + ( 4 / 2) );
+}
+let a = test(2);
+let a = a + 2;
+
+defaults("none");
+defaults("none", "none");
+
+while( a ) {
+pragma a size8
+  let a = a - 1;
+a--;
+a++;
+a--;
+}
+if ( a ) {
+  print("non-zero\n");
+} else {
+  print("Trouble at the mill\n");
+}
+let s = "Steve";
+print(s[0], "\n");
+s[0] = 42;
+putc(s[0]);
+while( 1 ) {
+  break;
+}
+let a = 3;
+while( a ) {
+   a++;
+   x = !a;
+   y = -a;
+   z = +a;
+   continue;
+   a--;
+}
+
+c = 7;
+switch c {
+  case 3 {  print("three\n");
+  }
+  case 0 {
+	    print("zero\n");
+  }
+  default {
+	    print("default\n");
+  }
+}
+print( s );
+print( test(3));
+inline { }
+
+# maths
+a = 1;
+b = 3;
+
+# maths
+print( a + b, "\n");
+print( a - b, "\n");
+print( a * b, "\n");
+print( a / b, "\n");
+print( a % b, "\n");
+print( a ^ b, "\n");
+
+# comparison
+print( a <  b, "\n");
+print( a <= b, "\n");
+print( a >  b, "\n");
+print( a >=  b, "\n");
+print( a ==  b, "\n");
+print( a !=  b, "\n");
+print( a &&  b, "\n");
+print( a ||  b, "\n");
+
+# collapse constants
+print( 1 + 1 , "\n" );
+print( 1 - 1 , "\n" );
+print( 1 / 1 , "\n" );
+print( 1 * 1 , "\n" );
+print( 1 % 1 , "\n" );
+print( 1 ^ 1 , "\n" );
+
+print( 1.0 + 1.0 , "\n" );
+print( 1.0 - 1.0 , "\n" );
+print( 1.0 / 1.0 , "\n" );
+print( 1.0 * 1.0 , "\n" );
+
+data {
+}
+inline {
+}
+function greet(name = "Steve") { print("Hello, ", name , "\n");}
+greet();
+greet("World");
+greet(32.2);
+pragma foo bar
+`
+	// The program we'll compile
+	_, err = f.Write([]byte(src))
+	if err != nil {
+		t.Fatalf("error writing %s", err)
+	}
+
+	// cleanup once done
+	defer os.Remove(f.Name())
+
+	x := parseCommand{}
+	err = x.parseFile(f.Name())
+	if err == nil {
+		t.Fatalf("expected error parsing program, got none.")
+	}
+
+	// Remove the file and try again
+	os.Remove(f.Name())
 
 }

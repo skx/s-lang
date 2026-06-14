@@ -7,22 +7,22 @@ import (
 	"testing"
 )
 
-// TestCompileInfo just calls the Info() method for coverage
-func TestCompileInfo(t *testing.T) {
+// TestExecuteInfo just calls the Info() method for coverage
+func TestExecuteInfo(t *testing.T) {
 
-	x := compileCommand{}
+	x := executeCommand{}
 	_, _ = x.Info()
 }
 
-// TestCompileDriver tests we can call the "Execute" method,
+// TestExecuteDriver tests we can call the "Execute" method,
 // as our CLI would generate.
-func TestCompileDriver(t *testing.T) {
+func TestExecuteDriver(t *testing.T) {
 
 	// Ensure the generation goes here.
 	var buff bytes.Buffer
 	output = &buff
 
-	c := &compileCommand{}
+	c := &executeCommand{}
 	c.Execute([]string{"/file/not/found"})
 	c.Execute([]string{"/file/not/found", "/too/many/args"})
 
@@ -32,7 +32,7 @@ func TestCompileDriver(t *testing.T) {
 
 }
 
-func TestCompile(t *testing.T) {
+func TestExecute(t *testing.T) {
 	// Create a temporary file for a fake source
 	f, err := os.CreateTemp("", "sample")
 	if err != nil {
@@ -51,8 +51,8 @@ print("OK\n");
 		t.Fatalf("error writing %s", err)
 	}
 
-	x := compileCommand{}
-	x.output = "s.out"
+	x := executeCommand{}
+	x.output = "a.out"
 	x.verbose = true
 
 	err = x.processFile(f.Name())
