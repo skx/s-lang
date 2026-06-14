@@ -121,6 +121,92 @@ return("Steve
 
 }
 
+// TestParseError ensures we can abort on unknown types
+func TestParseError(t *testing.T) {
+
+	// IntegerLiteral is not handled as a bare statement,
+	// it is part of an assignment, binop, or similar.
+	//
+	// So finding it inside a function body is a problem
+	fn := &parser.Function{
+		Name: "hello",
+		Statements: []parser.Statement{
+			&parser.IntegerLiteral{},
+		},
+	}
+	p := &parseCommand{}
+	err := p.printStmt(fn)
+	if err == nil {
+		t.Fatalf("expected function error, got none")
+	}
+
+	// IntegerLiteral is not handled as a bare statement,
+	// it is part of an assignment, binop, or similar.
+	//
+	// So similar story here, we have two if-cases to cover
+	// one in the true-block and one in the false.
+	if1 := &parser.If{
+		Expression: &parser.IntegerLiteral{},
+		True: []parser.Statement{
+			&parser.IntegerLiteral{},
+		},
+	}
+	if2 := &parser.If{
+		Expression: &parser.IntegerLiteral{},
+		False: []parser.Statement{
+			&parser.IntegerLiteral{},
+		},
+	}
+	err = p.printStmt(if1)
+	if err == nil {
+		t.Fatalf("expected if1 error, got none")
+	}
+	err = p.printStmt(if2)
+	if err == nil {
+		t.Fatalf("expected if2 error, got none")
+	}
+
+	// IntegerLiteral is not handled as a bare statement,
+	// it is part of an assignment, binop, or similar.
+	//
+	// So similar story here, inside a case statement this
+	// is an error.
+	swtch := &parser.Switch{
+		Value: &parser.IntegerLiteral{},
+		Choices: []*parser.Case{
+			&parser.Case{
+				Expression: &parser.IntegerLiteral{},
+				Statements: []parser.Statement{
+					&parser.IntegerLiteral{},
+				},
+			},
+		},
+	}
+	err = p.printStmt(swtch)
+	if err == nil {
+		t.Fatalf("expected switch error, got none")
+	}
+
+	// Final one
+	//
+	// IntegerLiteral is not handled as a bare statement,
+	// it is part of an assignment, binop, or similar.
+	//
+	// So similar story here, we have to cover the While
+	// case.
+	whle := &parser.While{
+		Expression: &parser.IntegerLiteral{},
+		Statements: []parser.Statement{
+			&parser.IntegerLiteral{},
+		},
+	}
+	err = p.printStmt(whle)
+	if err == nil {
+		t.Fatalf("expected while error, got none")
+	}
+
+}
+
 // TestParsePrintStmt tests printing bogus things, to ensure
 // errors are caught
 func TestParsePrintStmt(t *testing.T) {
