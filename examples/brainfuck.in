@@ -215,6 +215,29 @@ let jumpClose = malloc(length * 2);
 pragma jumpClose size16
 
 #
+# Replace "[-]" with "C" which stands for clear
+# and which just loads zero into the cell
+#
+function replaceClear() {
+    i = 0;
+    cleared= 0;
+    while (i < length-2) {
+       if ( program[i+0] == '[' && program[i+1] == '-' && program[i+2] == ']' ) {
+
+             program[i+0] = ' ';
+             program[i+1] = 'C';
+             program[i+2] = ' ';
+
+             cleared++;
+       }
+       i++;
+    }
+    print("cleared ", cleared, " loops!\n");
+}
+
+replaceClear();
+
+#
 # Build our jump tables for loop open/close
 #
 # We use a temporary stack here (never freed, oops), and
@@ -345,6 +368,10 @@ while(index < length) {
        cellptr++;
      }
 
+     case 'C' {
+        ram[cellptr] = 0;
+     }
+
      # [: loop open
      case '[' {
         # is the byte at the data pointer zero?
@@ -369,3 +396,4 @@ while(index < length) {
    # next opcode
    index++;
 }
+
