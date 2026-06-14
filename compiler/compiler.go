@@ -1090,10 +1090,11 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 
 			case lexer.MODULUS:
-				return &parser.IntegerLiteral{
-					Value: lI.Value % rI.Value,
+				if rI.Value != 0 {
+					return &parser.IntegerLiteral{
+						Value: lI.Value % rI.Value,
+					}
 				}
-
 			case lexer.POWER:
 				return &parser.IntegerLiteral{
 					Value: lI.Value ^ rI.Value,
