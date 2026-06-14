@@ -46,13 +46,13 @@ func (v *versionCommand) Execute(args []string) int {
 	}
 
 	// print the name and version
-	fmt.Printf("%s - %s\n", filepath.Base(os.Args[0]), version)
+	fmt.Fprintf(output, "%s - %s\n", filepath.Base(os.Args[0]), version)
 
 	// Now any other information we found.
 	if ok {
 		for _, setting := range info.Settings {
 			if strings.Contains(setting.Key, "vcs") {
-				fmt.Printf("\t%s\t%s\n", setting.Key, setting.Value)
+				fmt.Fprintf(output, "\t%s\t%s\n", setting.Key, setting.Value)
 			}
 		}
 	}
