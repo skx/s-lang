@@ -454,10 +454,6 @@ func (l *Lexer) Next() *Token {
 		// Is it a potential number?
 		case "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ".":
 
-			//
-			// Loop for more digits
-			//
-
 			// Starting offset of our number
 			start := l.position
 
@@ -485,7 +481,21 @@ func (l *Lexer) Next() *Token {
 				return &Token{Type: ERROR, Value: fmt.Sprintf("too many periods in '%s'", token), Line: l.line}
 			}
 
-			// Convert to float64
+			// If this number has an 0x prefix then we assume
+			// it is a hex integer
+			if strings.HasPrefix(strings.ToLower(token), "0x") {
+				if strings.Contains(token, ".") {
+					return &Token{Value: "hex-numbers must be integers", Type: ERROR, Line: l.line}
+				}
+
+				i, err := strconv.ParseInt(token, 0, 64)
+				if err != nil {
+					return &Token{Value: fmt.Sprintf("failed to parse hex number: %s", err.Error()), Type: ERROR, Line: l.line}
+				}
+				return &Token{Value: i, Type: INTEGER, Line: l.line}
+			}
+
+			// Otherwise we try to convert to a float64
 			number, err := strconv.ParseFloat(token, 64)
 			if err != nil {
 				return &Token{Value: fmt.Sprintf("failed to parse number: %s", err.Error()), Type: ERROR, Line: l.line}
@@ -669,6 +679,13 @@ func (l *Lexer) isNumberComponent(d byte) bool {
 
 	// floating-point numbers require the use of "."
 	if d == '.' {
+		return true
+	}
+
+	// Hex digits, and x for the leading "0X" or "0x"
+	accept := "xXabcdefABCDEF"
+
+	if strings.Contains(accept, string(d)) {
 		return true
 	}
 
