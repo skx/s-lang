@@ -36,31 +36,16 @@ You might try the new GDB TUI options:
 
 ## Tracing
 
-Save this file as `trace.gdb`:
+You can use the included [trace.gdb](trace.gdb) file to automate single-stepping and logging execution.
 
-```text
-set pagination off
-
-set logging file trace.log
-set logging overwrite off
-set logging redirect on
-set logging enabled on
-
-starti
-
-display/i $pc
-
-while 1
-    stepi
-end
-```
-
-Now launch GDB with a binary:
+Launch GDB with a binary and the script like so:
 
 ```
 gdb  a.out -x trace.gdb
 ```
-And look at `trace.log` to see a log of the instructions executed.
+
+Then your output will be saved into the file `trace.log`.  You can update the trace-script to log registers,
+but that gets quite noisy.
 
 
 
