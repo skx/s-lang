@@ -218,6 +218,11 @@ This performs the same generation as in the `compile` sub-command, but also runs
      s-lang execute [-output a.out] examples/example.in
 
 
+### version
+
+Report the version number of this binary, using the `git`-information that `go` embeds within generated binaries.
+
+
 
 ## STDLIB
 
