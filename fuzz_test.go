@@ -69,6 +69,12 @@ func FuzzProject(f *testing.F) {
 		"pragma value must be an ident",                       // pragma
 		"invalid self-referential function argument",          // function call argument
 		"non-literals prohibited for default argument values", // default values for functions are "simple"
+
+		// number parsing
+		"too many periods",
+		"hex-numbers must be integers",
+		"failed to parse hex number",
+		"failed to parse number",
 	}
 
 	//
@@ -134,6 +140,13 @@ func FuzzProject(f *testing.F) {
 		"let x = 'x';",
 		"let x = '\\",
 		"let x = '\n';",
+
+		// numbers
+		"let x = 0xff;",
+		"let x = 0xff.ff;",
+		"let x = 3.3;",
+		"let x = 3.3.3;",
+		"division by zero",
 	}
 
 	//

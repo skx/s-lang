@@ -492,7 +492,7 @@ func (l *Lexer) Next() *Token {
 				if err != nil {
 					return &Token{Value: fmt.Sprintf("failed to parse hex number: %s", err.Error()), Type: ERROR, Line: l.line}
 				}
-				return &Token{Value: i, Type: INTEGER, Line: l.line}
+				return &Token{Value: float64(i), Type: INTEGER, Line: l.line}
 			}
 
 			// Otherwise we try to convert to a float64

@@ -165,7 +165,7 @@ func TestHexNumbers(t *testing.T) {
 	if tok.Type != INTEGER {
 		t.Fatal("expected integer")
 	}
-	if tok.Value.(int64) != 65535 {
+	if tok.Value.(float64) != 65535 {
 		t.Fatalf("got wrong number, '%d'", tok.Value)
 	}
 
