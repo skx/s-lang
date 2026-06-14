@@ -34,6 +34,36 @@ You might try the new GDB TUI options:
 
 
 
+## Tracing
+
+Save this file as `trace.gdb`:
+
+```text
+set pagination off
+
+set logging file trace.log
+set logging overwrite off
+set logging redirect on
+set logging enabled on
+
+starti
+
+display/i $pc
+
+while 1
+    stepi
+end
+```
+
+Now launch GDB with a binary:
+
+```
+gdb  a.out -x trace.gdb
+```
+And look at `trace.log` to see a log of the instructions executed.
+
+
+
 ## Handy Tips
 
 If you start tracing into a function you can enter `finish` to continue execution until the function returns.
