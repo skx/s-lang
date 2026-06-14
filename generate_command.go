@@ -66,12 +66,9 @@ func (g *generateCommand) processFile(path string) error {
 	}
 
 	// Create a compiler object
-	c, err2 := compiler.New(
+	c := compiler.New(
 		compiler.WithSource(string(data)),
 		compiler.WithCompileChecking(g.stdlibCheck))
-	if err2 != nil {
-		return err2
-	}
 
 	txt := ""
 	txt, err = c.Compile()
