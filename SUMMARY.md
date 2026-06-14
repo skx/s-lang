@@ -427,6 +427,40 @@ function fast() {
 }
 ```
 
+It is also possible to allocate executable memory with `mmap`, insert code into it, and call it:
+
+```text
+// allocate
+let a = mmap(10);
+
+// populate with assembly
+//   mov rax, 32
+//   ret
+a[0] = 72;
+a[1] = 199;
+a[2] = 192
+a[3] = 32
+a[4] = 0
+a[5] = 0
+a[6] = 0
+a[7] = 195
+
+// call it
+print(call(a), "\n");
+```
+
+Similarly you may take the address of a function, and call it:
+
+```text
+function foo() {
+  print("Called!\n");
+}
+
+
+// Takes the address of the function, and calls it.
+call(foo);
+```
+
 
 
 ## Comments
@@ -457,7 +491,7 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Return the count of supplied command-line arguments, as an integer.
 * `argv(N)`
   * Return the Nth command-line argument, as a string.
-* `call(N)`
+* `call(N|POINTER)`
   * Call the given address.  Expected to be used for jumptables, etc.
 * `exit(N)`
   * Terminate execution with the given exit-code.

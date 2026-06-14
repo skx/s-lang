@@ -1,0 +1,6 @@
+Allocated 10 bytes of executable RAM
+The pointer has type STRING
+Injecting code..
+Calling code..
+Calling again, printing result..
+8
