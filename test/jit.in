@@ -1,0 +1,75 @@
+##
+## Test mmap and call.
+##
+
+
+
+#
+# Code is where we assemble the instructions to,
+# and later execute.
+#
+let code = mmap(65536);
+
+#
+# Tape is our brainfuck tape-space
+#
+let tape = malloc(3000);
+
+#
+# PC keeps track of where we're emitting code to,
+# within the code array.
+#
+let pc = 0;
+
+# push r12
+code[pc] = 0x41; pc++;
+code[pc] = 0x54; pc++;
+
+# mov r12, imm64
+code[pc] = 0x49; pc++;
+code[pc] = 0xBC; pc++;
+
+emit64(tape);
+
+# pop r12
+code[pc] = 0x41; pc++;
+code[pc] = 0x5C; pc++;
+
+# ret
+code[pc] = 0xC3; pc++;
+
+#
+# Now execute it :pray:
+#
+call(code);
+
+#
+# All done
+#
+exit(0);
+
+
+function emit32(v) {
+    code[pc] = v % 256;
+    v = float2int(v / 256);
+    pc++;
+
+    code[pc] = v % 256;
+    v = float2int(v / 256);
+    pc++;
+
+    code[pc] = v % 256;
+    v = float2int(v / 256);
+    pc++;
+
+    code[pc] = v % 256;
+    pc++;
+}
+
+# Hack: We never emit anything with a bigger
+# offset, so just treat it as a 32-bit value
+# and zero-pad.
+function emit64(v) {
+    emit32(v);
+    emit32(0);
+}
