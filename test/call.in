@@ -29,3 +29,11 @@ call(a);
 print("Calling again, printing result..\n");
 print(call(a));
 newline();
+
+
+#
+# Get the address of a function, and call it
+#
+function hello() { print("Hello, world!\n"); }
+let x = addr(hello);
+call(x);

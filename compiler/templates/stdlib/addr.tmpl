@@ -1,0 +1,48 @@
+#
+# Get the address of a pointer.
+#
+
+.section .text.addr,"ax",@progbits
+
+addr:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]    # Get the parameter
+        mov rcx, rdi         # type checking
+        and rcx, 3
+
+        cmp rcx, 0           # integer is an address
+        je addr_integer
+
+        cmp rcx, 1           # string is just a pointer, so the same!
+        je addr_ptr          # BUT TYPING IS PRESENT
+
+        # fall through to type-fail
+        mov rax, offset addr_type_fail_msg
+        or rax, 1
+        jmp .addr_cleanup
+
+
+addr_integer:
+        mov rax, rdi        # NOTE . no typing
+        jmp .addr_cleanup
+
+addr_ptr:
+        and rdi, -4          # Remove typing (ptr)
+        sal rdi, 2           # Add typing (integer)
+        mov rax, rdi
+
+        # fall-through
+
+.addr_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+.section .data.addr,"aw",@progbits
+
+.align 8
+addr_type_fail_msg:
+        .ascii "addr: expected INTEGER|POINTER"
+        .byte 00
