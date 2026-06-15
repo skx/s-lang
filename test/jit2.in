@@ -153,14 +153,14 @@ function compile(program, tape, putcAddr) {
     let len = strlen(program);
     pc = 0;
 
-    emitPrologue(tape);
+    emitPrologue(addr(tape));
 
     let i = 0;
 
     while (i < len) {
 
         switch (program[i]) {
-            case '.' { emitOutput(addr(putcAddr)); }
+            case '.' { emitOutput(putcAddr); }
             case '+' { emitIncCell(); }
         }
 

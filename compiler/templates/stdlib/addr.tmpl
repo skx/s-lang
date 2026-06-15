@@ -2,6 +2,23 @@
 # Get the address of a pointer.
 #
 
+#
+# NOTE:
+#
+# When called with a function we're already given
+# an encoded inetger
+#
+# because "let x = foo", really becomes
+#
+#    mov rax, offset foo
+#    sal rax, 2
+#
+# The compiler does that when loading the value.
+#
+# In that case if the value is an integer then leave it
+# alone as the type encoding is already present.
+#
+#
 .section .text.addr,"ax",@progbits
 
 addr:
@@ -25,7 +42,8 @@ addr:
 
 
 addr_integer:
-        mov rax, rdi        # NOTE . no typing
+        mov rax, rdi
+#        sal rax, 2          # NO Typing - See NOTE
         jmp .addr_cleanup
 
 addr_ptr:

@@ -37,3 +37,6 @@ newline();
 function hello() { print("Hello, world!\n"); }
 let x = addr(hello);
 call(x);
+
+let y = hello;
+call(y);
