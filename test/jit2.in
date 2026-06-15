@@ -1,0 +1,222 @@
+#
+# Code is where we assemble the instructions to and later execute from.
+#
+# We need to use mmap rather than malloc because the code region must
+# be marked as executable.
+#
+let code = mmap(65536);
+
+
+#
+# PC keeps track of where we're emitting code to,
+# within the code array.
+#
+let pc = 0;
+
+function emit32(v) {
+    code[pc] = v % 256;
+    v = float2int(v / 256);
+    pc++;
+
+    code[pc] = v % 256;
+    v = float2int(v / 256);
+    pc++;
+
+    code[pc] = v % 256;
+    v = float2int(v / 256);
+    pc++;
+
+    code[pc] = v % 256;
+    pc++;
+}
+
+# Hack: We never emit anything with a bigger
+# offset, so just treat it as a 32-bit value
+# and zero-pad.
+function emit64(v) {
+    emit32(v);
+    emit32(0);
+}
+
+
+#
+# Startup code
+#
+function emitPrologue(tape) {
+
+    # push r12
+    code[pc] = 0x41; pc++;
+    code[pc] = 0x54; pc++;
+
+    # mov r12, imm64
+    code[pc] = 0x49; pc++;
+    code[pc] = 0xBC; pc++;
+
+    emit64(tape);
+}
+
+
+#
+# Teardown code
+#
+function emitEpilogue() {
+
+    # pop r12
+    code[pc] = 0x41; pc++;
+    code[pc] = 0x5C; pc++;
+
+    # ret
+    code[pc] = 0xC3; pc++;
+}
+
+
+#
+# call the "output" function.
+#
+function emitOutput(putcAddr) {
+
+    # push r12
+    code[pc] = 0x41; pc++;
+    code[pc] = 0x54; pc++;
+
+    #
+    # movzx eax, byte [r12]
+    #
+    code[pc] = 0x41; pc++;
+    code[pc] = 0x0F; pc++;
+    code[pc] = 0xB6; pc++;
+    code[pc] = 0x04; pc++;
+    code[pc] = 0x24; pc++;
+
+    #
+    # shift left 2 (tagging)
+    #
+    code[pc] = 0x48; pc++;
+    code[pc] = 0xC1; pc++;
+    code[pc] = 0xE0; pc++;
+    code[pc] = 0x02; pc++;
+
+    #
+    # push rax
+    #
+    code[pc] = 0x50; pc++;
+
+    #
+    # mov rax, 1  # argument count
+    #
+    code[pc] = 0x48; pc++;
+    code[pc] = 0xC7; pc++;
+    code[pc] = 0xC0; pc++;
+    code[pc] = 0x01; pc++;
+    code[pc] = 0x00; pc++;
+    code[pc] = 0x00; pc++;
+    code[pc] = 0x00; pc++;
+
+    #
+    # mov rbx, putcAddr
+    #
+    code[pc] = 0x48; pc++;
+    code[pc] = 0xBB; pc++;
+
+    emit32(putcAddr);
+    emit32(0);
+
+    #
+    # call rbx
+    #
+    code[pc] = 0xFF; pc++;
+    code[pc] = 0xD3; pc++;
+
+    #
+    # restore stack (arg consumed)
+    #
+    code[pc] = 0x48; pc++;
+    code[pc] = 0x83; pc++;
+    code[pc] = 0xC4; pc++;
+    code[pc] = 0x08; pc++;
+
+    # pop r12
+    code[pc] = 0x41; pc++;
+    code[pc] = 0x5C; pc++;
+
+}
+
+function emitIncCell() {
+    code[pc] = 0x41; pc++;
+    code[pc] = 0xFE; pc++;
+    code[pc] = 0x04; pc++;
+    code[pc] = 0x24; pc++;
+}
+
+function compile(program, tape, putcAddr) {
+
+    let len = strlen(program);
+    pc = 0;
+
+    emitPrologue(addr(tape));
+
+    let i = 0;
+
+    while (i < len) {
+
+        switch (program[i]) {
+            case '.' { emitOutput(putcAddr); }
+            case '+' { emitIncCell(); }
+        }
+
+        i++;
+    }
+
+    emitEpilogue();
+
+    return(code);
+}
+
+
+
+#
+# I cannot get the address of built-in functions
+# so these are small wrappers which can be used.
+#
+# Getting the address of a label compiles to
+#
+#   mov rax, offset label
+#   sal rax, 2
+#
+# But that only works for user-defined functions,
+# there's no known "stdlib" list so we cannot validate
+# a function exists.  And when we compile
+#
+#   let a = b;
+#
+# We need to know is "b" a user-defined function?  Or
+# is it a variable?  Either of those we can detect
+# automatically - but for the standard-library functions
+# we don't have their names hardcoded in the compiler.
+#
+# That's possibly bug #1.
+#
+function output(x) { putc(x); }
+
+#
+# The tape-cells the program operates upon
+#
+let tape = malloc(30000);
+
+let program = "++++++++++++++++++++++++++++++++++++++++++.";
+
+#
+# Compile the program and run it.
+#
+let jit = compile(program, tape, output);
+call(jit);
+
+#
+# Newline
+#
+newline();
+
+#
+# All done
+#
+exit(0);

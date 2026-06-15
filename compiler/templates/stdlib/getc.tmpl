@@ -21,8 +21,7 @@ getc:
         cmp rax, 1  # success?
         jne getc_failed
 
-        mov al, [rsp]
-        movsx rax, al
+        movzx eax, byte ptr [rbp-8]
         sal rax, 2
         jmp getc_cleanup
 

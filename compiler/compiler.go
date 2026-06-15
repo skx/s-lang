@@ -378,6 +378,7 @@ func (c *Compiler) emitLoadVariable(name string) error {
 	if ok1 {
 		c.emit(fmt.Sprintf(`
 	mov rax, offset %s
+	sal rax, 2
 `, name))
 		return nil
 	}
