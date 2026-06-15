@@ -1,13 +1,30 @@
 #
-# brainfuck interpreter, launch with the name of the program to execute.
+# A naive brainfuck interpreter.
 #
-# For example:
+# Notes
+########
+#
+# This is pretty slow, for example it takes 2 minutes on my desktop to render
+# the mandelbrot example - although only 1:30 on my laptop.
+#
+# We have a far faster example in "jit.in", which compiles the program to be
+# executed into x86 assembly language, then executes it directly.
+#
+#
+# Usage
+########
+#
+# Launch with the name of the program to execute, for example:
 #
 #   ./brainfuck cat
 #   ./brainfuck hello
 #   ./brainfuck mandelbrot
 #
-# Any other argument will be assumed to be a filename to read.
+# Any other argument will be assumed to be a filename containing a program to
+# read and execute:
+#
+#   ./brainfuck /path/to/file.bf
+#
 #
 
 
@@ -220,7 +237,19 @@ pragma jumpClose size16
 #
 function replaceClear() {
     i = 0;
+
+    # If there is already a C in the program, remove it.
+    # this might be the case as some people write "literate"
+    # brainfuck programs where unused tokens are ignored.
+    while (i < length) {
+       if ( program[i] == 'C') {
+             program[i] = ' ';
+       }
+       i++;
+    }
+
     cleared= 0;
+    i = 0;
     while (i < length-2) {
        if ( program[i+0] == '[' && program[i+1] == '-' && program[i+2] == ']' ) {
 
@@ -396,4 +425,3 @@ while(index < length) {
    # next opcode
    index++;
 }
-

@@ -12,6 +12,7 @@ If you'd like to see the generated assembly for each example as well as produce 
   * Reads the command-line arguments to decide what to do.
     * Either run one of the embedded examples.
     * Or executes the program in the path you specify.
+  * This is an interpreter, there's also `jit.in` listed lower down which is a JIT compiler.
 * [cat.in](cat.in)
   * A simple `cat` program which echos input.
 * [example.in](example.in)
@@ -24,6 +25,8 @@ If you'd like to see the generated assembly for each example as well as produce 
   * The standard test.
 * [functions.in](functions.in)
   * Demonstrate user-defined functions, and inline-assembly.
+* [jit.in](jit.in) - JIT compiler for Brainfuck
+  * Executes the same programs as the `brainfuck.in` example, but significantly faster.
 * [life.in](life.in)
   * Conway's Game of Life.
   * Randomly populate 20% of the arena, and evolve until bored!

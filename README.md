@@ -68,12 +68,17 @@ There's a good [SUMMARY.md](SUMMARY.md) of the syntax, and implementation detail
 
 A couple of highlights from the examples:
 
-* [examples/brainfuck.in](examples/brainfuck.in) - Brainfuck interpreter.
+* [examples/brainfuck.in](examples/brainfuck.in) - Naive brainfuck interpreter.
   * Contains three hardcoded programs inline:
     * The classic "Hello World" program.
     * A simple "cat", which copies STDIN to STDOUT.
     * The impressive mandelbrot generation program.
   * If executed with the path to a file containing a brainfuck program it will read and execute that instead of any of the inline programs.
+  * This interpreter takes **approximately 2 minutes** to render the mandelbrot example program.
+* [examples/jit.in](examples/jit.in) - JIT brainfuck Compiler
+  * This runs the same programs as the previous version, and also has the ability to load other programs if you specify their path.
+  * This example _compiles_ the specified brainfuck programs to x86 assembly, before executing it.
+  * This runs the mandelbrot generation example in **approximately three seconds**.
 * [examples/life.in](examples/life.in)
   * Conway's Game of Life.
   * Randomly populate 20% of the arena, and evolves it until Ctrl-C is pressed.
