@@ -380,7 +380,6 @@ func (c *Compiler) emitLoadVariable(name string) error {
 	mov rax, offset %s
 	sal rax, 2
 `, name))
-		fmt.Printf("Found offset for %s, encoded as INTEGER\n", name)
 		return nil
 	}
 
