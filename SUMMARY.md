@@ -461,6 +461,8 @@ function foo() {
 call(foo);
 ```
 
+It is possible to get the _address_ of a pointer via `addr(ptr);` but there are few times when that would be necessary.
+
 
 
 ## Comments
@@ -487,6 +489,9 @@ function life() {
 
 Here is a brief list of standard library functions, if the name matches a C-language function assume it operates in a similar way.
 
+* `addr(PTR)`
+  * Return the address of a pointer returned by `mmap(N)` or `malloc(N)`.
+  * Necessary if you write a JIT, but not otherwise.
 * `argc()`
   * Return the count of supplied command-line arguments, as an integer.
 * `argv(N)`

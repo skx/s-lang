@@ -228,6 +228,9 @@ Report the version number of this binary, using the `git`-information that `go` 
 
 We embed a small number of functions within the generated programs, our so-called "standard library".  These are functions which seemed to be useful enough to include globally, and each function that accepts arguments has type-checking, both at compile-time and run-time.
 
+* `addr(PTR)`
+  * Return the address of a pointer returned by `mmap(N)` or `malloc(N)`.
+  * Necessary if you write a JIT, but not otherwise.
 * `argc()`
   * Return the count of supplied command-line arguments.
 * `argv(N)`
