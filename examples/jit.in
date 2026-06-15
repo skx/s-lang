@@ -501,7 +501,7 @@ function compile(program, tape, putcAddr, getcAddr) {
 # That's possibly bug #1.
 #
 function output(x) { putc(x); }
-function input()   { let x = getc(); print("input ", x); putc(x);  return(x); }
+function input()   { let x = getc();  return(x); }
 
 #
 # The tape-cells the program operates upon
