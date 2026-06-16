@@ -77,11 +77,14 @@ let sp = 0;
 #
 # Functions to emit stuff to our code region.
 #
+
+# byte
 function emit8(v) {
     code[pc] = v;
     pc++;
 }
 
+# word
 function emit32(v) {
     code[pc] = v % 256;
     v = float2int(v / 256);
@@ -99,9 +102,11 @@ function emit32(v) {
     pc++;
 }
 
-# Hack: We never emit anything with a bigger offset, so just treat it as
-# a 32-bit value and zero-pad.
+# double-word
 function emit64(v) {
+
+    # Hack: We never emit anything with a bigger offset, so just treat it as
+    # a 32-bit value and zero-pad.
     emit32(v);
     emit32(0);
 }
@@ -128,12 +133,12 @@ function patch32(pos, value) {
 function emitPrologue(tape) {
 
     # push r12
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x54; pc++;
+    emit8(0x41);
+    emit8(0x54);
 
     # mov r12, imm64
-    code[pc] = 0x49; pc++;
-    code[pc] = 0xBC; pc++;
+    emit8(0x49);
+    emit8(0xBC);
 
     # the address of the tape allocation.
     emit64(tape);
@@ -146,11 +151,11 @@ function emitPrologue(tape) {
 function emitEpilogue() {
 
     # pop r12
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x5C; pc++;
+    emit8(0x41);
+    emit8(0x5C);
 
     # ret
-    code[pc] = 0xC3; pc++;
+    emit8(0xC3);
 }
 
 
@@ -160,67 +165,63 @@ function emitEpilogue() {
 function emitOutput(putcAddr) {
 
     # push r12
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x54; pc++;
+    emit8(0x41);
+    emit8(0x54);
 
     #
     # movzx eax, byte [r12]
     #
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x0F; pc++;
-    code[pc] = 0xB6; pc++;
-    code[pc] = 0x04; pc++;
-    code[pc] = 0x24; pc++;
+    emit8(0x41);
+    emit8(0x0F);
+    emit8(0xB6);
+    emit8(0x04);
+    emit8(0x24);
 
     #
     # shift left 2 (tagging)
     #
-    code[pc] = 0x48; pc++;
-    code[pc] = 0xC1; pc++;
-    code[pc] = 0xE0; pc++;
-    code[pc] = 0x02; pc++;
+    emit8(0x48);
+    emit8(0xC1);
+    emit8(0xE0);
+    emit8(0x02);
 
     #
     # push rax
     #
-    code[pc] = 0x50; pc++;
+    emit8(0x50);
 
     #
     # mov rax, 1  # argument count
     #
-    code[pc] = 0x48; pc++;
-    code[pc] = 0xC7; pc++;
-    code[pc] = 0xC0; pc++;
-    code[pc] = 0x01; pc++;
-    code[pc] = 0x00; pc++;
-    code[pc] = 0x00; pc++;
-    code[pc] = 0x00; pc++;
+    emit8(0x48);
+    emit8(0xC7);
+    emit8(0xC0);
+    emit32(0x0001);
 
     #
     # mov rbx, putcAddr
     #
-    code[pc] = 0x48; pc++;
-    code[pc] = 0xBB; pc++;
-
+    emit8(0x48);
+    emit8(0xBB);
     emit64(putcAddr);
 
     #
     # call rbx
     #
-    code[pc] = 0xFF; pc++;
-    code[pc] = 0xD3; pc++;
+    emit8(0xFF);
+    emit8(0xD3);
 
     #
     # restore stack (arg consumed)
     #
-    code[pc] = 0x48; pc++;
-    code[pc] = 0x83; pc++;
-    code[pc] = 0xC4; pc++;
-    code[pc] = 0x08; pc++;
+    emit8(0x48);
+    emit8(0x83);
+    emit8(0xC4);
+    emit8(0x08);
 
     # pop r12
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x5C; pc++;
+    emit8(0x41);
+    emit8(0x5C);
 
 }
 
@@ -231,93 +232,93 @@ function emitOutput(putcAddr) {
 function emitInput(getcAddr) {
 
     # push r12
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x54; pc++;
+    emit8(0x41);
+    emit8(0x54);
 
     # mov rax, 0 # abi
-    code[pc] = 0x48; pc++;
-    code[pc] = 0xC7; pc++;
-    code[pc] = 0xC0; pc++;
-    code[pc] = 0x00; pc++;
-    code[pc] = 0x00; pc++;
-    code[pc] = 0x00; pc++;
-    code[pc] = 0x00; pc++;
+    emit8(0x48);
+    emit8(0xC7);
+    emit8(0xC0);
+    emit32(0x0000);
 
     #
     # mov rbx, getcAddr
     #
-    code[pc] = 0x48; pc++;
-    code[pc] = 0xBB; pc++;
-
+    emit8(0x48);
+    emit8(0xBB);
     emit64(getcAddr);
 
     #
     # call rbx
     #
-    code[pc] = 0xFF; pc++;
-    code[pc] = 0xD3; pc++;
+    emit8(0xFF);
+    emit8(0xD3);
 
     #
     # convert tagged int -> raw byte
     #
-    code[pc] = 0x48; pc++;
-    code[pc] = 0xC1; pc++;
-    code[pc] = 0xF8; pc++;
-    code[pc] = 0x02; pc++;
+    emit8(0x48);
+    emit8(0xC1);
+    emit8(0xF8);
+    emit8(0x02);
 
     # pop r12
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x5C; pc++;
+    emit8(0x41);
+    emit8(0x5C);
 
     #
     # store into *r12
     #
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x88; pc++;
-    code[pc] = 0x04; pc++;
-    code[pc] = 0x24; pc++;
+    emit8(0x41);
+    emit8(0x88);
+    emit8(0x04);
+    emit8(0x24);
 
 }
 
 function emitIncCell() {
     # inc byte [r12]
-    code[pc] = 0x41; pc++;
-    code[pc] = 0xFE; pc++;
-    code[pc] = 0x04; pc++;
-    code[pc] = 0x24; pc++;
+    emit8(0x41);
+    emit8(0xFE);
+    emit8(0x04);
+    emit8(0x24);
 }
 
 function emitDecCell() {
     # dec byte [r12]
-    code[pc] = 0x41; pc++;
-    code[pc] = 0xFE; pc++;
-    code[pc] = 0x0C; pc++;
-    code[pc] = 0x24; pc++;
+    emit8(0x41);
+    emit8(0xFE);
+    emit8(0x0C);
+    emit8(0x24);
 }
 
 function emitIncPtr() {
     # inc r12
-    code[pc] = 0x49; pc++;
-    code[pc] = 0xFF; pc++;
-    code[pc] = 0xC4; pc++;
+    emit8(0x49);
+    emit8(0xFF);
+    emit8(0xC4);
 }
 
 function emitDecPtr() {
     # dec r12
-    code[pc] = 0x49; pc++;
-    code[pc] = 0xFF; pc++;
-    code[pc] = 0xCC; pc++;
+    emit8(0x49);
+    emit8(0xFF);
+    emit8(0xCC);
 }
 
 function emitCmpZero() {
     # cmp byte [r12], 0
-    code[pc] = 0x41; pc++;
-    code[pc] = 0x80; pc++;
-    code[pc] = 0x3C; pc++;
-    code[pc] = 0x24; pc++;
-    code[pc] = 0x00; pc++;
+    emit8(0x41);
+    emit8(0x80);
+    emit8(0x3C);
+    emit8(0x24);
+    emit8(0x00);
 }
 
+# record details of where a loop open starts
+# on the loopStack we record the position before
+# the comparison, and also the target of the jump
+# to be updated with the loop close instruction
 function emitLoopOpen() {
 
     # record position of condition
@@ -343,6 +344,7 @@ function emitLoopClose() {
     let jmpPos = loopStack[sp - 1];
     sp = sp - 1;
 
+    # loop open target
     let start = loopStack[sp - 1];
     sp = sp - 1;
 
@@ -358,25 +360,28 @@ function emitLoopClose() {
     emit32(0);
 
     #
-    # backwards jump
+    # backwards jump - relative not absolute, of course.
     #
     let back = start - pc;
     patch32(backPatch, back);
 
     #
-    # forward jump
+    # forward jump - also relative, not absolute.
     #
     forward = pc - (jmpPos + 4);
     patch32(jmpPos, forward);
 }
 
+# clear a cell in one instruction, this is used in place of the
+# "[-]" loop-based construct.  See replaceClear for how that is
+# detected before the program is compiled.
 function emitClear() {
     # mov byte [r12], 0
-    code[pc] = 0x41; pc++;
-    code[pc] = 0xC6; pc++;
-    code[pc] = 0x04; pc++;
-    code[pc] = 0x24; pc++;
-    code[pc] = 0x00; pc++;
+    emit8(0x41);
+    emit8(0xC6);
+    emit8(0x04);
+    emit8(0x24);
+    emit8(0x00);
 }
 
 
@@ -394,7 +399,6 @@ function replaceClear(program) {
     # brainfuck programs where unused tokens are ignored.
     while (i < len) {
        if ( program[i] == 'C') {
-
              program[i] = ' ';
        }
        i++;
@@ -402,7 +406,8 @@ function replaceClear(program) {
 
     #
     # We're looking at three characters at a time,
-    # so decrease the length.
+    # so decrease the length to avoid overflowing the
+    # bounds of the program.
     #
     len--;
     len--;
@@ -421,15 +426,6 @@ function replaceClear(program) {
              cleared++;
        }
 
-       # same again for the increment case.
-       if ( program[i+0] == '[' && program[i+1] == '+' && program[i+2] == ']' ) {
-
-             program[i+0] = ' ';
-             program[i+1] = 'C';
-             program[i+2] = ' ';
-
-             cleared++;
-       }
        i++;
     }
     return(cleared);
@@ -449,10 +445,9 @@ function compile(program, tape, putcAddr, getcAddr) {
 
     let len = strlen(program);
     pc = 0;
+    i = 0;
 
     emitPrologue(addr(tape));
-
-    let i = 0;
 
     while (i < len) {
 
@@ -710,10 +705,16 @@ if (strlen(program) < 2) {
    exit(1);
 }
 
+
 #
-# Compile the program
+# Sneakily replace "[-]" loops within the program with a new
+# faux opcode, C, which just clears the contents of the cellptr.
 #
 replaced = replaceClear(program);
+
+#
+# Compile the program.
+#
 let jit = compile(program, tape, output, input);
 print("Generated code is ", pc, " bytes, with ", replaced, " loops cleared.\n");
 
