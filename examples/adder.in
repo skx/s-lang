@@ -1,0 +1,96 @@
+##
+## We don't have closures, so we cannot implement a "counter()" or
+## makeAdder(3); function as is traditional.
+##
+## However with binary code we can achieve the same results ..
+##
+## This is fun.
+
+
+#
+# Create an adder that adds 5 to any value it is called with.
+#
+let addFive = makeAdder(5);
+
+#
+# Create another adder that adds 7 to any value it is called with.
+#
+let addSeven = makeAdder(7);
+
+#
+# Now call the adder
+#
+print("First test of the addFive function\n");
+let x = call( addFive , 17);
+print("\tType of return value is ", type(x), ".\n");
+print("\tValue itself (should be 17 + 5 = 22): ", x, "\n\n");
+
+#
+# More tests
+#
+print("More calls to addFive(x):\n");
+print( "\t", call( addFive, 15 ) , "\n")
+print( "\t", call( addFive, 25 ) , "\n")
+print( "\t", call( addFive, 95 ) , "\n")
+
+#
+# Both adders work.
+#
+print("Calls to addSeven(x):\n");
+print( "\t", call( addSeven, 95 ) , "\n")
+print( "\t", call( addSeven, 7 ) , "\n")
+print( "\t", call( addSeven, -10 ) , "\n")
+
+
+#
+# Create an adder function which will always add the given
+# 32-bit value to its input.
+#
+function makeAdder(value) {
+
+   # Once encoded/compiled our binary code takes 19 bytes.
+   let code = mmap(19);
+   pc = 0;
+
+   # mov rax, [rbp+0x18].
+   #
+   # NOTE: This is where the input parameter will be when the
+   # code is executed via "call( ptr, VAL )".
+   #
+   code[pc] = 0x48; pc++;
+   code[pc] = 0x8B; pc++;
+   code[pc] = 0x45; pc++;
+   code[pc] = 0x18; pc++;
+
+   # sar rax, 2
+   # remove typing
+   code[pc] = 0x48; pc++;
+   code[pc] = 0xC1; pc++;
+   code[pc] = 0xF8; pc++;
+   code[pc] = 0x02; pc++;
+
+   # add rax, 0x12345678
+   # add the value
+   code[pc] = 0x48; pc++;
+   code[pc] = 0x05; pc++;
+   code[pc] = value % 256;
+   pc++;
+   code[pc] = float2int(value / 256) % 256;
+   pc++;
+   code[pc] = float2int(value / 65536) % 256;
+   pc++
+   code[pc] = float2int(value / 16777216) % 256;
+   pc++
+
+   # shl rax, 2
+   # add the typing
+   code[pc] = 0x48; pc++;
+   code[pc] = 0xC1; pc++;
+   code[pc] = 0xE0; pc++;
+   code[pc] = 0x02; pc++;
+
+   # ret
+   code[pc] = 0xC3; pc++;
+
+   return(code);
+}

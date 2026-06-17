@@ -55,6 +55,8 @@ Anti-features, or limitations:
   * We can allocate memory with `malloc()` and index it with "m[n]" - by default the memory will be treated as arrays of bytes.
     * `pragma` can be used to reinterpret a pointer as an arrays of 8, 16, 32, or 64-byte entries
     * (See [test/jumptable2.in](test/jumptable2.in) for an example of that.)
+* We do not support closures, or nested functions.
+  * Though at a push you could simulate things, as in [examples/adder.in](examples/adder.in).
 
 That said the code is clean, commented/documented, and contains a fair number of test-cases (both of the internal golang packages, and the compilation and execution of programs).
 

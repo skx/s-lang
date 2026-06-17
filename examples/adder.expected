@@ -1,0 +1,12 @@
+First test of the addFive function
+	Type of return value is INTEGER.
+	Value itself (should be 17 + 5 = 22): 22
+
+More calls to addFive(x):
+	20
+	30
+	100
+Calls to addSeven(x):
+	102
+	14
+	-3
