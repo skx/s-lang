@@ -411,6 +411,12 @@ After this, indexed accesses use 16-bit elements instead of bytes.  Valid sizes 
 * size64 - Quad-word access.
 * Other values are illegal.
 
+Index accesses are bounds-checked at run-time, to avoid potential security issues.  Reading or writing to an invalid index will abort execution with a failure message like this:
+
+```test
+array index out of bounds: x[2] at line 3
+```
+
 
 
 ## Inline Assembly
