@@ -231,14 +231,18 @@ type IndexAssign struct {
 
 	// Expression is evaluated to set the value.
 	Expression Expr
+
+	// The line number where this appears
+	Line int
 }
 
 // String converts this structure to a string.
 func (i *IndexAssign) String() string {
-	return fmt.Sprintf("%s[%s] = %s",
+	return fmt.Sprintf("%s[%s] = %s  # Line %d",
 		i.Left.String(),
 		i.Index.String(),
-		i.Expression.String())
+		i.Expression.String(),
+		i.Line)
 }
 
 func (IndexAssign) expr() {}
@@ -250,13 +254,17 @@ type IndexExpr struct {
 
 	// Index is the index we're going to retrieve.
 	Index Expr
+
+	// Line is the line number in the source where the statement was found
+	Line int
 }
 
 // String converts this structure to a string.
 func (i *IndexExpr) String() string {
-	return fmt.Sprintf("%s[%s]",
+	return fmt.Sprintf("%s[%s]   # Line %d",
 		i.Left.String(),
-		i.Index.String())
+		i.Index.String(),
+		i.Line)
 }
 
 func (IndexExpr) expr() {}
