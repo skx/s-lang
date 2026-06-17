@@ -242,6 +242,18 @@ sigint_fail:
 # Called when bounds check fails
 #
 out_of_bounds:
+        mov rax, [bounds_check_object_name]
+        call print_string_raw
+
+        mov rax, offset bounds_check_open
+        call print_string_raw
+
+        mov rax, [bounds_check_index]
+        call print_integer
+
+        mov rax, offset bounds_check_close
+        call print_string_raw
+
         mov rax, offset out_of_bounds_msg
         call panic_raw
 
@@ -251,6 +263,26 @@ out_of_bounds:
 
 
 .section .data
+
+.align 8
+# String version of the variable being indexed will be copied here during
+# such index-accesses
+bounds_check_object_name:
+        .quad 0
+
+# Similarly we store the index that is being accessed here.
+.align 8
+bounds_check_index:
+        .quad 0
+
+.align 8
+bounds_check_open:
+        .ascii "["
+        .byte 0
+.align 8
+bounds_check_close:
+        .ascii "] "
+        .byte 0
 
 .align 8
 out_of_bounds_msg:

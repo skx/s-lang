@@ -451,16 +451,21 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 		}
 	}
 
+	// we only compile index expressions of simple things
+	// so we can save their names without too much overhead
+	str_id := c.stringTable.Add(expr.Left.String())
+
 	// Compile base expression
 	_, err := c.compileExpr(expr.Left)
 	if err != nil {
 		return err
 	}
 
-	c.emit(`
-	# save base object
+	c.emit(fmt.Sprintf(`
+	# save base object - and the name of the thing being indexed
 	push rax
-`)
+	mov [dword ptr bounds_check_object_name], offset %s
+`, str_id))
 
 	// Compile index expression
 	_, err = c.compileExpr(expr.Index)
@@ -469,8 +474,8 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	}
 
 	c.emit(fmt.Sprintf(`
-	# index object -> integer
-	sar rax, 2
+	mov [bounds_check_index], rax   # Save the (tagged) offset
+	sar rax, 2                      # index object -> integer
 
 	%s
 	# restore base
@@ -754,7 +759,7 @@ func (c *Compiler) emitFunctionCall(v *parser.FunctionCallExpr) error {
 		// to make up the difference.
 		//
 		// we ignore that for the moment, and just skip the
-		// compilation - we assume the type-checking will catch
+		// compilation - we assume the type-checking willco catch
 		// that just a little while lower down.
 		//
 		if v.Arguments[i] != nil {
