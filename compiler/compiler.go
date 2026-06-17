@@ -555,16 +555,21 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 		}
 	}
 
+	// we only compile index expressions of simple things
+	// so we can save their names without too much overhead
+	str_id := c.stringTable.Add(expr.Left.String())
+
 	// Compile base expression
 	_, err := c.compileExpr(expr.Left)
 	if err != nil {
 		return err
 	}
 
-	c.emit(`
-	# save base object
+	c.emit(fmt.Sprintf(`
+	# save base object - and the name of the thing being indexed
 	push rax
-`)
+	mov [dword ptr bounds_check_object_name], offset %s
+`, str_id))
 
 	// Compile index expression
 	_, err = c.compileExpr(expr.Index)
@@ -607,8 +612,8 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 	}
 
 	c.emit(fmt.Sprintf(`
-	# index object -> integer
-	sar rax, 2
+	mov [bounds_check_index], rax   # Save the (tagged) offset
+	sar rax, 2                      # index object -> integer
 	%s
 	push rax
 `, extra))
