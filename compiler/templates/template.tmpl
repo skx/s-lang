@@ -242,6 +242,9 @@ sigint_fail:
 # Called when bounds check fails
 #
 out_of_bounds:
+        mov rax, offset out_of_bounds_msg
+        call print_string_raw
+
         mov rax, [bounds_check_object_name]
         call print_string_raw
 
@@ -254,8 +257,12 @@ out_of_bounds:
         mov rax, offset bounds_check_close
         call print_string_raw
 
-        mov rax, offset out_of_bounds_msg
-        call panic_raw
+        mov rax, [bounds_check_line]
+        call print_integer_raw
+
+        call newline
+        mov rax, 1
+        call exit_with_rax
 
 
 
@@ -275,18 +282,23 @@ bounds_check_object_name:
 bounds_check_index:
         .quad 0
 
+# And finally the source-line
+.align 8
+bounds_check_line:
+        .quad 0
+
 .align 8
 bounds_check_open:
         .ascii "["
         .byte 0
 .align 8
 bounds_check_close:
-        .ascii "] "
+        .ascii "] at line "
         .byte 0
 
 .align 8
 out_of_bounds_msg:
-        .ascii "array index out of bounds\n"
+        .ascii "array index out of bounds: "
         .byte 0
 
 .align 8
