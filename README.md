@@ -27,7 +27,7 @@ In terms of features:
     * So you can call "`print("Steve");`" 100 times and still see the text "Steve" in the binary only once.
 * There is support for string/memory indexing.
   * This is byte-based by default, but you can use a `pragma` to treat memory as arrays of 8, 16, 32, or 64 bit entries.  This is the closest we come to types.
-  * Bounds checking is enabled and enforced.
+  * Bounds checking is enabled and enforced, and pograms terminated with a readable message (`a[13] at line 26 array index out of bounds`)
 * The ability to include inline assembly via `inline { .. }`.
   * `inline` statements are generated as they are encountered.
   * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the assembly-generation.  So you can add "`.section blah .. ..`" without fear of breaking things.
@@ -432,3 +432,5 @@ Running `make test` should run both of those things.
 * It wasn't immediately obvious that I didn't need to write code for **both** `==` (equality-checking) and the reverse (`!=`/inequality checking).
   * Instead I needed to only write one routine and invert the result for the other operation.
   * Similarly ">" is the same as "not <=", and "<" is the same as "not >=".
+* Adding bounds-checks for arrays was pretty simple and definitely worthwhile.
+  * But adding line-number, and details of the array and index involved, made it much more useful.

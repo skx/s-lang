@@ -1,4 +1,4 @@
 321
 4321
 54321
-a[13] array index out of bounds
+array index out of bounds: a[13] at line 26

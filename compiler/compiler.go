@@ -464,8 +464,9 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	c.emit(fmt.Sprintf(`
 	# save base object - and the name of the thing being indexed
 	push rax
-	mov [dword ptr bounds_check_object_name], offset %s
-`, str_id))
+	mov [qword ptr bounds_check_object_name], offset %s
+	mov [qword ptr bounds_check_line], %d
+`, str_id, expr.Line))
 
 	// Compile index expression
 	_, err = c.compileExpr(expr.Index)
@@ -568,8 +569,9 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 	c.emit(fmt.Sprintf(`
 	# save base object - and the name of the thing being indexed
 	push rax
-	mov [dword ptr bounds_check_object_name], offset %s
-`, str_id))
+	mov [qword ptr bounds_check_object_name], offset %s
+	mov [qword ptr bounds_check_line], %d
+`, str_id, expr.Line))
 
 	// Compile index expression
 	_, err = c.compileExpr(expr.Index)

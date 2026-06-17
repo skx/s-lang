@@ -146,6 +146,7 @@ func (p *Parser) parsePratt(minPrec int) (Expr, error) {
 		// [
 		case lexer.LINDEX:
 
+			line := p.curToken.Line
 			p.l.Next()
 
 			index, err := p.parseExpr()
@@ -160,6 +161,7 @@ func (p *Parser) parsePratt(minPrec int) (Expr, error) {
 			left = &IndexExpr{
 				Left:  left,
 				Index: index,
+				Line:  line,
 			}
 
 		// (
@@ -450,6 +452,8 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				res = append(res, expr)
 			} else if p.l.Peek().Type == lexer.LINDEX {
 
+				line := p.curToken.Line
+
 				// index
 				// consume '['
 				p.l.Next()
@@ -475,6 +479,7 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 						Left:       &VariableExpr{Name: name},
 						Index:      index,
 						Expression: vals,
+						Line:       line,
 					})
 
 			} else if p.l.Peek().Type == lexer.LPAREN {
