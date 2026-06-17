@@ -8,6 +8,9 @@ If you'd like to see the generated assembly for each example as well as produce 
 
 ## Contents
 
+* [adder.in](adder.in) - simulate the classic "adder" closure.
+  * We don't have closures, but with effort you could simulate one.
+  * Probably not realistic.
 * [brainfuck.in](brainfuck.in) - Brainfuck interpreter.
   * Reads the command-line arguments to decide what to do.
     * Either run one of the embedded examples.
