@@ -1,0 +1,20 @@
+// Break down a 64-bit number into bytes.
+//
+// These will happen in reverse so we expect to see:
+//
+//  0x34  - 52
+//  0xCD  - 205
+//  0x12  - 18
+//  0xAB  - 171
+//  0x00  - 0
+//  0x00  - 0
+//  0x00  - 0
+//  0x00  - 0
+//
+let x = 0x000000AB12CD34;
+
+let i = 0;
+while( i < 8 ) {
+       print( (x >> (i * 8)) & 255 , "\n");
+       i++;
+}
