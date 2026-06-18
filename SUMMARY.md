@@ -311,6 +311,17 @@ Logical:
 ||
 ```
 
+Binary:
+
+We support left `<<` and right (`>>`) bit-shift operations.  There are binary OR (`|`) and AND (`&`)  operations too.  For example:
+
+```text
+print( 2 << 4, "\n");  # 32
+print( 3 & 15, "\n");  #  3
+```
+
+The shift, AND and OR operators are only valid against integers.
+
 Unary prefix functions:
 
 ```text

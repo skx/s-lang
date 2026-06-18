@@ -58,14 +58,20 @@ const (
 	POWER    = "^"
 
 	// Comparisons
-	AND       = "&&"
-	OR        = "||"
 	LT        = "<"
-	LTEQUALS  = "<="
 	GT        = ">"
+	AND       = "&&"
+	BIT_AND   = "&"
+	OR        = "||"
+	BIT_OR    = "|"
+	LTEQUALS  = "<="
 	GTEQUALS  = ">="
 	EQUALS    = "=="
 	NOTEQUALS = "!="
+
+	// shifts
+	LEFTLEFT   = "<<"
+	RIGHTRIGHT = ">>"
 
 	// postfix
 	PLUSPLUS   = "++"
@@ -278,6 +284,30 @@ func (l *Lexer) Next() *Token {
 			}
 			return &Token{Type: PLUS, Value: "+", Line: l.line}
 
+		case "<":
+			l.position++
+			if l.peekChar() == "=" {
+				l.position++
+				return &Token{Type: LTEQUALS, Value: "<=", Line: l.line}
+			}
+			if l.peekChar() == "<" {
+				l.position++
+				return &Token{Type: LEFTLEFT, Value: "<<", Line: l.line}
+			}
+			return &Token{Type: LT, Value: "<", Line: l.line}
+
+		case ">":
+			l.position++
+			if l.peekChar() == "=" {
+				l.position++
+				return &Token{Type: GTEQUALS, Value: ">=", Line: l.line}
+			}
+			if l.peekChar() == ">" {
+				l.position++
+				return &Token{Type: RIGHTRIGHT, Value: ">>", Line: l.line}
+			}
+			return &Token{Type: GT, Value: ">", Line: l.line}
+
 		case "/":
 			// skip over "/"
 			l.position++
@@ -328,20 +358,6 @@ func (l *Lexer) Next() *Token {
 			}
 			return &Token{Type: DIVIDE, Value: "/", Line: l.line}
 
-		case "<":
-			l.position++
-			if l.peekChar() == "=" {
-				l.position++
-				return &Token{Type: LTEQUALS, Value: "<=", Line: l.line}
-			}
-			return &Token{Type: LT, Value: "<", Line: l.line}
-		case ">":
-			l.position++
-			if l.peekChar() == "=" {
-				l.position++
-				return &Token{Type: GTEQUALS, Value: ">=", Line: l.line}
-			}
-			return &Token{Type: GT, Value: ">", Line: l.line}
 		case "!":
 			l.position++
 			if l.peekChar() == "=" {
@@ -355,14 +371,14 @@ func (l *Lexer) Next() *Token {
 				l.position++
 				return &Token{Type: AND, Value: "&&", Line: l.line}
 			}
-			return &Token{Type: ERROR, Value: "invalid character '&'", Line: l.line}
+			return &Token{Type: BIT_AND, Value: "&", Line: l.line}
 		case "|":
 			l.position++
 			if l.peekChar() == "|" {
 				l.position++
 				return &Token{Type: OR, Value: "||", Line: l.line}
 			}
-			return &Token{Type: ERROR, Value: "invalid character '|'", Line: l.line}
+			return &Token{Type: BIT_OR, Value: "|", Line: l.line}
 
 		case "=":
 			l.position++

@@ -29,6 +29,10 @@ const (
 
 	PREC_POWER
 
+	PREC_BITOP
+
+	PREC_SHIFT
+
 	PREC_POSTFIX
 )
 
@@ -61,8 +65,14 @@ func precedence(t lexer.TokenType) int {
 		lexer.MODULUS:
 		return PREC_MUL
 
+	case lexer.LEFTLEFT, lexer.RIGHTRIGHT:
+		return PREC_SHIFT
+
 	case lexer.POWER:
 		return PREC_POWER
+
+	case lexer.BIT_OR, lexer.BIT_AND:
+		return PREC_BITOP
 
 	case lexer.LPAREN,
 		lexer.LINDEX,

@@ -10,6 +10,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
+	"math"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -1110,7 +1111,7 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 				}
 			case lexer.POWER:
 				return &parser.IntegerLiteral{
-					Value: lI.Value ^ rI.Value,
+					Value: int64(math.Pow(float64(lI.Value), float64(rI.Value))),
 				}
 
 			case lexer.MULTIPLY:
@@ -1184,6 +1185,25 @@ func (c *Compiler) optimizeExpr(expr parser.Expr) parser.Expr {
 					Value: val,
 				}
 
+			case lexer.LEFTLEFT:
+				return &parser.IntegerLiteral{
+					Value: lI.Value << rI.Value,
+				}
+
+			case lexer.RIGHTRIGHT:
+				return &parser.IntegerLiteral{
+					Value: lI.Value >> rI.Value,
+				}
+
+			case lexer.BIT_AND:
+				return &parser.IntegerLiteral{
+					Value: lI.Value & rI.Value,
+				}
+
+			case lexer.BIT_OR:
+				return &parser.IntegerLiteral{
+					Value: lI.Value | rI.Value,
+				}
 			}
 
 			return v
@@ -1385,6 +1405,47 @@ func (c *Compiler) compileExpr(e parser.Expr) (check.Type, error) {
 			c.emit(`
 	call power`)
 
+		case lexer.LEFTLEFT:
+
+			c.emit(`
+    # <<
+    sar rax, 2      # right operand -> shift count
+    mov rcx, rax
+
+    mov rax, rbx    # left operand
+    sar rax, 2      # untag integer
+
+    sal rax, cl     # shift left
+
+    sal rax, 2      # retag integer
+`)
+
+		case lexer.RIGHTRIGHT:
+
+			c.emit(`
+    # >>
+    sar rax, 2      # right operand -> shift count
+    mov rcx, rax
+
+    mov rax, rbx    # left operand
+    sar rax, 2      # untag integer
+
+    sar rax, cl     # arithmetic shift right
+
+    sal rax, 2      # retag integer
+`)
+
+		case lexer.BIT_AND:
+			c.emit(`
+    and rbx, rax
+    mov rax, rbx
+`)
+
+		case lexer.BIT_OR:
+			c.emit(`
+    or rbx, rax
+    mov rax, rbx
+`)
 		default:
 			return check.UNKNOWN, fmt.Errorf("unhandled BinaryExpr in compileExpr: %v", v)
 		}
