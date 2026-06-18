@@ -38,25 +38,25 @@ function counter() {
 # Create an adder
 #
 function createCounter() {
-   code = mmap(18);    # Where our executable code lives.
-   stor = malloc(4);   # Where we store our state
+   code = mmap(20);  # Where our executable code lives.
+   stor = mmap(4);   # Where we store our state
    pc = 0;
+
 
    # mov rax, addr data
    code[pc] = 0x48; pc++;
-   code[pc] = 0xC7; pc++;
-   code[pc] = 0xC0; pc++;
+   code[pc] = 0xB8; pc++;
 
    # Encode the address of the state.
-   value = addr(stor);
-   code[pc] = value % 256;
-   pc++;
-   code[pc] = float2int(value / 256) % 256;
-   pc++;
-   code[pc] = float2int(value / 65536) % 256;
-   pc++
-   code[pc] = float2int(value / 16777216) % 256;
-   pc++
+   v = addr(stor);
+
+   # 64-bit address.
+   let i = 0;
+   while( i < 8 ) {
+        code[pc]  = (v >> (i * 8)) & 255;
+        pc++;
+        i++;
+   }
 
    # inc dword ptr [rax]
    code[pc] = 0xFF;
@@ -85,7 +85,7 @@ function createCounter() {
    # ret
    code[pc] = 0xC3; pc++;
 
-   if ( pc != 17 ) {
+   if ( pc != 20 ) {
       panic("code had unexpected size!\n");
    }
 }

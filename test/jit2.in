@@ -13,29 +13,26 @@ let code = mmap(65536);
 #
 let pc = 0;
 
+# word
 function emit32(v) {
-    code[pc] = v % 256;
-    v = float2int(v / 256);
-    pc++;
-
-    code[pc] = v % 256;
-    v = float2int(v / 256);
-    pc++;
-
-    code[pc] = v % 256;
-    v = float2int(v / 256);
-    pc++;
-
-    code[pc] = v % 256;
-    pc++;
+   code[pc] =  v        & 0xFF;
+   pc++;
+   code[pc] = (v >>  8) & 0xFF;
+   pc++;
+   code[pc] = (v >> 16) & 0xFF;
+   pc++;
+   code[pc] = (v >> 24) & 0xFF;
+   pc++;
 }
 
-# Hack: We never emit anything with a bigger
-# offset, so just treat it as a 32-bit value
-# and zero-pad.
-function emit64(v) {
-    emit32(v);
-    emit32(0);
+# double-word
+function emit64(x) {
+  let i = 0;
+  while( i < 8 ) {
+       code[pc]  = (x >> (i * 8)) & 255;
+       pc++;
+       i++;
+  }
 }
 
 
@@ -118,8 +115,7 @@ function emitOutput(putcAddr) {
     code[pc] = 0x48; pc++;
     code[pc] = 0xBB; pc++;
 
-    emit32(putcAddr);
-    emit32(0);
+    emit64(putcAddr);
 
     #
     # call rbx
