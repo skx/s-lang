@@ -20,6 +20,7 @@ In terms of features:
     * You can compare integer with integer, float with float, string with string, and mixed operations where you compare either a float or an integer.
     * You cannot compare a string with anything other than a string.
   * Logical operations: `&&` and `||`.
+  * Bit operations `<<`, `>>`, `|` and `&`.
   * Postfix decrement/increment support for variables (`i++;`, or `index--;` for example).
   * Unary operations `-`, `+`, and `!`.
 * Support for integers, floats, and strings.

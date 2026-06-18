@@ -17,6 +17,8 @@ func TestLexer(t *testing.T) {
 		{IF, "if"},
 		{COMMA, ","},
 		{WHILE, "while"},
+		{RIGHTRIGHT, ">>"},
+		{LEFTLEFT, "<<"},
 		{RETURN, "return"},
 		{MULTIPLY, "*"},
 		{ASSIGN, "="},
@@ -38,8 +40,8 @@ func TestLexer(t *testing.T) {
 		{AND, "&&"},
 		{OR, "||"},
 		{EXCLAIM, "!"},
-		{ERROR, "invalid character '&'"},
-		{ERROR, "invalid character '|'"},
+		{BIT_AND, "&"},
+		{BIT_OR, "|"},
 		{PLUSPLUS, "++"},
 		{PLUS, "+"},
 		{MINUSMINUS, "--"},
@@ -50,7 +52,7 @@ func TestLexer(t *testing.T) {
 		{EOF, ""},
 	}
 
-	l := NewLexer("LEt if, WHILE      retURN * = 3 + 4 * 5 - 1 / 2 == <= >= != < > && || ! & | +++ -- - % ^ \"\n\"")
+	l := NewLexer("LEt if, WHILE    >> <<  retURN * = 3 + 4 * 5 - 1 / 2 == <= >= != < > && || ! & | +++ -- - % ^ \"\n\"")
 
 	for i, tt := range tests {
 		tok := l.Next()

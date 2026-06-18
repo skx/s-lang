@@ -43,7 +43,8 @@ func TestCompile(t *testing.T) {
 
 	// cleanup once done
 	defer os.Remove(f.Name())
-
+	defer os.Remove("s.out")
+	defer os.Remove("a.out")
 	// Program
 	src := `
 print("OK\n");
