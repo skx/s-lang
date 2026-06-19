@@ -249,10 +249,18 @@ We embed a small number of functions within the generated programs, our so-calle
   * Call the given address.  Expected to be used for jumptables, etc.
 * `exit(N)`
   * Terminate execution with the given exit-code.
+* `fclose(N)`
+  * Close the file handle.
 * `filesize(STR)`
   * Return the size of the given file.
 * `float2int(F)`
   * Convert the given floating-point number to an integer.
+* `fopen(STR,STR)`
+  * Open a file by path, and return the corresponding file handle.
+* `fread(HANDLE):`
+  * Read and return the complete contents from the given file handle.
+* `fwrite(HANDLE, PTR, LEN)`
+  * Write the given data to the open file handle.
 * `getc()`
   * Read a single character from STDIN, returns 0 on EOF.
 * `getenv(STR)`
