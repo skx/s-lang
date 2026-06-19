@@ -91,7 +91,6 @@ printf:
         mov  rax, 1
         call putc
         add  rsp, 8
-        call emit_al
         jmp .printf_next
 
 .printf_float:
