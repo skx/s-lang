@@ -43,6 +43,7 @@ In terms of features:
     * This is the floating-point exception generated upon division by zero.
 * Cleanup via `at_exit()` which is called, if defined, when the program terminates, either due to signals being caught, or at an ordinary exit.
 * User defined functions, with default values.
+* File input and output via `fopen`, `fread`, `fwrite` and `fclose`.
 
 Anti-features, or limitations:
 

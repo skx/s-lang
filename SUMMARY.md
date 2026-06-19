@@ -175,6 +175,30 @@ Note that we don't have an `fseek` or `ftell` primitives, and it is not yet poss
 It might be that these decisions will be revisited in the future.
 
 
+### fclose
+
+Always returns zero.
+
+
+### fopen
+
+Returns a valid handle, or negative number on failure.
+
+
+### fread
+
+Returns a pointer containing the complete contents on success, or a negative number on failure:
+
+* -1: seek failure
+* -2: read failure
+* -3: unexpected EOF
+
+
+### fwrite
+
+Returns the number of bytes written on success, or negative number on failure.
+
+
 
 ## Functions
 

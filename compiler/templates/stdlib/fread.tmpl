@@ -114,18 +114,18 @@ fread_type_fail:
         jmp .cleanup
 
 fread_seek_fail:
-        mov rax, offset fread_seek_fail_msg
-        or rax, 1
+        mov rax, -1
+        sal rax, 2
         jmp .cleanup
 
 fread_read_fail:
-        mov rax, offset fread_read_fail_msg
-        or rax, 1
+        mov rax, -2
+        sal rax, 2
         jmp .cleanup
 
 fread_short_read:
-        mov rax, offset fread_short_read_msg
-        or rax, 1
+        mov rax, -3
+        sal rax, 2
         jmp .cleanup
 
 .cleanup:
@@ -140,15 +140,3 @@ fread_short_read:
 .align 8
 fread_type_fail_msg:
         .asciz "fread: expected INTEGER"
-
-.align 8
-fread_seek_fail_msg:
-        .asciz "fread: lseek failed"
-
-.align 8
-fread_read_fail_msg:
-        .asciz "fread: read failed"
-
-.align 8
-fread_short_read_msg:
-        .asciz "fread: short read"
