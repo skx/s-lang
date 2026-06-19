@@ -50,7 +50,7 @@ argv:
         sal  rax, 2
         push rax          # stack argument
         mov rax, 1        # one argument
-        call malloc
+        call mmap
         add rsp, 8
         and  rax, -4                # untag malloc result
 

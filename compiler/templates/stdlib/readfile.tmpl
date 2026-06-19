@@ -91,7 +91,7 @@ readfile:
 
         push rax        # stack-argument
         mov rax, 1      # one argument
-        call malloc
+        call mmap
         add rsp, 8
 
         #

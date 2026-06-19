@@ -32,7 +32,7 @@ strdup:
         sal rax, 2    # Add typing
         push rax      # store as stack-arg
         mov rax, 1    # one argument
-        call malloc
+        call mmap
         add rsp, 8
         and rax, -4   # untype the result
 

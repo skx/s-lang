@@ -31,11 +31,6 @@ _start:
         mov [rip + envp_ptr], rcx
 
         #
-        # Setup our initial heap allocator
-        #
-        call init_heap
-
-        #
         # Setup a signal handler, so Ctrl-c
         # routes to a known function.
         #
