@@ -47,5 +47,5 @@ endif
 	@echo "executing $@ > $@.out"
 	@./$< > $<.out 2>&1 < $<.in || true
 	@echo "  comparing $<.out to $<.expected"
-	@cmp $<.out $<.expected || exit "program $< did not match: $(cat $<.out)"
+	@cmp $<.out $<.expected || (echo "program $< did not match" ; cat $<.out ; exit 1)
 	@rm $<.out
