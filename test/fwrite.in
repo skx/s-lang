@@ -1,0 +1,20 @@
+#
+# file write
+#
+
+
+## type checking
+print(fwrite("steve", "steve", "steve"), "\n");
+print(fwrite(1/3, "steve", 1/3), "\n");
+
+## write to stderr
+msg = "STDERR\n";
+print(fwrite(2, msg, strlen(msg)), "\n");
+
+## write to stdout
+msg = "STDOUT\n";
+print(fwrite(1, msg, strlen(msg)), "\n");
+
+## write to stdin; fails
+msg = "STDIN\n";
+print(fwrite(0, msg, strlen(msg)), "\n");

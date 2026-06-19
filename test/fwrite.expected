@@ -1,0 +1,7 @@
+fwrite: expected (INTEGER,PTR,INTEGER)
+fwrite: expected (INTEGER,PTR,INTEGER)
+STDERR
+7
+STDOUT
+7
+-9
