@@ -1,0 +1,17 @@
+#
+# Hex printing
+#
+
+let i = 0;
+
+while( i < 64 ) {
+
+   # newline every 16 items
+   if ( i > 0 &&  ( i % 16 == 0 )) {
+      newline();
+   }
+
+   # print the number
+   printf("%x ", i);
+   i++;
+}

@@ -4,13 +4,23 @@ Hello, world!  The magic number is 42
 A=4: 4
 Steve Did this!
 Loop 10
+	printf is more readable 10
 Loop 9
+	printf is more readable 9
 Loop 8
+	printf is more readable 8
 Loop 7
+	printf is more readable 7
 Loop 6
+	printf is more readable 6
 Loop 5
+	printf is more readable 5
 Loop 4
+	printf is more readable 4
 Loop 3
+	printf is more readable 3
 Loop 2
+	printf is more readable 2
 Loop 1
+	printf is more readable 1
 ELSE works :)

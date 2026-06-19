@@ -6,11 +6,11 @@ let c = 3 * 4;
 let X = 99;
 
 let b = a - 1;
-print("Hello, world!  The magic number is ", b, "\n");
+printf("Hello, world!  The magic number is %d\n", b);
 
 # comments are good
 let a = 4;
-print( "A=4: ", a, "\n" );
+printf( "A=4: %d\n", a);
 
 print("Steve Did this!\n");
 
@@ -19,6 +19,7 @@ let f = 10;
 
 while( f ) {
   print( "Loop ", f, "\n" );
+  printf( "\tprintf is more readable %d\n", f);
   f--;
 }
 

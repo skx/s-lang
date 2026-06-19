@@ -1,0 +1,5 @@
+#
+# String printing
+#
+
+printf("%s %s\n", "Hello", "World!");
