@@ -1,0 +1,3 @@
+before fread(2)
+fread: lseek failed
+after fread(2)

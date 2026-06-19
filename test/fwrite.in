@@ -18,3 +18,6 @@ print(fwrite(1, msg, strlen(msg)), "\n");
 ## write to stdin; fails
 msg = "STDIN\n";
 print(fwrite(0, msg, strlen(msg)), "\n");
+
+## write to a random handle
+print(fwrite(32, msg, strlen(msg)), "\n");

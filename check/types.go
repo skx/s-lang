@@ -47,6 +47,8 @@ func (tc *Types) RegisterStdLib() {
 	tc.known["argv"] = []Type{INTEGER}
 	tc.known["exit"] = []Type{INTEGER}
 	tc.known["fclose"] = []Type{INTEGER}
+	tc.known["fread"] = []Type{INTEGER}
+	tc.known["fwrite"] = []Type{INTEGER, STRING, INTEGER}
 	tc.known["filesize"] = []Type{STRING}
 	tc.known["float2int"] = []Type{FLOAT}
 	tc.known["fopen"] = []Type{STRING, STRING}
