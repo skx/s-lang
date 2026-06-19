@@ -86,44 +86,40 @@ function emit8(v) {
 
 # word
 function emit32(v) {
-    code[pc] = v % 256;
-    v = float2int(v / 256);
-    pc++;
-
-    code[pc] = v % 256;
-    v = float2int(v / 256);
-    pc++;
-
-    code[pc] = v % 256;
-    v = float2int(v / 256);
-    pc++;
-
-    code[pc] = v % 256;
-    pc++;
+   code[pc] =  v        & 0xFF;
+   pc++;
+   code[pc] = (v >>  8) & 0xFF;
+   pc++;
+   code[pc] = (v >> 16) & 0xFF;
+   pc++;
+   code[pc] = (v >> 24) & 0xFF;
+   pc++;
 }
 
 # double-word
-function emit64(v) {
-
-    # Hack: We never emit anything with a bigger offset, so just treat it as
-    # a 32-bit value and zero-pad.
-    emit32(v);
-    emit32(0);
+function emit64(x) {
+  let i = 0;
+  while( i < 8 ) {
+       code[pc]  = (x >> (i * 8)) & 255;
+       pc++;
+       i++;
+  }
 }
 
 # Update previously emitted data; used to patch the destionation of jumps.
-function patch32(pos, value) {
+function patch32(pos, v) {
 
     # We want negative/twos-compliment numbers for
     # backwards jumps.  Sigh.
-    if (value < 0) {
-        value = 4294967296 + value;
+    if (v < 0) {
+        v = 4294967296 + v;
     }
 
-    code[pos]     = value % 256;
-    code[pos + 1] = float2int(value / 256) % 256;
-    code[pos + 2] = float2int(value / 65536) % 256;
-    code[pos + 3] = float2int(value / 16777216) % 256;
+   code[pos + 0] =  v        & 0xFF;
+   code[pos + 1] = (v >>  8) & 0xFF;
+   code[pos + 2] = (v >> 16) & 0xFF;
+   code[pos + 3] = (v >> 24) & 0xFF;
+
 }
 
 
@@ -501,7 +497,7 @@ function input()   { let x = getc();  return(x); }
 #
 # The tape-cells the program operates upon
 #
-let tape = malloc(30000);
+let tape = mmap(30000);
 
 #
 # Define a program, and compile it
