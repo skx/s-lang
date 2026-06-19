@@ -143,6 +143,39 @@ count++;
 
 
 
+## File I/O
+
+We have several file-related functions within our standard library, modeled after the C primitives.  Here is an example of reading a file:
+
+```text
+h = fopen( "/etc/passwd", "r");
+if (!h  { panic("failed to open file"); }
+
+data = fread(h);
+fclose(h);
+```
+
+Writing uses a similar approach:
+
+
+```text
+h = fopen( "out.log", "w");
+if (!h ) { panic("failed to open file"); }
+
+txt = "My text";
+
+if ( fwrite(h, txt, strlen(txt) ) < 0) {
+   panic("failed to write");
+}
+fclose(h);
+```
+
+Note that we don't have an `fseek` or `ftell` primitives, and it is not yet possible to open a file for appending.  The read function will also read **everything** from the given handle, rather than allowing you to limit sizes - this is a compromise to simplify usage, and avoid having users pre-create buffers of the correct size.
+
+It might be that these decisions will be revisited in the future.
+
+
+
 ## Functions
 
 Functions are declared with:
@@ -533,10 +566,18 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Call the given address.  Expected to be used for jumptables, etc.
 * `exit(N)`
   * Terminate execution with the given exit-code.
+* `fclose(N)`
+  * Close the file handle.
 * `filesize(STR)`
   * Return the size of the given file as an integer.
 * `float2int(F)`
   * Convert the given floating-point number to an integer.
+* `fopen(STR,STR)`
+  * Open a file by path, and return the corresponding file handle.
+* `fread(HANDLE):`
+  * Read and return the complete contents from the given file handle.
+* `fwrite(HANDLE, PTR, LEN)`
+  * Write the given data to the open file handle.
 * `getc()`
   * Read a single character from STDIN, returns 0 on EOF, otherwise an integer in the range 0-255.
 * `getenv(STR)`
