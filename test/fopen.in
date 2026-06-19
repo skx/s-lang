@@ -6,7 +6,7 @@
 print(fopen("test.txt", "r"), "\n");
 
 # second file handle should be four
-print(fopen("test.txt", "w"), "\n");
+print(fopen("test2.txt", "w"), "\n");
 
 # failure to open a missing file
 print(fopen("/not/a/valid/file", "r"), "\n");
