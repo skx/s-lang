@@ -1,0 +1,3 @@
+before fread(2)
+-1
+after fread(2)

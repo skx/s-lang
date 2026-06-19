@@ -1,0 +1,142 @@
+#
+# Read *all* the data from the named file - we don't allow reading by size
+#
+
+.section .text.fread,"ax",@progbits
+
+#
+# Read all contents from an open file.
+#
+fread:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]          # get handle
+        mov rcx, rdi               # type check
+        and rcx, 3
+        test rcx, rcx
+        jne fread_type_fail
+        sar rdi, 2                 # remove typing
+
+        #
+        # Seek to end to obtain size.
+        #
+        mov rax, 8                  # SYS_lseek
+        xor rsi, rsi                # offset = 0
+        mov rdx, 2                  # SEEK_END
+        syscall
+
+        test rax, rax
+        js fread_seek_fail
+
+        mov rbx, rax                # file size
+
+        push rbx                    # save size
+
+        #
+        # Allocate size+1 bytes.
+        #
+        mov rdi, rbx
+        inc rdi
+
+        sal rdi, 2                  # add tagging before calling amlloc
+        push rdi
+        call malloc
+        add rsp, 8                  # cleanup arg to malloc
+
+        pop rbx                     # restore size
+        mov r12, rax
+        and r12, -4                 # raw pointer
+
+        #
+        # Rewind to start of file.
+        #
+        mov rdi, [rbp+16]           # file handle
+        sar rdi, 2                  # remove typing
+
+        mov rax, 8                  # SYS_lseek
+        xor rsi, rsi
+        xor rdx, rdx                # SEEK_SET
+        syscall
+
+        test rax, rax
+        js fread_seek_fail
+
+
+        #
+        # Read until we've consumed the entire file.
+        #
+        xor r13, r13                # bytes_read_so_far = 0
+
+.read_loop:
+
+        cmp r13, rbx                # got all the file?  Yay!
+        je .read_complete
+
+        mov rdi, [rbp+16]
+        sar rdi, 2                  # fd
+
+        lea rsi, [r12+r13]          # destination offset
+
+        mov rdx, rbx
+        sub rdx, r13                # remaining bytes
+
+        xor rax, rax                # SYS_read
+        syscall
+
+        test rax, rax               # failed to read
+        js fread_read_fail
+
+        test rax, rax
+        je fread_short_read         # unexpected EOF
+
+        add r13, rax
+        jmp .read_loop
+
+.read_complete:
+
+        #
+        # NUL terminate.
+        #
+        mov byte ptr [r12+r13], 0
+
+        #
+        # Return tagged string.
+        #
+        mov rax, r12
+        or rax, 1
+        jmp .cleanup
+
+
+fread_type_fail:
+        mov rax, offset fread_type_fail_msg
+        or rax, 1
+        jmp .cleanup
+
+fread_seek_fail:
+        mov rax, -1
+        sal rax, 2
+        jmp .cleanup
+
+fread_read_fail:
+        mov rax, -2
+        sal rax, 2
+        jmp .cleanup
+
+fread_short_read:
+        mov rax, -3
+        sal rax, 2
+        jmp .cleanup
+
+.cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+
+
+.section .data.fread,"aw",@progbits
+
+.align 8
+fread_type_fail_msg:
+        .asciz "fread: expected INTEGER"

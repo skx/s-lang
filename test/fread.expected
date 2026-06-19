@@ -1,0 +1,19 @@
+fread: expected INTEGER
+fread: expected INTEGER
+#
+# file reading
+#
+
+#
+# type errors
+#
+print( fread( "steve" ), "\n");
+print( fread( 1/3     ), "\n");
+
+#
+# Read from this file
+#
+h = fopen( "fread.in", "r" );
+print( fread(h) , "\n");
+
+

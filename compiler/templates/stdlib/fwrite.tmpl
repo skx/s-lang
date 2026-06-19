@@ -1,0 +1,52 @@
+#
+# fwrite(HANDLE, PTR|STR, SIZE)
+#
+# Returns the bytes written.
+#
+.section .text.fwrite,"ax",@progbits
+
+fwrite:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]      # file handle
+        mov rcx, rdi           # type checking
+        and rcx, 3
+        test rcx, rcx
+        jne fwrite_type_fail
+        sar rdi, 2             # remove typing
+
+        mov rsi, [rbp+24]      # data pointer
+        mov rcx, rsi           # type checking
+        and rcx, 3
+        cmp rcx, 1
+        jne fwrite_type_fail
+        and rsi, -4            # remove typing
+
+        mov rdx, [rbp+32]      # length
+        mov rcx, rdx           # type checking
+        and rcx, 3
+        cmp rcx, 0
+        jne fwrite_type_fail
+        sar rdx, 2             # remove typing
+        mov rax, 1             # SYS_write
+        syscall
+
+        sal rax, 2             # return the bytes written
+
+.fwrite_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+fwrite_type_fail:
+        mov rax, offset fwrite_type_fail_msg
+        or rax, 1
+        jmp .fwrite_cleanup
+
+
+.section .data.fwrite,"aw",@progbits
+
+.align 8
+fwrite_type_fail_msg:
+        .asciz "fwrite: expected (INTEGER,PTR,INTEGER)"

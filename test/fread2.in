@@ -1,0 +1,7 @@
+#
+# Read from STDERR and STDOUT, should fail
+#
+
+print("before fread(2)\n");
+print( fread( 32 ) , "\n");
+print("after fread(2)\n");

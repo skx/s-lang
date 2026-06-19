@@ -46,8 +46,12 @@ func (tc *Types) RegisterStdLib() {
 
 	tc.known["argv"] = []Type{INTEGER}
 	tc.known["exit"] = []Type{INTEGER}
+	tc.known["fclose"] = []Type{INTEGER}
+	tc.known["fread"] = []Type{INTEGER}
+	tc.known["fwrite"] = []Type{INTEGER, STRING, INTEGER}
 	tc.known["filesize"] = []Type{STRING}
 	tc.known["float2int"] = []Type{FLOAT}
+	tc.known["fopen"] = []Type{STRING, STRING}
 	tc.known["getenv"] = []Type{STRING}
 	tc.known["int2float"] = []Type{INTEGER}
 	tc.known["malloc"] = []Type{INTEGER}
@@ -70,6 +74,7 @@ func (tc *Types) RegisterStdLib() {
 	//
 	//   type: Any type is valid.
 	//  print: variadic arguments of any type.
+	// printf: variadic arguments of any type.
 
 }
 
