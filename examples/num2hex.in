@@ -1,4 +1,12 @@
 #
+#  This example coupld be rewritten with bitshifts!
+#
+#  Or just replaced with "printf("%x\n", n);"
+#
+#  But it is an older one, and so it remains
+#
+
+#
 # Given a number convert to a hex-string
 #
 function num2hex(n) {

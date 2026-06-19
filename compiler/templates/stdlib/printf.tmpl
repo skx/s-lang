@@ -1,0 +1,209 @@
+#
+# printf(format, ...)
+#
+# Arguments:
+#   stack[0] = format string (tagged string)
+#   stack[1+] = values
+#   RAX = total argument count
+#
+# Return value ignored.
+#
+
+.section .text.printf,"ax",@progbits
+
+printf:
+        push rbp
+        mov  rbp, rsp
+
+        #
+        # Need at least one argument.
+        #
+        test rax, rax
+        jz .printf_done
+
+        #
+        # Get format string.
+        #
+        mov r12, [rbp+16]
+        and r12, -4              # untag
+
+        #
+        # r13 = pointer to next argument
+        #
+        lea r13, [rbp+24]
+
+        #
+        # r14 = remaining non-format arguments
+        #
+        mov r14, rax
+        dec r14
+
+.printf_loop:
+        mov al, [r12]
+        test al, al
+        jz .printf_done
+
+        cmp al, '%'
+        jne .emit_char
+
+        #
+        # Handle format directive
+        #
+        inc r12
+        mov al, [r12]
+        test al, al
+        jz .printf_done
+
+        cmp al, '%'
+        je .printf_percent
+
+        #
+        # Need another argument.
+        #
+        test r14, r14
+        jz .printf_next
+
+        mov r15, [r13]
+        add r13, 8
+        dec r14
+
+        cmp al, 'd'
+        je .printf_int
+
+        cmp al, 'f'
+        je .printf_float
+
+        cmp al, 's'
+        je .printf_string
+
+        cmp al, 'x'
+        je .printf_hex
+
+        cmp al, 'c'
+        je .printf_char
+
+        # Unknown format - ignore it.
+        jmp .printf_next
+
+.printf_char:
+        mov rdx, r15
+        push rdx
+        mov  rax, 1
+        call putc
+        add  rsp, 8
+        call emit_al
+        jmp .printf_next
+
+.printf_float:
+        mov rax, r15
+        call print_float
+        jmp .printf_next
+
+.printf_hex:
+        mov rax, r15
+        call print_hex
+        jmp .printf_next
+
+.printf_int:
+        mov rax, r15
+        call print_integer
+        jmp .printf_next
+
+.printf_string:
+        mov rax, r15
+        call print_string
+        jmp .printf_next
+
+
+.printf_percent:
+        mov al, '%'
+        call emit_al
+        jmp .printf_next
+
+.emit_char:
+        call emit_al
+        jmp .printf_next
+
+.printf_next:
+        inc r12
+        jmp .printf_loop
+
+.printf_done:
+        pop rbp
+        ret
+
+
+
+#
+# output single character, using our putc primitive
+#
+emit_al:
+        movzx rdx, al
+        sal   rdx, 2      # tag as integer
+
+        push rdx
+        mov  rax, 1
+        call putc
+        add  rsp, 8
+
+        ret
+
+
+#
+# Print integer as hexadecimal.
+#
+# Tagged integer in RAX - use upper-case, because I prefer that.
+#
+print_hex:
+        sar rax, 2              # remove tag
+
+        lea rdi, [hexbuf+31]
+        mov byte ptr [rdi], 0
+        dec rdi
+
+        test rax, rax
+        jnz .print_hex_loop
+
+        mov byte ptr [rdi], '0'
+        dec rdi
+        jmp .print_hex_write
+
+.print_hex_loop:
+        mov rbx, rax
+        and rbx, 15
+
+        cmp bl, 9
+        jle .print_hex_digit
+
+        add bl, 'A' - 10        # Upper-case
+        jmp .print_hex_store
+
+.print_hex_digit:
+        add bl, '0'
+
+.print_hex_store:
+        mov [rdi], bl
+        dec rdi
+
+        shr rax, 4
+        test rax, rax
+        jnz .print_hex_loop
+
+.print_hex_write:
+        inc rdi              # rdi = start of string
+
+        mov rsi, rdi         # save pointer
+
+        lea rdx, [hexbuf+31]
+        sub rdx, rsi         # length
+
+        mov rax, 1           # sys_write
+        mov rdi, 1           # stdout
+
+        syscall
+        ret
+
+.section .bss.printf,"aw",@nobits
+
+.align 8
+        .lcomm hexbuf,32

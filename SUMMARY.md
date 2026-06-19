@@ -34,6 +34,20 @@ b = 3.5
 print( a + b );
 ```
 
+Our `printf` function understands the standard format-strings for dealing with our types:
+
+* `%c` - Print a character.
+* `%d` - Print an integer.
+* `%f` - Print a floating point number.
+* `%s` - Print a string.
+* `%x` - Print an integer, as hex.
+* `%%` - Print a literal `%`.
+
+For example:
+```text
+printf("Int:%d, Float:%f, Char:%c, String:%s\n", 3, 2/3, 'c', "OK!");
+```
+
 
 
 ## Type Encoding
@@ -190,6 +204,8 @@ call print   # call the stdlib function
 xor rax, rax   # Newline function takes no arguments
 call newline   # Call it
 ```
+
+In practice our standard library routines largely access the parameters they expect to receive, and ignore the argument count.  The two major exceptions are our two output functions `print` and `printf`.
 
 
 
@@ -541,8 +557,12 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Print the given message, and exit.
 * `print(...,...,...)`
   * This function is variadic, it will accept any number of arguments of any type, print each argument in turn.
+* `printf(fmt,...,...,...)`
+  * This function is variadic; it will accept any number of arguments of any type.
+  * Print each argument according to the specified format string.
 * `putc(N)`
   * Print the ASCII character corresponding to the given integer to STDOUT, i.e `putc(42);` will print `*`.
+  * Calls to this could be replaced with `printf("%c", x);`
 * `rand(N)`
   * Return a random number between 0-(N-1).
 * `readfile(STR)`

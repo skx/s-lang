@@ -1,0 +1,10 @@
+#
+# printf with basic types
+#
+
+let i = 1;
+
+while( i < 10 ) {
+   printf("%d %f %c\n", i, 1/i, 'a' + i);
+   i++;
+}

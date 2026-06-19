@@ -1,0 +1,15 @@
+#
+# misc sanity checks
+#
+
+# %% is %
+printf("%c%%%c\n", 42, 42);
+
+# %P is unknown
+printf("%p", 0);
+
+# unterminated?
+printf("%");
+
+# missing argument(s)
+printf("%c%c%c%c%c%c%c%c%c%c\n",42);

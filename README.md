@@ -107,6 +107,7 @@ The following is a tour of our language, again check [SUMMARY.md](SUMMARY.md) fo
     # Set a variable and print it.
     let a = 3;
     print( a );
+    printf("A = %d\n", a);
 
     /* Multi-
        line
@@ -133,6 +134,7 @@ The following is a tour of our language, again check [SUMMARY.md](SUMMARY.md) fo
     # Looping on a variable is the same as "while ( x > 0 ) .."
     while(x) {
        print("The value in my loop is ", x, "\n");
+       printf("Again, using printf: %d\n", x);
        x--;
     }
 
@@ -273,8 +275,12 @@ We embed a small number of functions within the generated programs, our so-calle
 * `print(...,...,...)`
   * This function is variadic; it will accept any number of arguments of any type.
   * Print each argument in turn.
+* `printf(fmt,...,...,...)`
+  * This function is variadic; it will accept any number of arguments of any type.
+  * Print each argument according to the specified format string.
 * `putc(N)`
   * Print the ASCII character corresponding to the given integer to STDOUT, i.e `putc(42);` will print `*`.
+  * Calls to this could be replaced with `printf("%c", x);`
 * `rand(N)`
   * Return a random number between 0-(N-1).
 * `readfile(STR)`
