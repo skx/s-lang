@@ -36,6 +36,9 @@ strcat:
         mov  r8, rdi
         mov  r9, rsi
 
+        push r8
+        push r9
+
         # Get length of first string
         mov  rdi, r8
         call strlen_raw
@@ -65,6 +68,9 @@ strcat:
 
         pop  rsi
         pop  rdi
+
+        pop r9
+        pop r8
 
         push rax               # Save allocated memory address
 
