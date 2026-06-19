@@ -75,6 +75,9 @@ func FuzzProject(f *testing.F) {
 		"hex-numbers must be integers",
 		"failed to parse hex number",
 		"failed to parse number",
+
+		"unterminated block",
+		"unexpected closing brace",
 	}
 
 	//

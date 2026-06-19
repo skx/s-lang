@@ -121,7 +121,7 @@ func (p *Parser) NewError(format string, args ...interface{}) error {
 func (p *Parser) ParseProgram() (*Program, error) {
 	program := &Program{}
 	var err error
-	program.Statements, err = p.parseStatements()
+	program.Statements, err = p.parseStatements(false)
 	return program, err
 }
 
@@ -327,17 +327,26 @@ func (p *Parser) parseAtom() (Expr, error) {
 //
 // It is extracted into a function because our WHILE and IF blocks
 // will themselves contain statements.
-func (p *Parser) parseStatements() ([]Statement, error) {
+func (p *Parser) parseStatements(rbraceCloses bool) ([]Statement, error) {
 	res := []Statement{}
 
 	// Setup the token
 	p.curToken = p.l.Next()
 
-	// continue until we hit the end of the file, or the block.
-	// (blocks are parsed via recursion for things like "while" and "if")
-	for p.curToken.Type != lexer.RBRACE && p.curToken.Type != lexer.EOF {
+	// continue until we hit the end of the file
+	for p.curToken.Type != lexer.EOF {
+
+		// should we stop on rbrace?  If so break out if we see one.
+		// (blocks are parsed via recursion for things like "while" and "if")
+		if rbraceCloses && p.curToken.Type == lexer.RBRACE {
+			break
+		}
 
 		switch p.curToken.Type {
+
+		// "}" without an opening brace is illegal.
+		case lexer.RBRACE:
+			return res, p.NewError("unexpected closing brace")
 
 		case lexer.BREAK:
 			res = append(res, &Break{})
@@ -431,9 +440,12 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			// Now parse the block
 			// that will terminate on "}"
-			stmts, err := p.parseStatements()
+			stmts, err := p.parseStatements(true)
 			if err != nil {
 				return res, err
+			}
+			if p.curToken.Type != lexer.RBRACE {
+				return res, p.NewError("unterminated block")
 			}
 			res = append(res, &Function{Name: name.Value.(string), Parameters: params, Statements: stmts})
 
@@ -572,9 +584,12 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			// Now parse the block
 			// that will terminate on "}"
-			stmts, err := p.parseStatements()
+			stmts, err := p.parseStatements(true)
 			if err != nil {
 				return res, err
+			}
+			if p.curToken.Type != lexer.RBRACE {
+				return res, p.NewError("unterminated block")
 			}
 
 			var False []Statement
@@ -589,9 +604,13 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 					return res, p.NewError("missing '{' after else")
 				}
 
-				False, err = p.parseStatements()
+				False, err = p.parseStatements(true)
 				if err != nil {
 					return res, err
+				}
+
+				if p.curToken.Type != lexer.RBRACE {
+					return res, p.NewError("unterminated block")
 				}
 			}
 
@@ -720,10 +739,14 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 				}
 
 				// parse the block
-				stmts, err := p.parseStatements()
+				stmts, err := p.parseStatements(true)
 				if err != nil {
 					return res, err
 				}
+				if p.curToken.Type != lexer.RBRACE {
+					return res, p.NewError("unterminated block")
+				}
+
 				tmp.Statements = stmts
 
 				// save the choice away
@@ -766,9 +789,12 @@ func (p *Parser) parseStatements() ([]Statement, error) {
 
 			// Now parse the block
 			// that will terminate on "}"
-			stmts, err := p.parseStatements()
+			stmts, err := p.parseStatements(true)
 			if err != nil {
 				return res, err
+			}
+			if p.curToken.Type != lexer.RBRACE {
+				return res, p.NewError("unterminated block")
 			}
 			res = append(res, &While{Expression: val, Statements: stmts})
 
