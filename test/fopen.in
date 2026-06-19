@@ -1,0 +1,25 @@
+#
+# file opening
+#
+
+# first file handle should be three
+print(fopen("test.txt", "r"), "\n");
+
+# second file handle should be four
+print(fopen("test.txt", "w"), "\n");
+
+# failure to open a missing file
+print(fopen("/not/a/valid/file", "r"), "\n");
+
+##
+## Type checking
+##
+
+# now errors in the second arg
+print(fopen("test.txt", "a"), "\n");
+print(fopen("test.txt",   3), "\n");
+print(fopen("test.txt", 1/3), "\n");
+
+# and the first
+print(fopen( 2  , "r"), "\n");
+print(fopen( 1/2, "r"), "\n");

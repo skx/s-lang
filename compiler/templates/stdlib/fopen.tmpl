@@ -1,0 +1,93 @@
+#
+# Open a file, and return the handle of that file.
+#
+#    handle = fopen( path/to/file, "r|w")
+#
+# TODO:  Allow appending
+#
+
+.section .text.fopen,"ax",@progbits
+
+fopen:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]      # path
+        mov rcx, rdi           # type-checking
+        and rcx, 3
+        cmp rcx, 1
+        jne fopen_type_fail
+
+        and rdi, -4            # remove tping
+
+        mov rsi, [rbp+24]      # mode
+        mov rcx, rsi           # type-checking
+        and rcx, 3
+        cmp rcx, 1
+        jne fopen_type_fail
+        and rsi, -4            # remove typing
+
+        mov al, [rsi]
+        cmp al, 'r'         # "r" is valid mode
+        je .read_mode
+
+        cmp al, 'w'         # "w" is valid mode
+        je .write_mode
+
+        jmp fopen_bad_mode
+
+.read_mode:
+
+        mov rax, 2          # SYS_open
+        mov rsi, 0          # O_RDONLY
+        xor rdx, rdx
+        syscall
+        jmp .fopen_done
+
+.write_mode:
+
+        mov rax, 2          # SYS_open
+        mov rsi, 577        # O_WRONLY|O_CREAT|O_TRUNC
+        mov rdx, 0644
+        syscall
+
+.fopen_done:
+
+        #
+        # syscall returns fd or negative errno
+        #
+        test rax, rax
+        js fopen_syscall_fail
+
+        sal rax, 2          # integer tag
+
+.fopen_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+fopen_type_fail:
+        mov rax, offset fopen_type_fail_msg
+        or rax, 1
+        jmp .fopen_cleanup
+
+fopen_bad_mode:
+        mov rax, offset fopen_bad_mode_msg
+        or rax, 1
+        jmp .fopen_cleanup
+
+fopen_syscall_fail:
+        mov rax, 0          # false
+        jmp .fopen_cleanup
+
+
+
+.section .data.fopen,"aw",@progbits
+
+.align 8
+fopen_type_fail_msg:
+        .asciz "fopen: expected (STRING,STRING)"
+
+.align 8
+fopen_bad_mode_msg:
+        .asciz "fopen: mode must be r or w"

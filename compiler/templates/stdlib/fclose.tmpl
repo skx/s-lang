@@ -1,0 +1,38 @@
+#
+# close the given file handle.
+#
+
+.section .text.fclose,"ax",@progbits
+
+fclose:
+        push rbp
+        mov rbp, rsp
+
+        mov rdi, [rbp+16]     # file handle
+        mov rcx, rdi          # type checking
+        and rcx, 3
+        test rcx, rcx
+        jne fclose_type_fail
+        sar rdi, 2            # remove typing
+
+        mov rax, 3            # SYS_close
+        syscall
+
+        xor rax, rax          # return 0
+
+.fclose_cleanup:
+        mov rsp, rbp
+        pop rbp
+        ret
+
+fclose_type_fail:
+        mov rax, offset fclose_type_fail_msg
+        or rax, 1
+        jmp .fclose_cleanup
+
+
+.section .data.fclose,"aw",@progbits
+
+.align 8
+fclose_type_fail_msg:
+        .asciz "fclose: expected INTEGER"

@@ -1,0 +1,5 @@
+fclose: expected INTEGER
+fclose: expected INTEGER
+Closing STDERR
+0
+Still seeing output to STDOUT
