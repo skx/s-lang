@@ -41,7 +41,7 @@ fread:
 
         sal rdi, 2                  # add tagging before calling amlloc
         push rdi
-        call malloc
+        call mmap
         add rsp, 8                  # cleanup arg to malloc
 
         pop rbx                     # restore size

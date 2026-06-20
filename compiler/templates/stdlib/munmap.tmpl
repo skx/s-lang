@@ -1,0 +1,63 @@
+##
+## Free memory which was allocated via mmap.
+##
+
+
+.section .text.munmap,"ax",@progbits
+
+free:
+munmap:
+    push rbp
+    mov rbp, rsp
+
+    mov rdi, [rbp+16]     # Get pointer
+
+    mov rcx, rdi          # type-check
+    and rcx, 3
+    cmp rcx, 1
+    jne .munmap_type_fail
+    and rdi, -4           # remove typing
+
+    #
+    # Back up to allocation header
+    #
+    sub rdi, 8
+
+    #
+    # Load original allocation size
+    #
+    mov rsi, [rdi]
+
+    #
+    # Reconstruct actual mmap length:
+    #
+    #   requested_size
+    # + header
+    # aligned to 8 bytes
+    #
+    add rsi, 8
+    add rsi, 7
+    and rsi, -8
+
+    #
+    # munmap(base, length)
+    #
+    mov rax, 11          # sys_munmap
+    syscall
+
+    sal rax, 2     # Add typing on the result
+    mov rsp, rbp
+    pop rbp
+    ret
+
+.munmap_type_fail:
+    mov rax, offset munmap_type_fail_msg
+    call panic_raw
+
+
+.section .data.munmap,"aw",@progbits
+
+.align 8
+munmap_type_fail_msg:
+    .ascii "free: expected POINTER"
+    .byte 0

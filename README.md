@@ -240,7 +240,7 @@ Report the version number of this binary, using the `git`-information that `go` 
 We embed a small number of functions within the generated programs, our so-called "standard library".  These are functions which seemed to be useful enough to include globally, and each function that accepts arguments has type-checking, both at compile-time and run-time.
 
 * `addr(PTR)`
-  * Return the address of a pointer returned by `mmap(N)` or `malloc(N)`.
+  * Return the address of a pointer returned by `malloc(N)`.
   * Necessary if you write a JIT, but not otherwise.
 * `argc()`
   * Return the count of supplied command-line arguments.
@@ -258,8 +258,10 @@ We embed a small number of functions within the generated programs, our so-calle
   * Convert the given floating-point number to an integer.
 * `fopen(STR,STR)`
   * Open a file by path, and return the corresponding file handle.
-* `fread(HANDLE):`
+* `fread(HANDLE)`
   * Read and return the complete contents from the given file handle.
+* `free(PTR)`
+  * free/unmap pointers returned from `malloc(N)`.  After this accesses to the (now-freed) pointer will trigger our sig_segv handler, and terminate program execution.
 * `fwrite(HANDLE, PTR, LEN)`
   * Write the given data to the open file handle.
 * `getc()`
@@ -269,13 +271,10 @@ We embed a small number of functions within the generated programs, our so-calle
 * `int2float(N)`
   * Convert the given integer to a floating point.
 * `malloc(N)`
-  * Allocate N bytes on the heap.
-  * Note memory is not executable; use mmap() if you need that.
-  * **NOTE**: We have no corresponding `free`.
+  * Allocate N bytes of memory.
+  * Internally we use the `MMAP` syscall, and ensure that memory requested is readable, writable, and executable.
 * `memlen(PTR|STR)`
   * Return the length of the given string/pointer-allocation as an integer.
-* `mmap(N)`
-  * Allocate N bytes of readable/writable/executable memory via MMAP.
 * `newline()`
   * Print a newline to STDOUT.
 * `panic(STR)`

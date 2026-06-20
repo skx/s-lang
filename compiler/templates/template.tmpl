@@ -31,11 +31,6 @@ _start:
         mov [rip + envp_ptr], rcx
 
         #
-        # Setup our initial heap allocator
-        #
-        call init_heap
-
-        #
         # Setup a signal handler, so Ctrl-c
         # routes to a known function.
         #
@@ -55,6 +50,16 @@ _start:
         xor rdx, rdx
         mov r10, 8
         syscall
+        js sigint_fail
+
+        # Install SIGSEGV handler
+        mov rax, 13
+        mov rdi, 11          # SIGSEGV
+        lea rsi, [rip + sigaction_struct_sigsegv]
+        xor rdx, rdx
+        mov r10, 8
+        syscall
+        test rax, rax
         js sigint_fail
 
         #
@@ -210,6 +215,26 @@ sigfpe_handler:
        xor rdi, rdi
        syscall
 
+sigsegv_handler:
+       mov rbx, rsi
+       push rbx
+       mov rax, offset SIGSEGV_CAUGHT
+       call print_string_raw
+       pop rbx
+
+       #
+       # Load fault address
+       #
+       mov rax, [rbx + 16]
+       call print_integer_raw
+       call newline
+
+       mov rax, 60  # SYS_exit
+       xor rdi, rdi
+       syscall
+
+
+
 sigint_restorer:
        mov rax, 15  # SYS_rt_sigreturn
        syscall
@@ -218,6 +243,8 @@ sigint_restorer:
 # Linux x86-64 sigaction flags
 #
 .equ SA_RESTORER, 0x04000000
+.equ SA_SIGINFO,   4
+.equ SA_FLAGS_SEGV, SA_SIGINFO + SA_RESTORER
 
 #
 # struct sigaction
@@ -322,6 +349,13 @@ sigaction_struct_sigfpe:
     .quad 0
     .quad 0
 
+.align 16
+sigaction_struct_sigsegv:
+    .quad sigsegv_handler
+    .quad SA_FLAGS_SEGV
+    .quad sigint_restorer
+    .quad 0
+    .quad 0
 
 .section .data
 .align 8
@@ -332,6 +366,11 @@ SIGFPE_CAUGHT:
 .align 8
 SIGINT_CAUGHT:
         .ascii "Caught SIGINT (Ctrl-C)!\nTerminating!\n"
+        .byte 0
+
+.align 8
+SIGSEGV_CAUGHT:
+        .ascii "Caught SIGSEGV!\nTerminating!\nFaulting address was "
         .byte 0
 
 {{ if .StringTable }}

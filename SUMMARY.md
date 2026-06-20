@@ -465,7 +465,7 @@ let str = "My name is \"Bob\".";
 
 ## Arrays and Memory
 
-Pointers returned from `malloc()` or `mmap()` may be indexed:
+Pointers returned from our memory allocation function, `malloc(N)`, may be indexed:
 
 ```text
 let ram = malloc(4096);
@@ -580,7 +580,7 @@ function life() {
 Here is a brief list of standard library functions, if the name matches a C-language function assume it operates in a similar way.
 
 * `addr(PTR)`
-  * Return the address of a pointer returned by `mmap(N)` or `malloc(N)`.
+  * Return the address of a pointer returned by `malloc(N)`.
   * Necessary if you write a JIT, but not otherwise.
 * `argc()`
   * Return the count of supplied command-line arguments, as an integer.
@@ -600,6 +600,8 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Open a file by path, and return the corresponding file handle.
 * `fread(HANDLE):`
   * Read and return the complete contents from the given file handle.
+* `free(PTR)`
+  * free/unmap pointers returned from `malloc(N)`.  After this accesses to the (now-freed) pointer will trigger our sig_segv handler, and terminate program execution.
 * `fwrite(HANDLE, PTR, LEN)`
   * Write the given data to the open file handle.
 * `getc()`
@@ -609,13 +611,10 @@ Here is a brief list of standard library functions, if the name matches a C-lang
 * `int2float(N)`
   * Convert the given integer to a floating point.
 * `malloc(N)`
-  * Allocate N bytes on the heap.
-  * Note memory is not executable; use mmap() if you need that.
-  * **NOTE**: We have no corresponding `free`.
+  * Allocate N bytes of memory.
+  * Internally we use the `MMAP` syscall, and ensure that memory requested is readable, writable, and executable.
 * `memlen(PTR|STR)`
   * Return the length of the given string/pointer-allocation as an integer.
-* `mmap(N)`
-  * Allocate N bytes of readable/writable/executable memory via MMAP.
 * `newline()`
   * Print a newline to STDOUT.
 * `panic(STR)`
