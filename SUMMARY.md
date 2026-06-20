@@ -634,8 +634,6 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Calls to this could be replaced with `printf("%c", x);`
 * `rand(N)`
   * Return a random number between 0-(N-1).
-* `readfile(STR)`
-  * Return the contents of the given file as a string.
 * `sleep(N|F)`
   * Sleep for the given duration, integer or float.
 * `sqrt(N|F)`

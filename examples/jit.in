@@ -687,7 +687,13 @@ if ( argc() == 2 ) {
             # load that over the default.
             # that is non-empty, then read that.
             if (filesize( argv(1) ) > 0 ) {
-                program = readfile(argv(1));
+                handle = fopen(argv(1), "r");
+                if ( handle <= 0) {
+                   print("failed to read file ", argv(1), "\n");
+                   exit(1);
+                }
+                program = fread(handle);
+                fclose(handle);
             }
          }
       }

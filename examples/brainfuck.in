@@ -206,7 +206,14 @@ if (argv(1) == "mandelbrot") {
 # If we don't have a program, and there is a file
 # that is non-empty, then read that.
 if (strlen(program)< 2 && filesize( argv(1) ) > 0 ) {
-   program = readfile( argv(1));
+
+    handle = fopen(argv(1), "r");
+    if ( handle <= 0) {
+        print("failed to read file ", argv(1), "\n");
+        exit(1);
+    }
+    program = fread(handle);
+    fclose(handle);
 }
 
 # At this point the program is empty, or the file read failed
