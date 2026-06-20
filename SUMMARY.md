@@ -34,6 +34,20 @@ b = 3.5
 print( a + b );
 ```
 
+Our `printf` function understands the standard format-strings for dealing with our types:
+
+* `%c` - Print a character.
+* `%d` - Print an integer.
+* `%f` - Print a floating point number.
+* `%s` - Print a string.
+* `%x` - Print an integer, as hex.
+* `%%` - Print a literal `%`.
+
+For example:
+```text
+printf("Int:%d, Float:%f, Char:%c, String:%s\n", 3, 2/3, 'c', "OK!");
+```
+
 
 
 ## Type Encoding
@@ -99,7 +113,7 @@ Finally here's how to do type-checking of the parameter in RAX:
         je print_reserved
         ret
 
-**NOTE**  Our `malloc` function will do it's own error-checking, if allocation fails they will print a message and terminate execution.  That means there is no need to check the result of calls to allocation routines.
+**NOTE**  Our `alloc8` and `malloc` functions will do their own error-checking, if allocation fails they will print a message and terminate execution.  That means there is no need to check the result of calls to allocation routines.
 
 
 
@@ -248,7 +262,7 @@ xor rax, rax   # Newline function takes no arguments
 call newline   # Call it
 ```
 
-In practice our standard library routines largely access the parameters they expect to receive, and ignore the argument count.
+In practice our standard library routines largely access the parameters they expect to receive, and ignore the argument count.  The two major exceptions are our two output functions `print` and `printf`.
 
 
 
@@ -451,7 +465,7 @@ let str = "My name is \"Bob\".";
 
 ## Arrays and Memory
 
-Pointers returned from `malloc()` may be indexed:
+Pointers returned from our memory allocation function, `malloc(N)`, may be indexed:
 
 ```text
 let ram = malloc(4096);
@@ -584,11 +598,10 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Convert the given floating-point number to an integer.
 * `fopen(STR,STR)`
   * Open a file by path, and return the corresponding file handle.
-* `fread(HANDLE)`
+* `fread(HANDLE):`
   * Read and return the complete contents from the given file handle.
 * `free(PTR)`
-  * Free the memory at the given pointer.
-  * Future accesses to this old allocation will trigger a segfault.
+  * free/unmap pointers returned from `malloc(N)`.  After this accesses to the (now-freed) pointer will trigger our sig_segv handler, and terminate program execution.
 * `fwrite(HANDLE, PTR, LEN)`
   * Write the given data to the open file handle.
 * `getc()`
@@ -599,7 +612,7 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Convert the given integer to a floating point.
 * `malloc(N)`
   * Allocate N bytes of memory.
-  * Memory is actually allocated by `mmap` so it may be read, written and executed from.
+  * Internally we use the `MMAP` syscall, and ensure that memory requested is readable, writable, and executable.
 * `memlen(PTR|STR)`
   * Return the length of the given string/pointer-allocation as an integer.
 * `newline()`
@@ -608,8 +621,12 @@ Here is a brief list of standard library functions, if the name matches a C-lang
   * Print the given message, and exit.
 * `print(...,...,...)`
   * This function is variadic, it will accept any number of arguments of any type, print each argument in turn.
+* `printf(fmt,...,...,...)`
+  * This function is variadic; it will accept any number of arguments of any type.
+  * Print each argument according to the specified format string.
 * `putc(N)`
   * Print the ASCII character corresponding to the given integer to STDOUT, i.e `putc(42);` will print `*`.
+  * Calls to this could be replaced with `printf("%c", x);`
 * `rand(N)`
   * Return a random number between 0-(N-1).
 * `readfile(STR)`

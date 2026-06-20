@@ -261,8 +261,7 @@ We embed a small number of functions within the generated programs, our so-calle
 * `fread(HANDLE)`
   * Read and return the complete contents from the given file handle.
 * `free(PTR)`
-  * Free the memory at the given pointer.
-  * Future accesses to this old allocation will trigger a segfault.
+  * free/unmap pointers returned from `malloc(N)`.  After this accesses to the (now-freed) pointer will trigger our sig_segv handler, and terminate program execution.
 * `fwrite(HANDLE, PTR, LEN)`
   * Write the given data to the open file handle.
 * `getc()`
@@ -273,11 +272,9 @@ We embed a small number of functions within the generated programs, our so-calle
   * Convert the given integer to a floating point.
 * `malloc(N)`
   * Allocate N bytes of memory.
-  * Memory is actually allocated by `mmap` so it may be read, written and executed from.
+  * Internally we use the `MMAP` syscall, and ensure that memory requested is readable, writable, and executable.
 * `memlen(PTR|STR)`
   * Return the length of the given string/pointer-allocation as an integer.
-* `mmap(N)`
-  * Allocate N bytes of readable/writable/executable memory via MMAP.
 * `newline()`
   * Print a newline to STDOUT.
 * `panic(STR)`
