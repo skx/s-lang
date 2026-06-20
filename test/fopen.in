@@ -16,7 +16,7 @@ print(fopen("/not/a/valid/file", "r"), "\n");
 ##
 
 # now errors in the second arg
-print(fopen("test.txt", "a"), "\n");
+print(fopen("test.txt", "p"), "\n");
 print(fopen("test.txt",   3), "\n");
 print(fopen("test.txt", 1/3), "\n");
 

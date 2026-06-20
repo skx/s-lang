@@ -3,6 +3,18 @@
 #
 
 
+##
+## Show a file
+##
+function cat(filename) {
+   let handle = fopen(filename, "r");
+   if ( handle != 0 ){
+      txt = fread(handle);
+      print(txt, "\n");
+   }
+   fclose(handle);
+}
+
 ## type checking
 print(fwrite("steve", "steve", "steve"), "\n");
 print(fwrite(1/3, "steve", 1/3), "\n");
@@ -21,3 +33,31 @@ print(fwrite(0, msg, strlen(msg)), "\n");
 
 ## write to a random handle
 print(fwrite(32, msg, strlen(msg)), "\n");
+
+
+##
+## Open a file and write some data there
+##
+handle = fopen( "tmp.txt", "w");
+txt    = "Original content\n";
+fwrite(handle, txt, strlen(txt));
+fclose(handle);
+
+##
+## Show it, to confirm it worked
+##
+cat( "tmp.txt");
+
+##
+## Append
+##
+extra = "I am appended!\n";
+handle = fopen( "tmp.txt", "a");
+fwrite(handle, extra, strlen(extra));
+fclose(handle);
+
+
+##
+## Show it, to confirm it worked
+##
+cat( "tmp.txt");

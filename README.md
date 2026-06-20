@@ -256,7 +256,7 @@ We embed a small number of functions within the generated programs, our so-calle
   * Return the size of the given file.
 * `float2int(F)`
   * Convert the given floating-point number to an integer.
-* `fopen(STR,STR)`
+* `fopen(PATH,MODE)`
   * Open a file by path, and return the corresponding file handle.
 * `fread(HANDLE)`
   * Read and return the complete contents from the given file handle.
