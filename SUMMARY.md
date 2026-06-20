@@ -170,33 +170,38 @@ if ( fwrite(h, txt, strlen(txt) ) < 0) {
 fclose(h);
 ```
 
-Note that we don't have an `fseek` or `ftell` primitives, and it is not yet possible to open a file for appending.  The read function will also read **everything** from the given handle, rather than allowing you to limit sizes - this is a compromise to simplify usage, and avoid having users pre-create buffers of the correct size.
+Note that we haven't yet implemented either `fseek` or `ftell` primitives, however it _is_ possible to append to an existing file via the use of `a` as the opening mode:
 
-It might be that these decisions will be revisited in the future.
+* `fopen(path, mode);`
+  * Mode `r` means open the file for reading.
+  * Mode `w` means open the file for writing.
+  * Mode `a` means open the file for appending (writing is implicit).
+
+Note also that the `fread` function will read **everything** from the given handle, rather than allowing you to limit sizes - this is a compromise to simplify usage, and avoid having users pre-create buffers of the correct size.
 
 
-### fclose
+### fclose(handle)
 
 Always returns zero.
 
 
-### fopen
+### fopen(path, mode)
 
-Returns a valid handle, or negative number on failure.
+Returns a valid handle, or negative value on failure.
 
 
-### fread
+### fread(handle)
 
-Returns a pointer containing the complete contents on success, or a negative number on failure:
+Returns a pointer containing the complete contents on success, or a negative value on failure:
 
 * -1: seek failure
 * -2: read failure
 * -3: unexpected EOF
 
 
-### fwrite
+### fwrite(handle, pointer, length)
 
-Returns the number of bytes written on success, or negative number on failure.
+Returns the number of bytes written on success, or negative value on failure.
 
 
 

@@ -27,14 +27,25 @@ fopen:
         jne fopen_type_fail
         and rsi, -4            # remove typing
 
-        mov al, [rsi]
-        cmp al, 'r'         # "r" is valid mode
+        mov al, [rsi]          # We only look at the first character..
+        cmp al, 'a'            # "a" is valid mode: append [write]
+        je .append_mode
+
+        cmp al, 'r'            # "r" is valid mode: read
         je .read_mode
 
-        cmp al, 'w'         # "w" is valid mode
+        cmp al, 'w'            # "w" is valid mode: write
         je .write_mode
 
         jmp fopen_bad_mode
+
+.append_mode:
+
+        mov rax, 2          # SYS_open
+        mov rsi, 1089       # O_WRONLY|O_CREAT|O_APPEND
+        mov rdx, 0644
+        syscall
+        jmp .fopen_done
 
 .read_mode:
 
@@ -59,7 +70,7 @@ fopen:
         test rax, rax
         js fopen_syscall_fail
 
-        sal rax, 2          # integer tag
+        sal rax, 2          # tag as integer
 
 .fopen_cleanup:
         mov rsp, rbp
@@ -90,4 +101,4 @@ fopen_type_fail_msg:
 
 .align 8
 fopen_bad_mode_msg:
-        .asciz "fopen: mode must be r or w"
+        .asciz "fopen: mode must be a/r/w"
