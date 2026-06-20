@@ -291,8 +291,6 @@ We embed a small number of functions within the generated programs, our so-calle
   * Calls to this could be replaced with `printf("%c", x);`
 * `rand(N)`
   * Return a random number between 0-(N-1).
-* `readfile(STR)`
-  * Return the contents of the given file.
 * `sleep(N|F)`
   * Sleep for the given duration, integer or float.
 * `sqrt(N|F)`
