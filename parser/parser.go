@@ -241,9 +241,7 @@ func (p *Parser) parsePratt(minPrec int) (Expr, error) {
 
 			rhsPrec := prec
 
-			if !isRightAssociative(tok.Type) {
-				rhsPrec = prec
-			} else {
+			if isRightAssociative(tok.Type) {
 				rhsPrec = prec - 1
 			}
 

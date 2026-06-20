@@ -454,7 +454,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 
 	// we only compile index expressions of simple things
 	// so we can save their names without too much overhead
-	str_id := c.stringTable.Add(expr.Left.String())
+	strID := c.stringTable.Add(expr.Left.String())
 
 	// Compile base expression
 	_, err := c.compileExpr(expr.Left)
@@ -467,7 +467,7 @@ func (c *Compiler) emitLoadIndex(expr *parser.IndexExpr) error {
 	push rax
 	mov [qword ptr bounds_check_object_name], offset %s
 	mov [qword ptr bounds_check_line], %d
-`, str_id, expr.Line))
+`, strID, expr.Line))
 
 	// Compile index expression
 	_, err = c.compileExpr(expr.Index)
@@ -559,7 +559,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 
 	// we only compile index expressions of simple things
 	// so we can save their names without too much overhead
-	str_id := c.stringTable.Add(expr.Left.String())
+	strID := c.stringTable.Add(expr.Left.String())
 
 	// Compile base expression
 	_, err := c.compileExpr(expr.Left)
@@ -572,7 +572,7 @@ func (c *Compiler) emitStoreIndex(expr *parser.IndexAssign) error {
 	push rax
 	mov [qword ptr bounds_check_object_name], offset %s
 	mov [qword ptr bounds_check_line], %d
-`, str_id, expr.Line))
+`, strID, expr.Line))
 
 	// Compile index expression
 	_, err = c.compileExpr(expr.Index)

@@ -165,9 +165,6 @@ if ( 0.0 ) {
    ffalse();
 }
 `))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	txt, err = c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
@@ -195,9 +192,6 @@ if ( 1 + 3 ) {
    ffalse();
 }
 `), WithConstantFolding(false))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	txt, err = c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)
@@ -253,9 +247,6 @@ while( 1.5 ) {
    valid();
 }
 `))
-	if err != nil {
-		t.Fatalf("failed to create compiler")
-	}
 	txt, err = c.Compile()
 	if err != nil {
 		t.Fatalf("unexpected error compiling empty program: %s", err)

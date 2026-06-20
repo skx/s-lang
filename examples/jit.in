@@ -53,7 +53,7 @@ let code = mmap( 1024 * 1024 * 256 );
 #
 #    https://github.com/rdebath/Brainfuck/blob/master/testing/Hanoi.b
 #
-# Suprisingly it doesn't need any more tape-space, nor more loop-tracking.
+# Surprisingly it doesn't need any more tape-space, nor more loop-tracking.
 #
 
 #
