@@ -265,68 +265,8 @@ sigint_fail:
         mov rax, offset int_fail     # Message to display
         call panic_raw               # NOTE: Doesn't return
 
-#
-# Called when bounds check fails
-#
-out_of_bounds:
-        mov rax, offset out_of_bounds_msg
-        call print_string_raw
-
-        mov rax, [bounds_check_object_name]
-        call print_string_raw
-
-        mov rax, offset bounds_check_open
-        call print_string_raw
-
-        mov rax, [bounds_check_index]
-        call print_integer
-
-        mov rax, offset bounds_check_close
-        call print_string_raw
-
-        mov rax, [bounds_check_line]
-        call print_integer_raw
-
-        call newline
-        mov rax, 1
-        call exit_with_rax
-
-
-
-
-
 
 .section .data
-
-.align 8
-# String version of the variable being indexed will be copied here during
-# such index-accesses
-bounds_check_object_name:
-        .quad 0
-
-# Similarly we store the index that is being accessed here.
-.align 8
-bounds_check_index:
-        .quad 0
-
-# And finally the source-line
-.align 8
-bounds_check_line:
-        .quad 0
-
-.align 8
-bounds_check_open:
-        .ascii "["
-        .byte 0
-.align 8
-bounds_check_close:
-        .ascii "] at line "
-        .byte 0
-
-.align 8
-out_of_bounds_msg:
-        .ascii "array index out of bounds: "
-        .byte 0
 
 .align 8
 int_fail:
@@ -356,6 +296,83 @@ sigaction_struct_sigsegv:
     .quad sigint_restorer
     .quad 0
     .quad 0
+
+
+
+
+#
+# Code relating to bounds-checking of index-accesses
+#
+.section .text.bounds,"ax",@progbits
+
+
+#
+# Called when bounds check fails
+#
+out_of_bounds:
+        mov rax, offset out_of_bounds_msg
+        call print_string_raw
+
+        mov rax, [bounds_check_object_name]
+        call print_string_raw
+
+        mov rax, offset bounds_check_open
+        call print_string_raw
+
+        mov rax, [bounds_check_index]
+        call print_integer
+
+        mov rax, offset bounds_check_close
+        call print_string_raw
+
+        mov rax, [bounds_check_line]
+        call print_integer_raw
+
+        call newline
+        mov rax, 1
+        call exit_with_rax
+
+
+#
+# Data relating to bounds-checking code.
+#
+# This is only necessary if a program uses the index-operator
+# to get/set array contents.
+#
+.section .data.bounds,"aw", @progbits
+
+# String version of the variable being indexed will be copied here during
+# such index-accesses
+.align 8
+bounds_check_object_name:
+        .quad 0
+
+# Similarly we store the index that is being accessed here.
+.align 8
+bounds_check_index:
+        .quad 0
+
+# And finally the source-line
+.align 8
+bounds_check_line:
+        .quad 0
+
+.align 8
+bounds_check_open:
+        .ascii "["
+        .byte 0
+
+.align 8
+bounds_check_close:
+        .ascii "] at line "
+        .byte 0
+
+.align 8
+out_of_bounds_msg:
+        .ascii "array index out of bounds: "
+        .byte 0
+
+
 
 .section .data
 .align 8
