@@ -294,7 +294,17 @@ if (condition) {
 }
 ```
 
-Loops:
+Loops are available with either the C-style `for` loop, or with `while`.
+
+Here is what a for loop looks like:
+
+```text
+for( let i = 0 ; i < 10 ; i++ ) {
+  printf("\tfor i: %d\n", i);
+}
+```
+
+The while loop looks like this and within the body of a `while` loop both `break` and `continue` work as you would expect:
 
 ```text
 while (condition) {
