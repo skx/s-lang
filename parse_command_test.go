@@ -48,6 +48,8 @@ if ( 1 ) {
 }
 inline { }
 return(3);
+
+for( i = 0; i < 10 ; i++ ) { printf("%d\n", i); }
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))
@@ -89,8 +91,10 @@ func TestParseBroken(t *testing.T) {
 	// The tests that each have a broken program
 	tests := []string{
 		`
-# This is an error
-return("Steve
+for ( i = 0, i < 10, i++ ) {
+  # This is an error
+  return("Steve
+
 `,
 		`if ( true ) { return( "S `,
 		`if ( true ) { return ; } else { return( "S `,
@@ -398,8 +402,6 @@ greet();
 greet("World");
 greet(32.2);
 pragma foo bar
-
-for( i = 0; i < 10 ; i++ ) { printf("%d\n", i); }
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))
