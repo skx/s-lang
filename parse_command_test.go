@@ -398,6 +398,8 @@ greet();
 greet("World");
 greet(32.2);
 pragma foo bar
+
+for( i = 0; i < 10 ; i++ ) { printf("%d\n", i); }
 `
 	// The program we'll compile
 	_, err = f.Write([]byte(src))
