@@ -370,6 +370,72 @@ func (c *Compiler) popScope() {
 	c.scope = c.scope.Parent
 }
 
+// emitFor generates code for a for statement
+func (c *Compiler) emitFor(fr *parser.For) error {
+
+	// for statements have four parts:
+	//  FOR (init; comp ; post ) { BODY }
+	//
+	// We compile "init", then create a label which
+	// will be returned to ahead of the comp
+	//
+	// Finally we compile the BODY and the POST then
+	// we jump back to the label
+
+	// create a label for this statement
+	n := c.labelCount
+	c.labelCount++
+
+	// new scope
+	c.pushScope()
+
+	// compile the init
+	err := c.generateStmt(fr.Init)
+	if err != nil {
+		return err
+	}
+
+	c.emit(fmt.Sprintf(`
+for_%d:
+`, n))
+
+	// now the comparison
+	_, err = c.compileExpr(fr.Cmp)
+	if err != nil {
+		return err
+	}
+
+	c.emit(fmt.Sprintf(`
+	# IF condition - value in RAX
+	call true
+	jz  for_%d_end  # non-zero past the for loop
+
+	# now we've tested we fall-through
+`, n))
+
+	// compile the body
+	for _, s := range fr.Statements {
+		err := c.generateStmt(s)
+		if err != nil {
+			return err
+		}
+	}
+
+	// compile the post-statement
+	err = c.generateStmt(fr.Post)
+	if err != nil {
+		return err
+	}
+
+	c.emit(fmt.Sprintf(`
+	jmp for_%d
+for_%d_end:
+`, n, n))
+
+	c.popScope()
+	return nil
+}
+
 // emitLoadVariable emits the code for getting the value from a variable.
 //
 // The complexity here comes from determining if a variable is local or global.
@@ -1584,6 +1650,10 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 	case *parser.Data:
 		c.rawData = append(c.rawData, s.Text)
 
+	case *parser.For:
+		err := c.emitFor(s)
+		return err
+
 	case *parser.Function:
 
 		// save this function away, so that it
@@ -1691,12 +1761,10 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 		c.functionBuffer.Reset()
 
 	case *parser.FunctionCallExpr:
-
 		err := c.emitFunctionCall(s)
 		return err
 
 	case *parser.If:
-
 		err := c.emitIf(s)
 		return err
 
@@ -1817,7 +1885,6 @@ func (c *Compiler) generateStmt(stmt parser.Statement) error {
 	jmp %s_cleanup`, c.functionName))
 
 	case *parser.While:
-
 		err := c.emitWhile(s)
 		return err
 
