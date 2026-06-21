@@ -38,6 +38,17 @@ func (p *parseCommand) printStmt(st parser.Statement) error {
 		fmt.Fprintf(output, "\tBREAK;\n")
 	case *parser.Continue:
 		fmt.Fprintf(output, "\tCONTINUE;\n")
+	case *parser.For:
+		fmt.Fprintf(output, "for (%s ; %s; %s) { \n", stmt.Init, stmt.Cmp, stmt.Post)
+		for _, x := range stmt.Statements {
+			fmt.Fprintf(output, "\t")
+			err := p.printStmt(x)
+			if err != nil {
+				return err
+			}
+		}
+		fmt.Fprintf(output, "}\n")
+
 	case *parser.Function:
 		args := ""
 		for _, arg := range stmt.Parameters {
