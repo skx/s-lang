@@ -326,482 +326,588 @@ func (p *Parser) parseAtom() (Expr, error) {
 // It is extracted into a function because our WHILE and IF blocks
 // will themselves contain statements.
 func (p *Parser) parseStatements(rbraceCloses bool) ([]Statement, error) {
-	res := []Statement{}
+	var res []Statement
 
-	// Setup the token
 	p.curToken = p.l.Next()
 
-	// continue until we hit the end of the file
 	for p.curToken.Type != lexer.EOF {
 
-		// should we stop on rbrace?  If so break out if we see one.
-		// (blocks are parsed via recursion for things like "while" and "if")
-		if rbraceCloses && p.curToken.Type == lexer.RBRACE {
-			break
+		if p.curToken.Type == lexer.RBRACE {
+			if rbraceCloses {
+				break
+			} else {
+				return nil, p.NewError("unexpected closing brace")
+			}
 		}
 
-		switch p.curToken.Type {
+		stmt, err := p.parseStatement()
+		if err != nil {
+			return nil, err
+		}
 
-		// "}" without an opening brace is illegal.
-		case lexer.RBRACE:
-			return res, p.NewError("unexpected closing brace")
+		if stmt != nil {
+			res = append(res, stmt)
+		}
 
-		case lexer.BREAK:
-			res = append(res, &Break{})
+		p.curToken = p.l.Next()
+	}
 
-		case lexer.CONTINUE:
-			res = append(res, &Continue{})
+	return res, nil
+}
 
-		case lexer.DATA:
-			res = append(res, &Data{Text: p.curToken.Value.(string)})
+// parseStatement parses a single statement
+func (p *Parser) parseStatement() (Statement, error) {
+	switch p.curToken.Type {
 
-		case lexer.FLOAT:
-			return res, p.NewError("bare literal is illegal: %s", p.curToken.String())
+	case lexer.EOF:
+		return nil, nil
 
-		case lexer.FUNCTION:
-			name := p.l.Next()
-			if name.Type != lexer.IDENT {
-				return res, p.NewError("function names must be identifiers")
-			}
-			start := p.l.Next()
-			if start.Type != lexer.LPAREN {
-				return res, p.NewError("missing '(' after function name %s", name)
-			}
+	case lexer.BREAK:
+		return &Break{}, nil
 
-			// If we've found parameters with default values then
-			// all remaining parameters must have them.
-			//
-			// i.e. this is fine
-			//    function foo( name = "Steve", address = "Secret")
-			//
-			// But this is not
-			//
-			//    function bar( name = "steve", age )
-			//
-			// Record here if we found a default
-			defValue := false
+	case lexer.CONTINUE:
+		return &Continue{}, nil
 
-			// collect parameters
-			params := []*FunctionParameter{}
+	case lexer.DATA:
+		return &Data{Text: p.curToken.Value.(string)}, nil
 
-			for {
-				tok := p.l.Next()
-				if tok.Type == lexer.EOF {
-					return res, p.NewError("unexpected EOF in function definition")
-				}
+	case lexer.FLOAT:
+		return nil, p.NewError("bare literal is illegal: %s", p.curToken.String())
 
-				// )?  Then we're at the end
-				if tok.Type == lexer.RPAREN {
-					break
-				}
-				// skip the comments
-				if tok.Type == lexer.COMMA {
-					continue
-				}
-				if tok.Type == lexer.IDENT {
-					name := tok.Value.(string)
+	case lexer.FOR:
+		return p.parseFor()
 
-					// If we see "=" then we're looking at a default parameter
-					if p.l.Peek().Type == lexer.ASSIGN {
+	case lexer.FUNCTION:
+		name := p.l.Next()
+		if name.Type != lexer.IDENT {
+			return nil, p.NewError("function names must be identifiers")
+		}
+		start := p.l.Next()
+		if start.Type != lexer.LPAREN {
+			return nil, p.NewError("missing '(' after function name %s", name)
+		}
 
-						// We've seen a default value
-						defValue = true
+		// If we've found parameters with default values then
+		// all remaining parameters must have them.
+		//
+		// i.e. this is fine
+		//    function foo( name = "Steve", address = "Secret")
+		//
+		// But this is not
+		//
+		//    function bar( name = "steve", age )
+		//
+		// Record here if we found a default
+		defValue := false
 
-						p.l.Next()
+		// collect parameters
+		params := []*FunctionParameter{}
 
-						// Save the default value.
-						val, err := p.parseExpr()
-						if err != nil {
-							return res, err
-						}
-						params = append(params, &FunctionParameter{
-							Name:    name,
-							Default: val})
-						continue
-					}
-					if defValue {
-						return nil, p.NewError("function %s has parameter without default value after previously seen a default", name)
-
-					}
-					params = append(params, &FunctionParameter{
-						Name: name})
-
-				} else {
-					return res, p.NewError("function arguments must be identifiers")
-				}
+		for {
+			tok := p.l.Next()
+			if tok.Type == lexer.EOF {
+				return nil, p.NewError("unexpected EOF in function definition")
 			}
 
-			end := p.l.Next()
-			if end.Type != lexer.LBRACE {
-				return res, p.NewError("missing '{' after function definition")
+			// )?  Then we're at the end
+			if tok.Type == lexer.RPAREN {
+				break
 			}
-
-			// Now parse the block
-			// that will terminate on "}"
-			stmts, err := p.parseStatements(true)
-			if err != nil {
-				return res, err
+			// skip the comments
+			if tok.Type == lexer.COMMA {
+				continue
 			}
-			if p.curToken.Type != lexer.RBRACE {
-				return res, p.NewError("unterminated block")
-			}
-			res = append(res, &Function{Name: name.Value.(string), Parameters: params, Statements: stmts})
+			if tok.Type == lexer.IDENT {
+				name := tok.Value.(string)
 
-		case lexer.IDENT:
+				// If we see "=" then we're looking at a default parameter
+				if p.l.Peek().Type == lexer.ASSIGN {
 
-			name := p.curToken.Value.(string)
+					// We've seen a default value
+					defValue = true
 
-			if p.l.Peek().Type == lexer.PLUSPLUS {
-				// consume '++'
-				p.l.Next()
+					p.l.Next()
 
-				expr := &PostfixExpr{
-					Expr: &VariableExpr{Name: name},
-					Op:   lexer.PLUSPLUS,
-				}
-				res = append(res, expr)
-			} else if p.l.Peek().Type == lexer.MINUSMINUS {
-
-				// consume '--'
-				p.l.Next()
-
-				expr := &PostfixExpr{
-					Expr: &VariableExpr{Name: name},
-					Op:   lexer.MINUSMINUS,
-				}
-				res = append(res, expr)
-			} else if p.l.Peek().Type == lexer.LINDEX {
-
-				line := p.curToken.Line
-
-				// index
-				// consume '['
-				p.l.Next()
-
-				index, err := p.parseExpr()
-				if err != nil {
-					return nil, err
-				}
-
-				if p.l.Next().Type != lexer.RINDEX {
-					return nil, p.NewError("missing ]")
-				}
-
-				// consume '='
-				p.l.Next()
-
-				vals, err := p.parseExpr()
-				if err != nil {
-					return nil, err
-				}
-				res = append(res,
-					&IndexAssign{
-						Left:       &VariableExpr{Name: name},
-						Index:      index,
-						Expression: vals,
-						Line:       line,
-					})
-
-			} else if p.l.Peek().Type == lexer.LPAREN {
-
-				// consume '('
-				p.l.Next()
-
-				var params []Expr
-
-				for {
-					t := p.l.Peek()
-
-					if t.Type == lexer.EOF {
-						return res, p.NewError("unexpected EOF in function call")
-					}
-
-					if t.Type == lexer.RPAREN {
-						p.l.Next()
-						break
-					}
-
-					if t.Type == lexer.COMMA {
-						p.l.Next()
-						continue
-					}
-
-					expr, err := p.parseExpr()
+					// Save the default value.
+					val, err := p.parseExpr()
 					if err != nil {
 						return nil, err
 					}
-
-					params = append(params, expr)
+					params = append(params, &FunctionParameter{
+						Name:    name,
+						Default: val})
+					continue
 				}
+				if defValue {
+					return nil, p.NewError("function %s has parameter without default value after previously seen a default", name)
 
-				res = append(res, &FunctionCallExpr{
-					Name:      name,
-					Arguments: params,
-				})
-
-			} else if p.l.Peek().Type == lexer.ASSIGN {
-
-				// consume '='
-				p.l.Next()
-
-				vals, err := p.parseExpr()
-				if err != nil {
-					return nil, err
 				}
-				res = append(res,
-					&Let{Left: &VariableExpr{Name: name}, Expression: vals})
+				params = append(params, &FunctionParameter{
+					Name: name})
 
 			} else {
-
-				// plain variable
-				res = append(res, &VariableExpr{
-					Name: name,
-				})
+				return nil, p.NewError("function arguments must be identifiers")
 			}
+		}
 
-		case lexer.IF:
-			start := p.l.Next()
-			if start.Type != lexer.LPAREN {
-				return res, p.NewError("missing '(' after if")
+		end := p.l.Next()
+		if end.Type != lexer.LBRACE {
+			return nil, p.NewError("missing '{' after function definition")
+		}
+
+		// Now parse the block
+		// that will terminate on "}"
+		stmts, err := p.parseStatements(true)
+		if err != nil {
+			return nil, err
+		}
+		if p.curToken.Type != lexer.RBRACE {
+			return nil, p.NewError("unterminated block")
+		}
+		return &Function{Name: name.Value.(string), Parameters: params, Statements: stmts}, nil
+
+	case lexer.IDENT:
+
+		name := p.curToken.Value.(string)
+
+		if p.l.Peek().Type == lexer.PLUSPLUS {
+			// consume '++'
+			p.l.Next()
+
+			expr := &PostfixExpr{
+				Expr: &VariableExpr{Name: name},
+				Op:   lexer.PLUSPLUS,
 			}
+			return expr, nil
 
-			expr, err := p.parseExpr()
+		} else if p.l.Peek().Type == lexer.MINUSMINUS {
+
+			// consume '--'
+			p.l.Next()
+
+			expr := &PostfixExpr{
+				Expr: &VariableExpr{Name: name},
+				Op:   lexer.MINUSMINUS,
+			}
+			return expr, nil
+		} else if p.l.Peek().Type == lexer.LINDEX {
+
+			line := p.curToken.Line
+
+			// index
+			// consume '['
+			p.l.Next()
+
+			index, err := p.parseExpr()
 			if err != nil {
 				return nil, err
 			}
 
-			start = p.l.Next()
-			if start.Type != lexer.RPAREN {
-				return res, p.NewError("missing ')' after if")
+			if p.l.Next().Type != lexer.RINDEX {
+				return nil, p.NewError("missing ]")
 			}
 
-			end := p.l.Next()
-			if end.Type != lexer.LBRACE {
-				return res, p.NewError("missing '{' after if")
-			}
+			// consume '='
+			p.l.Next()
 
-			// Now parse the block
-			// that will terminate on "}"
-			stmts, err := p.parseStatements(true)
-			if err != nil {
-				return res, err
-			}
-			if p.curToken.Type != lexer.RBRACE {
-				return res, p.NewError("unterminated block")
-			}
-
-			var False []Statement
-
-			// Is there a false block?
-			tok := p.l.Peek()
-			if tok.Type == lexer.ELSE {
-				p.l.Next()
-
-				end := p.l.Next()
-				if end.Type != lexer.LBRACE {
-					return res, p.NewError("missing '{' after else")
-				}
-
-				False, err = p.parseStatements(true)
-				if err != nil {
-					return res, err
-				}
-
-				if p.curToken.Type != lexer.RBRACE {
-					return res, p.NewError("unterminated block")
-				}
-			}
-
-			res = append(res, &If{Expression: expr, True: stmts, False: False})
-
-		case lexer.INLINE:
-			res = append(res, &Inline{Text: p.curToken.Value.(string)})
-
-		case lexer.INTEGER:
-			return res, p.NewError("bare literal is illegal: %s", p.curToken.String())
-
-		case lexer.LET:
-			left, err := p.parseExpr()
-			if err != nil {
-				return res, err
-			}
-			eq := p.l.Next()
-
-			if eq.Type != lexer.ASSIGN {
-				return res, p.NewError("missing '=' after LET")
-			}
 			vals, err := p.parseExpr()
 			if err != nil {
 				return nil, err
 			}
-			res = append(res,
-				&Let{Left: left, Expression: vals})
+			return &IndexAssign{
+				Left:       &VariableExpr{Name: name},
+				Index:      index,
+				Expression: vals,
+				Line:       line,
+			}, nil
 
-		case lexer.PRAGMA:
-			k := p.l.Next()
-			if k.Type != lexer.IDENT {
-				return res, p.NewError("pragma key must be an ident")
-			}
-			v := p.l.Next()
-			if v.Type != lexer.IDENT {
-				return res, p.NewError("pragma value must be an ident")
-			}
-			res = append(res, &Pragma{
-				Key:   k.Value.(string),
-				Value: v.Value.(string),
-			})
-		case lexer.RETURN:
-			var expr Expr
-			var err error
-			start := p.l.Next()
-			if start.Type == lexer.SEMICOLON {
-				// "return;" with no value
-			} else {
-				if start.Type != lexer.LPAREN {
-					return res, p.NewError("missing '(' after return")
+		} else if p.l.Peek().Type == lexer.LPAREN {
+
+			// consume '('
+			p.l.Next()
+
+			var params []Expr
+
+			for {
+				t := p.l.Peek()
+
+				if t.Type == lexer.EOF {
+					return nil, p.NewError("unexpected EOF in function call")
 				}
-				expr, err = p.parseExpr()
+
+				if t.Type == lexer.RPAREN {
+					p.l.Next()
+					break
+				}
+
+				if t.Type == lexer.COMMA {
+					p.l.Next()
+					continue
+				}
+
+				expr, err := p.parseExpr()
 				if err != nil {
 					return nil, err
 				}
 
-				end := p.l.Next()
-				if end.Type != lexer.RPAREN {
-					return res, p.NewError("missing ')' after return value")
-				}
-			}
-			res = append(res, &Return{Expression: expr})
-
-		case lexer.SEMICOLON:
-			// NOP
-
-		case lexer.SWITCH:
-
-			// look for the expression
-			expr, err := p.parseExpr()
-			if err != nil {
-				return res, err
+				params = append(params, expr)
 			}
 
-			// switch statement
-			swtch := &Switch{Value: expr}
+			return &FunctionCallExpr{
+				Name:      name,
+				Arguments: params,
+			}, nil
 
-			start := p.l.Next()
-			if start.Type != lexer.LBRACE {
-				return res, p.NewError("missing '{' after switch")
-			}
+		} else if p.l.Peek().Type == lexer.ASSIGN {
 
-			// Process the block which we think will contain
-			// various case-statements
-			for {
-				tok := p.l.Next()
-				if tok.Type == lexer.EOF {
-					return res, p.NewError("unexpected EOF in switch statement")
-				}
-				if tok.Type == lexer.RBRACE {
-					break
-				}
+			// consume '='
+			p.l.Next()
 
-				tmp := &Case{}
-
-				// Default will be handled specially
-				if tok.Type == lexer.DEFAULT {
-
-					// We have a default-case here.
-					tmp.Default = true
-
-				} else if tok.Type == lexer.CASE {
-
-					// Here we allow "case default" even though
-					// most people would prefer to write "default".
-					if tok.Type == lexer.DEFAULT {
-						tmp.Default = true
-					} else {
-
-						// parse the match-expression.
-						left, err := p.parseExpr()
-						if err != nil {
-							return res, err
-						}
-
-						tmp.Expression = left
-					}
-				} else {
-					// error - unexpected token
-					return res, p.NewError("expected case|default, got %s", tok)
-				}
-
-				tok = p.l.Next()
-				if tok.Type != lexer.LBRACE {
-					return res, p.NewError("missing '{' after case")
-				}
-
-				// parse the block
-				stmts, err := p.parseStatements(true)
-				if err != nil {
-					return res, err
-				}
-				if p.curToken.Type != lexer.RBRACE {
-					return res, p.NewError("unterminated block")
-				}
-
-				tmp.Statements = stmts
-
-				// save the choice away
-				swtch.Choices = append(swtch.Choices, tmp)
-
-			}
-
-			// More than one default is a bug
-			count := 0
-			for _, c := range swtch.Choices {
-				if c.Default {
-					count++
-				}
-			}
-			if count > 1 {
-				return res, p.NewError("A switch-statement should only have one default block")
-			}
-
-			res = append(res, swtch)
-		case lexer.STRING:
-			return res, p.NewError("bare literal is illegal: %s", p.curToken.String())
-
-		case lexer.WHILE:
-			start := p.l.Next()
-			if start.Type != lexer.LPAREN {
-				return res, p.NewError("missing '(' after while")
-			}
-			val, err := p.parseExpr()
+			vals, err := p.parseExpr()
 			if err != nil {
 				return nil, err
 			}
-			end := p.l.Next()
-			if end.Type != lexer.RPAREN {
-				return res, p.NewError("missing ')' after while")
-			}
-			end = p.l.Next()
-			if end.Type != lexer.LBRACE {
-				return res, p.NewError("missing '{' after while")
-			}
+			return &Let{Left: &VariableExpr{Name: name}, Expression: vals}, nil
 
-			// Now parse the block
-			// that will terminate on "}"
-			stmts, err := p.parseStatements(true)
-			if err != nil {
-				return res, err
-			}
-			if p.curToken.Type != lexer.RBRACE {
-				return res, p.NewError("unterminated block")
-			}
-			res = append(res, &While{Expression: val, Statements: stmts})
+		} else {
 
-		default:
-			return res, p.NewError("unknown token type in parseStatements: %v", p.curToken)
+			// plain variable
+			return &VariableExpr{Name: name}, nil
 		}
 
-		// repeat
-		p.curToken = p.l.Next()
+	case lexer.IF:
+		start := p.l.Next()
+		if start.Type != lexer.LPAREN {
+			return nil, p.NewError("missing '(' after if")
+		}
+
+		expr, err := p.parseExpr()
+		if err != nil {
+			return nil, err
+		}
+
+		start = p.l.Next()
+		if start.Type != lexer.RPAREN {
+			return nil, p.NewError("missing ')' after if")
+		}
+
+		end := p.l.Next()
+		if end.Type != lexer.LBRACE {
+			return nil, p.NewError("missing '{' after if")
+		}
+
+		// Now parse the block
+		// that will terminate on "}"
+		stmts, err := p.parseStatements(true)
+		if err != nil {
+			return nil, err
+		}
+		if p.curToken.Type != lexer.RBRACE {
+			return nil, p.NewError("unterminated block")
+		}
+
+		var False []Statement
+
+		// Is there a false block?
+		tok := p.l.Peek()
+		if tok.Type == lexer.ELSE {
+			p.l.Next()
+
+			end := p.l.Next()
+			if end.Type != lexer.LBRACE {
+				return nil, p.NewError("missing '{' after else")
+			}
+
+			False, err = p.parseStatements(true)
+			if err != nil {
+				return nil, err
+			}
+
+			if p.curToken.Type != lexer.RBRACE {
+				return nil, p.NewError("unterminated block")
+			}
+		}
+
+		return &If{Expression: expr, True: stmts, False: False}, nil
+
+	case lexer.INLINE:
+		return &Inline{Text: p.curToken.Value.(string)}, nil
+
+	case lexer.INTEGER:
+		return nil, p.NewError("bare literal is illegal: %s", p.curToken.String())
+
+	case lexer.LET:
+		left, err := p.parseExpr()
+		if err != nil {
+			return nil, err
+		}
+		eq := p.l.Next()
+
+		if eq.Type != lexer.ASSIGN {
+			return nil, p.NewError("missing '=' after LET")
+		}
+		vals, err := p.parseExpr()
+		if err != nil {
+			return nil, err
+		}
+		return &Let{Left: left, Expression: vals}, nil
+
+	case lexer.PRAGMA:
+		k := p.l.Next()
+		if k.Type != lexer.IDENT {
+			return nil, p.NewError("pragma key must be an ident")
+		}
+		v := p.l.Next()
+		if v.Type != lexer.IDENT {
+			return nil, p.NewError("pragma value must be an ident")
+		}
+		return &Pragma{
+			Key:   k.Value.(string),
+			Value: v.Value.(string),
+		}, nil
+	case lexer.RETURN:
+		var expr Expr
+		var err error
+		start := p.l.Next()
+		if start.Type == lexer.SEMICOLON {
+			// "return;" with no value
+		} else {
+			if start.Type != lexer.LPAREN {
+				return nil, p.NewError("missing '(' after return")
+			}
+			expr, err = p.parseExpr()
+			if err != nil {
+				return nil, err
+			}
+
+			end := p.l.Next()
+			if end.Type != lexer.RPAREN {
+				return nil, p.NewError("missing ')' after return value")
+			}
+		}
+		return &Return{Expression: expr}, nil
+
+	case lexer.SEMICOLON:
+		return nil, nil
+
+	case lexer.SWITCH:
+
+		// look for the expression
+		expr, err := p.parseExpr()
+		if err != nil {
+			return nil, err
+		}
+
+		// switch statement
+		swtch := &Switch{Value: expr}
+
+		start := p.l.Next()
+		if start.Type != lexer.LBRACE {
+			return nil, p.NewError("missing '{' after switch")
+		}
+
+		// Process the block which we think will contain
+		// various case-statements
+		for {
+			tok := p.l.Next()
+			if tok.Type == lexer.EOF {
+				return nil, p.NewError("unexpected EOF in switch statement")
+			}
+			if tok.Type == lexer.RBRACE {
+				break
+			}
+
+			tmp := &Case{}
+
+			// Default will be handled specially
+			if tok.Type == lexer.DEFAULT {
+
+				// We have a default-case here.
+				tmp.Default = true
+
+			} else if tok.Type == lexer.CASE {
+
+				// Here we allow "case default" even though
+				// most people would prefer to write "default".
+				if tok.Type == lexer.DEFAULT {
+					tmp.Default = true
+				} else {
+
+					// parse the match-expression.
+					left, err := p.parseExpr()
+					if err != nil {
+						return nil, err
+					}
+
+					tmp.Expression = left
+				}
+			} else {
+				// error - unexpected token
+				return nil, p.NewError("expected case|default, got %s", tok)
+			}
+
+			tok = p.l.Next()
+			if tok.Type != lexer.LBRACE {
+				return nil, p.NewError("missing '{' after case")
+			}
+
+			// parse the block
+			stmts, err := p.parseStatements(true)
+			if err != nil {
+				return nil, err
+			}
+			if p.curToken.Type != lexer.RBRACE {
+				return nil, p.NewError("unterminated block")
+			}
+
+			tmp.Statements = stmts
+
+			// save the choice away
+			swtch.Choices = append(swtch.Choices, tmp)
+
+		}
+
+		// More than one default is a bug
+		count := 0
+		for _, c := range swtch.Choices {
+			if c.Default {
+				count++
+			}
+		}
+		if count > 1 {
+			return nil, p.NewError("A switch-statement should only have one default block")
+		}
+
+		return swtch, nil
+	case lexer.STRING:
+		return nil, p.NewError("bare literal is illegal: %s", p.curToken.String())
+
+	case lexer.WHILE:
+		start := p.l.Next()
+		if start.Type != lexer.LPAREN {
+			return nil, p.NewError("missing '(' after while")
+		}
+		val, err := p.parseExpr()
+		if err != nil {
+			return nil, err
+		}
+		end := p.l.Next()
+		if end.Type != lexer.RPAREN {
+			return nil, p.NewError("missing ')' after while")
+		}
+		end = p.l.Next()
+		if end.Type != lexer.LBRACE {
+			return nil, p.NewError("missing '{' after while")
+		}
+
+		// Now parse the block
+		// that will terminate on "}"
+		stmts, err := p.parseStatements(true)
+		if err != nil {
+			return nil, err
+		}
+		if p.curToken.Type != lexer.RBRACE {
+			return nil, p.NewError("unterminated block")
+		}
+		return &While{Expression: val, Statements: stmts}, nil
+
 	}
-	return res, nil
+
+	return nil, p.NewError("unknown token type in parseStatement: %v", p.curToken)
+
+}
+
+func (p *Parser) parseFor() (Statement, error) {
+
+	f := &For{}
+
+	tok := p.l.Next()
+	if tok.Type != lexer.LPAREN {
+		return nil, p.NewError("missing '(' after for")
+	}
+
+	//
+	// INIT
+	//
+	tok = p.l.Peek()
+
+	if tok.Type != lexer.SEMICOLON {
+
+		p.curToken = p.l.Next()
+
+		stmt, err := p.parseStatement()
+		if err != nil {
+			return nil, err
+		}
+
+		f.Init = stmt
+	}
+
+	tok = p.l.Next()
+	if tok.Type != lexer.SEMICOLON {
+		return nil, p.NewError("missing ';' after init")
+	}
+
+	//
+	// CMP
+	//
+	tok = p.l.Peek()
+
+	if tok.Type != lexer.SEMICOLON {
+
+		expr, err := p.parseExpr()
+		if err != nil {
+			return nil, err
+		}
+
+		f.Cmp = expr
+	}
+
+	tok = p.l.Next()
+	if tok.Type != lexer.SEMICOLON {
+		return nil, p.NewError("missing ';' after comparison")
+	}
+
+	//
+	// POST
+	//
+	tok = p.l.Peek()
+
+	if tok.Type != lexer.RPAREN {
+
+		p.curToken = p.l.Next()
+
+		stmt, err := p.parseStatement()
+		if err != nil {
+			return nil, err
+		}
+
+		f.Post = stmt
+	}
+
+	tok = p.l.Next()
+	if tok.Type != lexer.RPAREN {
+		return nil, p.NewError("missing ')' after post expression")
+	}
+
+	//
+	// BODY
+	//
+	tok = p.l.Next()
+	if tok.Type != lexer.LBRACE {
+		return nil, p.NewError("missing '{' after for")
+	}
+
+	stmts, err := p.parseStatements(true)
+	if err != nil {
+		return nil, err
+	}
+
+	if p.curToken.Type != lexer.RBRACE {
+		return nil, p.NewError("unterminated block")
+	}
+
+	f.Statements = stmts
+
+	return f, nil
 }
