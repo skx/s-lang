@@ -80,10 +80,10 @@ function num2hex(n) {
 
 
 #
-# Show a table
+# Show a table of hex values and their integers
 #
 let n = 0;
-while( n < 65535 ) {
+while( n < 256 ) {
    print( n , "\t", num2hex(n ), "\n" );
    n++;
 }

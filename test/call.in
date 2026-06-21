@@ -1,4 +1,4 @@
-let a = mmap(10);
+let a = malloc(10);
 print("Allocated ", memlen(a), " bytes of executable RAM\n");
 print("The pointer has type ", type(a), "\n");
 

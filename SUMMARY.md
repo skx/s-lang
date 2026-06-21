@@ -522,11 +522,11 @@ function fast() {
 }
 ```
 
-It is also possible to allocate executable memory with `mmap`, insert code into it, and call it:
+It is also possible to allocate executable memory with `malloc`, insert code into it, and call it:
 
 ```text
 // allocate
-let a = mmap(10);
+let a = malloc(10);
 
 // populate with assembly
 //   mov rax, 32

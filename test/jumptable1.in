@@ -31,13 +31,28 @@
 #    index++;
 #    stack[index] = value % 256;
 #
-# This is obviously manual and terrible, but it does
-# actually work.
+# NOTE:  The "float2int" does rounding, and is necessary
+#        because "int/int" always becomes "float".
 #
-# Nowadays we have support for indexing memory as if
-# it was storing 8, 16, 32, or 64 bit values so this
-# complexity has gone away - you can see the simpler
-# example in "jumptable2.in"
+# This code is obviously pretty manual and terrible, but
+# on the other hand it works!
+#
+# Nowadays, in addition to the literal storing of 64-bit
+# values in arrays, which we see used in jumptable2.in
+# we have also added support for bit-shift operations
+# so this could be rewritten in the cleaner way:
+#
+#   stack[index] =  value        & 0xFF;
+#   index++;
+#   stack[index] = (value >>  8) & 0xFF;
+#   index++;
+#   stack[index] = (value >> 16) & 0xFF;
+#   index++;
+#   stack[index] = (value >> 24) & 0xFF;
+#   index++;
+#
+# I leave this example alone, as the commentary here
+# shows evolution in action.
 #
 
 
@@ -105,9 +120,9 @@ function getStack(stack, index) {
 
     return(
         b0 +
-        256 * b1 +
-        65536 * b2 +
-        16777216 * b3
+        b1 * 256 +
+        b2 * 65536 +
+        b3 * 16777216
     );
  }
 

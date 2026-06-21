@@ -47,7 +47,7 @@ function jminus() {
 # We're going to assume our "program" is ASCII, which means
 # we need to have 255 possible handlers.
 #
-# As noted each address is four bytes so we multiply the
+# As noted each address is a full 64-bit address so we multiply the
 # size appropriately and record the functions we know.
 #
 let jump = malloc(256 * 8);

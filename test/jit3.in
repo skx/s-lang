@@ -38,8 +38,8 @@ function counter() {
 # Create an adder
 #
 function createCounter() {
-   code = mmap(20);  # Where our executable code lives.
-   stor = mmap(4);   # Where we store our state
+   code = malloc(20);  # Where our executable code lives.
+   stor = malloc(4);   # Where we store our state
    pc = 0;
 
 

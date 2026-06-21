@@ -49,7 +49,7 @@ print( "\t", call( addSeven, -10 ) , "\n")
 function makeAdder(value) {
 
    # Once encoded/compiled our binary code takes 19 bytes.
-   let code = mmap(19);
+   let code = malloc(19);
    pc = 0;
 
    # mov rax, [rbp+0x18].
@@ -69,18 +69,19 @@ function makeAdder(value) {
    code[pc] = 0xF8; pc++;
    code[pc] = 0x02; pc++;
 
-   # add rax, 0x12345678
+   # add rax, 0x1234
    # add the value
    code[pc] = 0x48; pc++;
    code[pc] = 0x05; pc++;
-   code[pc] = value % 256;
+
+   code[pc] =  value        & 0xFF;
    pc++;
-   code[pc] = float2int(value / 256) % 256;
+   code[pc] = (value >>  8) & 0xFF;
    pc++;
-   code[pc] = float2int(value / 65536) % 256;
-   pc++
-   code[pc] = float2int(value / 16777216) % 256;
-   pc++
+   code[pc] = (value >> 16) & 0xFF;
+   pc++;
+   code[pc] = (value >> 24) & 0xFF;
+   pc++;
 
    # shl rax, 2
    # add the typing

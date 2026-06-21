@@ -1,10 +1,7 @@
 #
 # Code is where we assemble the instructions to and later execute from.
 #
-# We need to use mmap rather than malloc because the code region must
-# be marked as executable.
-#
-let code = mmap(65536);
+let code = malloc(65536);
 
 
 #

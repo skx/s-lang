@@ -42,7 +42,7 @@
 #
 # Code is where we assemble the assembly to, and later execute from.
 #
-let code = mmap( 1024 * 1024 * 256 );
+let code = malloc( 1024 * 1024 * 256 );
 
 #
 # NOTE:
@@ -64,7 +64,7 @@ let pc = 0;
 #
 # loop stack for [ and ]
 #
-let loopStack = mmap(4096);
+let loopStack = malloc(4096);
 pragma loopStack size32
 
 #
@@ -497,7 +497,7 @@ function input()   { let x = getc();  return(x); }
 #
 # The tape-cells the program operates upon
 #
-let tape = mmap(30000);
+let tape = malloc(30000);
 
 #
 # Define a program, and compile it

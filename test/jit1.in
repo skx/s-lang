@@ -1,5 +1,5 @@
 ##
-## Test mmap and call.
+## Test malloc and call.
 ##
 
 
@@ -8,7 +8,7 @@
 # Code is where we assemble the instructions to,
 # and later execute.
 #
-let code = mmap(65536);
+let code = malloc(65536);
 
 #
 # Tape is our brainfuck tape-space
