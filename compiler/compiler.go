@@ -389,10 +389,14 @@ func (c *Compiler) emitFor(fr *parser.For) error {
 	// new scope
 	c.pushScope()
 
+	var err error
+
 	// compile the init
-	err := c.generateStmt(fr.Init)
-	if err != nil {
-		return err
+	if fr.Init != nil {
+		err = c.generateStmt(fr.Init)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.emit(fmt.Sprintf(`
@@ -422,9 +426,11 @@ for_%d:
 	}
 
 	// compile the post-statement
-	err = c.generateStmt(fr.Post)
-	if err != nil {
-		return err
+	if fr.Post != nil {
+		err = c.generateStmt(fr.Post)
+		if err != nil {
+			return err
+		}
 	}
 
 	c.emit(fmt.Sprintf(`

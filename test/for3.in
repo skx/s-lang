@@ -1,0 +1,6 @@
+i = 4;
+
+for( ; i < 10 ; ) {
+  printf("\tfor i: %d\n", i);
+  i++;
+}
