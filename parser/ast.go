@@ -70,17 +70,17 @@ type Data struct {
 type For struct {
 
 	// Init is the initialization expression.
-	Init Expr
+	Init Statement
 
 	// Cmp is the comparison expression which tests to see
 	// if we should execute the body.
 	Cmp Expr
 
 	// Post is the expression we add to the end of the body.
-	Post Expr
+	Post Statement
 
 	// Statements are the body of the expression
-	Statements []Expr
+	Statements []Statement
 }
 
 // Function holds details about (user-defined) functions.
