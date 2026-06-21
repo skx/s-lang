@@ -1,0 +1,5 @@
+for( ; false ; ) {
+  panic("not hit\n");
+}
+
+print("OK!\n");

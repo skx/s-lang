@@ -1,0 +1,8 @@
+let i = 34;
+printf("before for loop i:%d\n", i);
+
+for( let i = 0 ; i < 10 ; i++ ) {
+  printf("\tfor i: %d\n", i);
+}
+
+printf("after for loop i:%d\n", i);

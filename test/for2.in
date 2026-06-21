@@ -1,0 +1,5 @@
+let i = 7;
+
+for(  ; i < 10 ; i++ ) {
+  printf("\tfor i: %d\n", i);
+}

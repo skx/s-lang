@@ -26,6 +26,7 @@ const (
 	DATA     = "DATA"
 	DEFAULT  = "DEFAULT"
 	ELSE     = "ELSE"
+	FOR      = "FOR"
 	FUNCTION = "FUNCTION"
 	IF       = "IF"
 	INLINE   = "INLINE"
@@ -165,6 +166,7 @@ func NewLexer(input string) *Lexer {
 	l.keywords["continue"] = true
 	l.keywords["default"] = true
 	l.keywords["else"] = true
+	l.keywords["for"] = true
 	l.keywords["function"] = true
 	l.keywords["if"] = true
 	l.keywords["let"] = true

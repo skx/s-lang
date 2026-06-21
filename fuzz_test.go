@@ -18,36 +18,42 @@ func FuzzProject(f *testing.F) {
 		"unhandled token in", // Input is just A
 		"unexpected token in",
 		"unknown token type in parseStatements", // blah
+		"unknown token type in parseStatement",  // blah
 		"unexpected token in parsePrimary",      // foo(123
 		"unterminated character literal",        // '
 		"unrecognized escape character in character literal",
-		"unterminated string",                    // "foo
-		"unterminated inline",                    // inline { ..
-		"unterminated data",                      // data { ..
-		"undefined variable",                     // easy
-		"unknown character",                      // $
-		"missing ]",                              // a[1
-		"missing )",                              // a[(00
-		"cannot call non-function",               // A(0(0)
-		"symbol already defined",                 // duplicate variable
-		"'(' after if",                           // IF ..
-		"')' after if",                           //
-		"'}' after if",                           //
-		"'{' after if",                           //
-		"'}' after else",                         // IF .. ELSE
-		"'{' after else",                         //
-		"'=' after LET",                          //
-		"missing '(' after while",                // WHILE
-		"missing ')' after while",                //
-		"missing '{' after while",                //
-		"missing '}' after while",                //
-		"missing '(' after return",               // RETURN
-		"missing ')' after return",               //
-		"unexpected EOF",                         // FUNCTIOn
-		"missing '(' after function",             //
-		"missing ')' after function",             //
-		"missing '}' after function",             //
-		"missing '{' after function",             //
+		"unterminated string",               // "foo
+		"unterminated inline",               // inline { ..
+		"unterminated data",                 // data { ..
+		"undefined variable",                // easy
+		"unknown character",                 // $
+		"missing ]",                         // a[1
+		"missing )",                         // a[(00
+		"cannot call non-function",          // A(0(0)
+		"symbol already defined",            // duplicate variable
+		"'(' after if",                      // IF ..
+		"')' after if",                      //
+		"'}' after if",                      //
+		"'{' after if",                      //
+		"'}' after else",                    // IF .. ELSE
+		"'{' after else",                    //
+		"'=' after LET",                     //
+		"missing '(' after while",           // WHILE
+		"missing ')' after while",           //
+		"missing '{' after while",           //
+		"missing '}' after while",           //
+		"missing '(' after return",          // RETURN
+		"missing ')' after return",          //
+		"unexpected EOF",                    // FUNCTIOn
+		"missing '(' after function",        //
+		"missing ')' after function",        //
+		"missing '}' after function",        //
+		"missing '{' after function",        //
+		"missing ')' after post expression", // FOR
+		"missing '(' after for",
+		"missing '{' after for",
+		"missing ';' after init",
+		"missing ';' after comparison",
 		"function names must be identifiers",     //
 		"function arguments must be identifiers", //
 		"parameter without default value after previously seen a default",
@@ -102,6 +108,9 @@ func FuzzProject(f *testing.F) {
 
 		// varargs
 		`print( "test", "me", 3, 3.2, "\n"`,
+
+		// for
+		"for (i = 0 ; i < 10; i++ ) { print(i); newline(); }",
 
 		// if
 		"if ( 1 ) { print(2); } else { print (3); }",

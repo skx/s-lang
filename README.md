@@ -32,7 +32,7 @@ In terms of features:
 * The ability to include inline assembly via `inline { .. }`.
   * `inline` statements are generated as they are encountered.
   * If you want to add new sections then use a `data { ..  }`-block, that is guaranteed to be inserted at the end of the assembly-generation.  So you can add "`.section blah .. ..`" without fear of breaking things.
-* Looping is available with the `while` statement, including standard support for `break` and `continue`.
+* Looping is available with either the C-style `for`loop, or the `while` statement, including standard support for `break` and `continue`.
 * Conditional support with `if` with `else` branch too.
 * We support `switch` statements, albeit only with integer/character literals for the `case` matches.
   * `default` is supported too, of course.
