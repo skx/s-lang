@@ -65,6 +65,17 @@ That said the code is clean, commented/documented, and contains a fair number of
 The intent behind this project was to learn, and increase my knowledge of low-level stuff.  So everything here works, and everything is commented, but this is not a production-grade general-purpose language by any means.
 
 
+### Alternatives
+
+Because the type-system here is so constrained and baked into every aspect of the compiler, the standard-library, and the interface between the two, I decided to step back.
+
+I created a simple lisp compiler where I could worry less about parsing, syntax, and standard-libraries.  Instead focus on typing for lists, lambdas, & etc:
+
+* https://github.com/skx/slisp
+
+A different kind of learning experience; although I still manage to avoid a strongly-typed language!
+
+
 
 ## Example Programs
 
